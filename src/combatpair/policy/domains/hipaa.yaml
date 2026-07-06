@@ -1,0 +1,99 @@
+name: hipaa
+version: "2025.1"
+description: HIPAA Security Rule — adversarial attack scenarios for Protected Health Information (PHI) systems
+regulatory_framework: HIPAA Security Rule (45 CFR Parts 160 and 164)
+
+scenarios:
+  - id: hipaa-164-312a1
+    cwe: CWE-284
+    title: Unauthorized PHI Access — Missing Access Controls
+    description: >
+      Verify that all endpoints serving PHI enforce role-based access control.
+      Look for missing authentication checks on routes that return patient data,
+      IDOR vulnerabilities (sequential patient IDs), and missing minimum-necessary
+      principle enforcement on queries that return full record sets.
+    regulatory_ref: HIPAA §164.312(a)(1) — Access Control
+    example: "GET /api/patients/{id} — does the code verify the requesting user is authorized for this patient?"
+
+  - id: hipaa-164-312a2
+    cwe: CWE-798
+    title: Emergency Access — Hardcoded Override Credentials
+    description: >
+      Check for hardcoded emergency access credentials, backdoor accounts with
+      elevated PHI access, and bypass mechanisms that circumvent normal access
+      controls for 'emergency' scenarios without audit trail.
+    regulatory_ref: HIPAA §164.312(a)(2) — Emergency Access Procedure
+    example: "if user == 'admin_emergency': skip_auth() — hardcoded bypass exposes all PHI"
+
+  - id: hipaa-164-312b
+    cwe: CWE-778
+    title: Insufficient PHI Audit Logging
+    description: >
+      Verify that all PHI access, modification, and disclosure events are logged
+      with user ID, timestamp, and action. Look for missing audit logs on bulk
+      exports, search operations, API responses that include PHI fields,
+      and administrative actions.
+    regulatory_ref: HIPAA §164.312(b) — Audit Controls
+    example: "return db.query(Patient).all() — no audit log for bulk PHI access"
+
+  - id: hipaa-164-312c1
+    cwe: CWE-345
+    title: PHI Integrity — Missing Tamper Detection
+    description: >
+      Check for missing integrity verification on stored PHI. Look for lack
+      of checksums on medical records, missing digital signatures on
+      transmitted health data, and mutable audit logs.
+    regulatory_ref: HIPAA §164.312(c)(1) — Integrity Controls
+    example: "Audit log table with UPDATE/DELETE permissions for application user"
+
+  - id: hipaa-164-312e1
+    cwe: CWE-319
+    title: PHI Transmission — Cleartext over Network
+    description: >
+      Find any PHI transmitted without TLS: HTTP endpoints returning patient
+      data, database connections without SSL, message queues without encryption,
+      and email transmission of PHI without S/MIME or PGP.
+    regulatory_ref: HIPAA §164.312(e)(1) — Transmission Security
+    example: "http:// endpoint returning patient records, or db connection string without ssl=true"
+
+  - id: hipaa-164-312d
+    cwe: CWE-521
+    title: PHI System Authentication — Weak Password Policy
+    description: >
+      Check for missing password complexity enforcement, no account lockout
+      policy, missing MFA for remote access to PHI systems, shared service
+      accounts with PHI access, and default credentials on healthcare integrations.
+    regulatory_ref: HIPAA §164.312(d) — Person Authentication
+    example: "No password complexity check on PHI portal, or shared sa_healthdb account"
+
+  - id: hipaa-164-312e2
+    cwe: CWE-311
+    title: PHI at Rest — Missing Encryption
+    description: >
+      Check for PHI stored in plaintext: unencrypted database columns for SSN,
+      DOB, diagnosis codes; unencrypted file storage for medical images or documents;
+      backup files without encryption; and cache layers (Redis, Memcached) holding
+      PHI without TLS or encryption at rest.
+    regulatory_ref: HIPAA §164.312(e)(2) — Encryption and Decryption
+    example: "Patient.ssn stored as VARCHAR without column-level encryption; Redis cache contains raw PHI"
+
+  - id: hipaa-164-528
+    cwe: CWE-200
+    title: PHI Disclosure — Over-Broad API Response
+    description: >
+      Find API endpoints that return more PHI fields than the minimum necessary
+      for the stated purpose: returning full patient records when only status is needed,
+      bulk export endpoints without field filtering, GraphQL queries without field-level
+      authorization, and responses that include PHI in error messages or logs.
+    regulatory_ref: HIPAA §164.528 — Accounting of Disclosures
+    example: "GET /api/appointments returns full SSN, DOB, diagnosis in response body"
+
+  - id: hipaa-164-514
+    cwe: CWE-359
+    title: De-identification Failure — Re-identifiable PHI
+    description: >
+      Check for 'de-identified' datasets that retain quasi-identifiers enabling
+      re-identification: exact age >89, full ZIP codes, dates with day precision,
+      rare diagnosis codes, combination of gender + region + diagnosis.
+    regulatory_ref: HIPAA §164.514(b) — De-identification of PHI
+    example: "Export includes exact_age=91, zip_code=94102, diagnosis=rare_condition — re-identifiable via ZIP+age"

@@ -1,0 +1,61 @@
+# Runtime artifacts
+.last_report_id
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.whl
+MANIFEST
+
+# Virtual environments — NEVER commit these
+.venv/
+venv/
+env/
+ENV/
+.env
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+*.log
+
+# COMBATPAIR runtime data — local state, not source code
+.combatpair/reports/
+.combatpair/forge/
+.combatpair/brain/
+.combatpair/runs/
+.combatpair/vault/
+.combatpair/policies/
+# Keep .combatpair.yml (config template) — DO commit it
+
+# IDE / OS
+.DS_Store
+.idea/
+.vscode/settings.json
+.claude/settings.local.json
+*.swp
+~$*
+
+# Internal working documents — not for public repo
+*.docx
+*.xlsx
+*.pptx
+
+# Secrets — never commit
+.env.local
+*.pem
+*.key
+secrets.json
+combatpair-app.private-key.pem
+
+# Claude Code workspace config — not for public repo
+CLAUDE.md

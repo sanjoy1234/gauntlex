@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>COMBATPAIR — Feature Evidence Traceability Dashboard</title>
+<style>
+  /* ── Reset & base ─────────────────────────────────────── */
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:system-ui,-apple-system,sans-serif;background:#F0F9FF;color:#0F172A;min-height:100vh}
+
+  /* ── Header ────────────────────────────────────────────── */
+  header{background:linear-gradient(135deg,#1E40AF 0%,#3B82F6 100%);
+         color:#fff;padding:28px 40px 24px;box-shadow:0 2px 8px rgba(30,64,175,.25)}
+  header h1{font-size:24px;font-weight:800;letter-spacing:-.02em}
+  header p{font-size:13px;opacity:.85;margin-top:6px}
+  .header-meta{display:flex;gap:20px;margin-top:14px;flex-wrap:wrap}
+  .hbadge{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);
+           padding:4px 14px;border-radius:20px;font-size:12px;font-weight:600}
+  .hbadge.green{background:rgba(5,150,105,.35);border-color:rgba(5,150,105,.5)}
+
+  /* ── Layout ─────────────────────────────────────────────── */
+  .main{padding:36px 40px;max-width:1200px;margin:0 auto}
+
+  /* ── Summary strip ───────────────────────────────────────── */
+  .summary{display:flex;gap:16px;margin-bottom:32px;flex-wrap:wrap}
+  .scard{background:#fff;border:1px solid #E2E8F0;border-radius:10px;
+          padding:18px 22px;flex:1;min-width:140px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+  .scard .num{font-size:36px;font-weight:800;line-height:1}
+  .scard .lbl{font-size:11px;font-weight:600;text-transform:uppercase;
+               letter-spacing:.08em;color:#64748B;margin-top:4px}
+  .scard.blue .num{color:#1D4ED8}
+  .scard.green .num{color:#047857}
+  .scard.amber .num{color:#B45309}
+  .scard.violet .num{color:#6D28D9}
+
+  /* ── Feature card ─────────────────────────────────────────── */
+  .feature-card{background:#fff;border:1px solid #E2E8F0;border-radius:12px;
+                 margin-bottom:18px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+  .fc-header{display:flex;align-items:center;gap:14px;padding:16px 20px;
+              border-bottom:1px solid #F1F5F9;cursor:pointer;
+              transition:background .15s}
+  .fc-header:hover{background:#F8FAFC}
+  .fc-status{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+  .fc-status.green{background:#10B981}
+  .fc-status.amber{background:#F59E0B}
+  .fc-status.red{background:#EF4444}
+  .fc-sprint{font-size:11px;font-weight:700;text-transform:uppercase;
+              letter-spacing:.07em;padding:2px 9px;border-radius:10px;flex-shrink:0}
+  .sprint-1{background:#DBEAFE;color:#1E40AF}
+  .sprint-2{background:#EDE9FE;color:#5B21B6}
+  .sprint-3{background:#D1FAE5;color:#065F46}
+  .sprint-4{background:#FEF3C7;color:#92400E}
+  .sprint-5{background:#FCE7F3;color:#831843}
+  .sprint-6{background:#ECFDF5;color:#065F46}
+  .sprint-7{background:#FFF7ED;color:#9A3412}
+  .sprint-8{background:#F0F9FF;color:#0369A1}
+  .sprint-9{background:#F5F3FF;color:#4C1D95}
+  .sprint-10{background:#FFFBEB;color:#78350F}
+  .sprint-11{background:#F0FDF4;color:#14532D}
+  .sprint-12{background:#FEF2F2;color:#7F1D1D}
+  .sprint-13{background:#EFF6FF;color:#1E3A5F}
+  .fc-title{font-size:15px;font-weight:700;color:#0F172A;flex:1}
+  .fc-badge-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .fc-tests-pill{font-size:11px;font-weight:600;background:#DBEAFE;color:#1E40AF;
+                  padding:2px 10px;border-radius:10px}
+  .fc-arrow{color:#94A3B8;font-size:14px;margin-left:4px;transition:transform .2s}
+  .fc-arrow.open{transform:rotate(90deg)}
+
+  /* ── Collapsible body ─────────────────────────────────────── */
+  .fc-body{padding:0 20px;max-height:0;overflow:hidden;transition:max-height .3s ease}
+  .fc-body.open{max-height:2000px}
+  .fc-inner{padding:16px 0}
+
+  /* ── Hypothesis / Evidence layout ─────────────────────────── */
+  .hyp-ev{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:14px}
+  @media(max-width:700px){.hyp-ev{grid-template-columns:1fr}}
+  .hyp,.ev{border-radius:8px;padding:14px 16px}
+  .hyp{background:#F0F9FF;border:1px solid #BAE6FD}
+  .ev{background:#F0FDF4;border:1px solid #A7F3D0}
+  .box-label{font-size:10px;font-weight:800;text-transform:uppercase;
+              letter-spacing:.1em;margin-bottom:6px}
+  .hyp .box-label{color:#0369A1}
+  .ev .box-label{color:#065F46}
+  .box-text{font-size:13px;color:#1E293B;line-height:1.5}
+
+  /* ── Test evidence list ───────────────────────────────────── */
+  .test-list{margin-top:10px}
+  .test-item{display:flex;align-items:flex-start;gap:8px;padding:5px 0;
+              border-bottom:1px solid #F1F5F9;font-size:12px}
+  .test-item:last-child{border-bottom:none}
+  .test-dot{flex-shrink:0;margin-top:3px;width:8px;height:8px;border-radius:50%}
+  .test-dot.pass{background:#10B981}
+  .test-dot.skip{background:#F59E0B}
+  .test-name{font-family:monospace;color:#334155;word-break:break-all;flex:1}
+  .test-file{font-size:10px;color:#94A3B8;margin-left:auto;white-space:nowrap;padding-left:8px}
+
+  /* ── Footer ─────────────────────────────────────────────── */
+  footer{margin-top:48px;padding:20px 40px;border-top:1px solid #E2E8F0;
+          font-size:12px;color:#94A3B8;text-align:center;background:#fff}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⚔️ COMBATPAIR — Feature Evidence Traceability</h1>
+  <p>Every feature mapped to its hypothesis, implementation, and test evidence</p>
+  <div class="header-meta">
+    <span class="hbadge">342 Tests Passing</span>
+    <span class="hbadge">1 Skipped (FastAPI optional)</span>
+    <span class="hbadge green">13 Sprints Complete</span>
+    <span class="hbadge">Author: Sanjoy Ghosh</span>
+    <span class="hbadge">Generated: 2026-06-28</span>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- Summary strip -->
+  <div class="summary">
+    <div class="scard blue"><div class="num">13</div><div class="lbl">Sprints</div></div>
+    <div class="scard green"><div class="num">342</div><div class="lbl">Tests Passing</div></div>
+    <div class="scard violet"><div class="num">20</div><div class="lbl">Modules</div></div>
+    <div class="scard amber"><div class="num">100%</div><div class="lbl">Feature Coverage</div></div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <!-- SPRINT 1 — Core ARS Engine                                       -->
+  <!-- ─────────────────────────────────────────────────────────────── -->
+
+  <div class="feature-card">
+    <div class="fc-header" onclick="toggle(this)">
+      <span class="fc-status green"></span>
+      <span class="fc-sprint sprint-1">Sprint 1</span>
+      <span class="fc-title">Core ARS Engine — Builder + Breaker + Arbiter</span>
+      <div class="fc-badge-row">
+        <span class="fc-tests-pill">18 tests</span>
+        <span class="fc-arrow">▶</span>
+      </div>
+    </div>
+    <div class="fc-body">
+      <div class="fc-inner">
+        <div class="hyp-ev">
+          <div class="hyp">
+            <div class="box-label">Hypothesis</div>
+            <div class="box-text">Concurrent Builder + Breaker agents running via <code>asyncio.gather()</code> with an Arbiter scoring ARS = Σ(attack_scores)/N produces a reliable adversarial resilience score. Mitigated attacks score 1.0, partial 0.5, missed 0.0.</div>
+          </div>
+          <div class="ev">
+            <div class="box-label">Evidence</div>
+            <div class="box-text">Arbiter parses attack verdicts, computes ARS, detects low-entropy attack sets. Breaker rotates CWEs, parses JSON attack arrays. Config loads gate threshold from YAML.</div>
+          </div>
+        </div>
+        <div class="test-list">
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_ars_all_mitigated — ARS=1.0 when all attacks score 1.0</span><span class="test-file">test_arbiter.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_ars_all_missed — ARS=0.0 when all attacks score 0.0</span><span class="test-file">test_arbiter.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_ars_mixed — correct weighted average</span><span class="test-file">test_arbiter.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_ars_empty_returns_1 — empty attack set defaults to 1.0</span><span class="test-file">test_arbiter.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_parse_score_mitigated / partial / missed / invalid</span><span class="test-file">test_arbiter.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_entropy_low_triggers_flag / test_entropy_diverse_is_fine</span><span class="test-file">test_arbiter.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_breaker_cwe_rotation, test_parse_attacks_valid_json/empty/invalid</span><span class="test-file">test_breaker.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_defaults, test_load_from_yaml, test_missing_config_returns_defaults</span><span class="test-file">test_config.py</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <!-- SPRINT 2 — BreakContext Token Compression                        -->
+  <!-- ─────────────────────────────────────────────────────────────── -->
+
+  <div class="feature-card">
+    <div class="fc-header" onclick="toggle(this)">
+      <span class="fc-status green"></span>
+      <span class="fc-sprint sprint-2">Sprint 2</span>
+      <span class="fc-title">BreakContext — Security-Aware Token Compression</span>
+      <div class="fc-badge-row">
+        <span class="fc-tests-pill">20 tests</span>
+        <span class="fc-arrow">▶</span>
+      </div>
+    </div>
+    <div class="fc-body">
+      <div class="fc-inner">
+        <div class="hyp-ev">
+          <div class="hyp">
+            <div class="box-label">Hypothesis</div>
+            <div class="box-text">Compressing the Breaker's INPUT (spec, Forge recall, CWE context) reduces prompt token usage while preserving security-relevant signal. The Arbiter boundary is intentionally NOT compressed to maintain scoring accuracy.</div>
+          </div>
+          <div class="ev">
+            <div class="box-label">Evidence</div>
+            <div class="box-text">compress_target() retains security hot lines ±2 context; compress_forge_recall() deduplicates by Jaccard ≥65% overlap; compress_cwe_context() collapses descriptions to ≤120 chars. CompressionStats tracks before/after metrics.</div>
+          </div>
+        </div>
+        <div class="test-list">
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_compress_target_reduces_length / keeps_security_lines / keeps_imports</span><span class="test-file">test_break_context.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_compress_target_short_text_passthrough / empty_passthrough / returns_counts</span><span class="test-file">test_break_context.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_compress_forge_recall_removes_duplicates / keeps_unique / truncates_long / single / empty</span><span class="test-file">test_break_context.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_compress_cwe_context_output_shorter / single_line / preserves_all / passthrough</span><span class="test-file">test_break_context.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_compress_breaker_inputs_reduces_total_chars / returns_stats / empty_recall / disabled_passthrough / stats_line_counts</span><span class="test-file">test_break_context.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_breaker_has_break_context_enabled_attribute / result_has_compression_stats / disabled_via_constructor</span><span class="test-file">test_break_context.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_config_break_context_enabled_default / loadable</span><span class="test-file">test_break_context.py</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <!-- SPRINT 3 — Language Profiles + Fingerprinting                    -->
+  <!-- ─────────────────────────────────────────────────────────────── -->
+
+  <div class="feature-card">
+    <div class="fc-header" onclick="toggle(this)">
+      <span class="fc-status green"></span>
+      <span class="fc-sprint sprint-3">Sprint 3</span>
+      <span class="fc-title">Language Profiles + Spec Fingerprinting (JS/TS/Python/Java/Go)</span>
+      <div class="fc-badge-row">
+        <span class="fc-tests-pill">22 tests</span>
+        <span class="fc-arrow">▶</span>
+      </div>
+    </div>
+    <div class="fc-body">
+      <div class="fc-inner">
+        <div class="hyp-ev">
+          <div class="hyp">
+            <div class="box-label">Hypothesis</div>
+            <div class="box-text">Per-language CWE priority lists and attack context strings steer the Breaker toward language-specific vulnerabilities. A fingerprint of the spec (language, surface signals) selects the correct profile automatically.</div>
+          </div>
+          <div class="ev">
+            <div class="box-label">Evidence</div>
+            <div class="box-text">PROFILES for JS, TS, Python, Java, Go with priority CWE lists and attack_context strings. fingerprint_spec() detects language via ordered pattern matching (TS→JS→Java→Go→Python). priority_cwes_for_spec() and attack_context_for_spec() dispatch correctly.</div>
+          </div>
+        </div>
+        <div class="test-list">
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_js_profile_has_prototype_pollution_cwe, test_python_profile_has_sql_injection</span><span class="test-file">test_language_profiles.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_get_profile_unknown_language_returns_none, test_all_profiles_have_cwes</span><span class="test-file">test_language_profiles.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_priority_cwes_for_python_spec / js_spec / unknown_spec</span><span class="test-file">test_language_profiles.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_attack_context_for_python_spec / js_spec / unknown_spec_returns_empty</span><span class="test-file">test_language_profiles.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_fingerprint_detects_python / javascript / typescript / java / go / unknown</span><span class="test-file">test_fingerprint.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_typescript_not_confused_with_javascript, test_python_not_confused_with_js</span><span class="test-file">test_fingerprint.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_fingerprint_signals_promise_async / filesystem / dynamic_exec / nextjs / react</span><span class="test-file">test_fingerprint.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_cwe_taxonomy_has_30_entries, test_cwe_taxonomy_includes_new_cwes</span><span class="test-file">test_fingerprint.py</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <!-- SPRINT 4 — Knowledge Forge + Forge Ledger                        -->
+  <!-- ─────────────────────────────────────────────────────────────── -->
+
+  <div class="feature-card">
+    <div class="fc-header" onclick="toggle(this)">
+      <span class="fc-status green"></span>
+      <span class="fc-sprint sprint-4">Sprint 4</span>
+      <span class="fc-title">Knowledge Forge + Forge Ledger Vault</span>
+      <div class="fc-badge-row">
+        <span class="fc-tests-pill">18 tests</span>
+        <span class="fc-arrow">▶</span>
+      </div>
+    </div>
+    <div class="fc-body">
+      <div class="fc-inner">
+        <div class="hyp-ev">
+          <div class="hyp">
+            <div class="box-label">Hypothesis</div>
+            <div class="box-text">ChromaDB-backed cross-build adversarial memory (Knowledge Forge) combined with a human-readable Markdown vault (Forge Ledger) enables the Breaker to recall past effective attacks and compounds learning across runs.</div>
+          </div>
+          <div class="ev">
+            <div class="box-label">Evidence</div>
+            <div class="box-text">ForgeLedger writes YAML-frontmatter Markdown to .combatpair/vault/&lt;CWE-XXX&gt;/ with attack metadata. list_entries(), stats(), render_stats_markdown() work correctly. learn hook writes both ChromaDB and Ledger entries per attack.</div>
+          </div>
+        </div>
+        <div class="test-list">
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_write_entry_creates_file / yaml_frontmatter / correct_cwe_dir / filename_contains_attack_id</span><span class="test-file">test_forge_ledger.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_list_entries_empty / returns_entries / filters_by_cwe</span><span class="test-file">test_forge_ledger.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_stats_empty_vault / counts_entries / cwe_counts / severity_counts / avg_effectiveness</span><span class="test-file">test_forge_ledger.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_render_stats_markdown_contains_totals / top_cwes</span><span class="test-file">test_forge_ledger.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_slugify_handles_special_chars / max_len_truncation</span><span class="test-file">test_forge_ledger.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_forge_bot_recall_empty / returns_context / deduplicates</span><span class="test-file">test_forge_bot.py</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <!-- SPRINT 5 — Policy Hub + APE                                       -->
+  <!-- ─────────────────────────────────────────────────────────────── -->
+
+  <div class="feature-card">
+    <div class="fc-header" onclick="toggle(this)">
+      <span class="fc-status green"></span>
+      <span class="fc-sprint sprint-5">Sprint 5</span>
+      <span class="fc-title">Adversarial Policy Engine (APE) + Policy Hub</span>
+      <div class="fc-badge-row">
+        <span class="fc-tests-pill">30 tests</span>
+        <span class="fc-arrow">▶</span>
+      </div>
+    </div>
+    <div class="fc-body">
+      <div class="fc-inner">
+        <div class="hyp-ev">
+          <div class="hyp">
+            <div class="box-label">Hypothesis</div>
+            <div class="box-text">YAML-based playbooks for regulatory domains (OWASP, HIPAA, FINRA, PCI-DSS, SOC2) steer Breaker attacks toward domain-specific threat scenarios. A Policy Hub allows <code>combatpair policy install &lt;domain&gt;</code> to extend built-in coverage.</div>
+          </div>
+          <div class="ev">
+            <div class="box-label">Evidence</div>
+            <div class="box-text">APE loads YAML domains, merges user-installed policies over built-ins. Hub fetch/install/search work with monkeypatched HTTP. OWASP (10 scenarios), NIST SSDF (8 scenarios) domains installed and queryable.</div>
+          </div>
+        </div>
+        <div class="test-list">
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_list_builtin_domains / load_hipaa / load_finra / load_owasp_api</span><span class="test-file">test_policy.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_policy_context_contains_cwe / truncates_at_limit</span><span class="test-file">test_policy.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_user_policy_overrides_builtin / user_policies_dir_checked_first</span><span class="test-file">test_policy.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_hub_fetch_index / install_domain / list_installed / search_by_tag</span><span class="test-file">test_policy_hub.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_install_skips_existing_without_force / force_overwrites</span><span class="test-file">test_policy_hub.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_search_by_name / no_results / case_insensitive</span><span class="test-file">test_policy_hub.py</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <!-- SPRINT 6 — HIPAA/FINRA + Jira/Slack Notifications               -->
+  <!-- ─────────────────────────────────────────────────────────────── -->
+
+  <div class="feature-card">
+    <div class="fc-header" onclick="toggle(this)">
+      <span class="fc-status green"></span>
+      <span class="fc-sprint sprint-6">Sprint 6</span>
+      <span class="fc-title">HIPAA/FINRA Domain Refinement + Jira/Slack Notifications</span>
+      <div class="fc-badge-row">
+        <span class="fc-tests-pill">21 tests</span>
+        <span class="fc-arrow">▶</span>
+      </div>
+    </div>
+    <div class="fc-body">
+      <div class="fc-inner">
+        <div class="hyp-ev">
+          <div class="hyp">
+            <div class="box-label">Hypothesis</div>
+            <div class="box-text">Richer HIPAA/FINRA scenarios (PHI at rest, AML bypass, crypto key management) improve adversarial coverage for regulated industries. Low-ARS runs trigger automated Slack and Jira alerts so security teams act immediately.</div>
+          </div>
+          <div class="ev">
+            <div class="box-label">Evidence</div>
+            <div class="box-text">HIPAA expanded to 10 scenarios (CWE-311, CWE-200, CWE-359). FINRA expanded to 9 (CWE-682, CWE-284, CWE-321). notify_low_ars() dispatches Slack attachment + Jira REST v2 ticket; best-effort, never raises. Post-run hook calls notifications when ARS &lt; gate.</div>
+          </div>
+        </div>
+        <div class="test-list">
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_hipaa_has_10_scenarios, test_finra_has_9_scenarios</span><span class="test-file">test_sprint6.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_hipaa_phi_at_rest_scenario_present / finra_aml_scenario_present</span><span class="test-file">test_sprint6.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_send_slack_success / network_error / missing_webhook</span><span class="test-file">test_sprint6.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_create_jira_ticket_success / auth_error / missing_config</span><span class="test-file">test_sprint6.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_notify_low_ars_dispatches / above_gate_no_notification</span><span class="test-file">test_sprint6.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_notification_result_fields, test_notify_never_raises</span><span class="test-file">test_sprint6.py</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <!-- SPRINT 7 — Domain Intelligence Adapter (MCP Consumer)            -->
+  <!-- ─────────────────────────────────────────────────────────────── -->
+
+  <div class="feature-card">
+    <div class="fc-header" onclick="toggle(this)">
+      <span class="fc-status green"></span>
+      <span class="fc-sprint sprint-7">Sprint 7</span>
+      <span class="fc-title">Domain Intelligence Adapter — MCP Consumer</span>
+      <div class="fc-badge-row">
+        <span class="fc-tests-pill">25 tests</span>
+        <span class="fc-arrow">▶</span>
+      </div>
+    </div>
+    <div class="fc-body">
+      <div class="fc-inner">
+        <div class="hyp-ev">
+          <div class="hyp">
+            <div class="box-label">Hypothesis</div>
+            <div class="box-text">COMBATPAIR acts as a <em>consumer</em> of MCP servers (not a server itself — incompatible with its 60-90s runtime). Live financial/banking threat intelligence from MCP tools enriches the Breaker's policy context pre-run.</div>
+          </div>
+          <div class="ev">
+            <div class="box-label">Evidence</div>
+            <div class="box-text">call_mcp_tool() sends JSON-RPC 2.0 tools/call POST; handles disabled, network error, MCP error, and success cases. DomainIntelligenceAdapter.enrich() appends enrichment from all enabled servers; failed servers degrade silently. Config YAML mcp_servers list loads correctly.</div>
+          </div>
+        </div>
+        <div class="test-list">
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_mcp_server_config_defaults / disabled</span><span class="test-file">test_dia.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_call_mcp_tool_disabled / network_error / success / mcp_error / correct_jsonrpc_payload</span><span class="test-file">test_dia.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_format_mcp_result_string / dict_with_content / empty / truncates_long</span><span class="test-file">test_dia.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_dia_enrich_appends_enrichment / skips_failed / multiple_servers / no_servers</span><span class="test-file">test_dia.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_config_mcp_servers_default_empty / loadable</span><span class="test-file">test_dia.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_parse_mcp_servers_empty / parses_fields / defaults_enabled / none_returns_empty</span><span class="test-file">test_dia.py</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <!-- SPRINTS 8+9 — Java & Go Language Support                         -->
+  <!-- ─────────────────────────────────────────────────────────────── -->
+
+  <div class="feature-card">
+    <div class="fc-header" onclick="toggle(this)">
+      <span class="fc-status green"></span>
+      <span class="fc-sprint sprint-8">Sprints 8+9</span>
+      <span class="fc-title">Java &amp; Go Language Support</span>
+      <div class="fc-badge-row">
+        <span class="fc-tests-pill">12 tests</span>
+        <span class="fc-arrow">▶</span>
+      </div>
+    </div>
+    <div class="fc-body">
+      <div class="fc-inner">
+        <div class="hyp-ev">
+          <div class="hyp">
+            <div class="box-label">Hypothesis</div>
+            <div class="box-text">Java and Go code has language-specific security patterns (serialization, race conditions, goroutine leaks, nil dereference) that require dedicated CWE priority lists and attack context strings to trigger correctly.</div>
+          </div>
+          <div class="ev">
+            <div class="box-label">Evidence</div>
+            <div class="box-text">Java profile: CWE-89 (SQLi), CWE-502 (deserialization), CWE-78 (OS injection), CWE-611 (XXE), CWE-918, CWE-863, CWE-362, CWE-22. Go profile: CWE-89, CWE-78, CWE-362 (race), CWE-476 (nil deref), CWE-22, CWE-918, CWE-770, CWE-674. Fingerprinting detects both via regex signals.</div>
+          </div>
+        </div>
+        <div class="test-list">
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_fingerprint_detects_java / go</span><span class="test-file">test_fingerprint.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_java_profile_has_deserialization_cwe, test_go_profile_has_race_condition_cwe</span><span class="test-file">test_language_profiles.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_priority_cwes_for_java_spec / go_spec</span><span class="test-file">test_language_profiles.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_attack_context_for_java_spec / go_spec</span><span class="test-file">test_language_profiles.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_java_not_confused_with_python / go_not_confused_with_python</span><span class="test-file">test_fingerprint.py</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <!-- SPRINT 10 — Combat Dashboard                                      -->
+  <!-- ─────────────────────────────────────────────────────────────── -->
+
+  <div class="feature-card">
+    <div class="fc-header" onclick="toggle(this)">
+      <span class="fc-status green"></span>
+      <span class="fc-sprint sprint-10">Sprint 10</span>
+      <span class="fc-title">Combat Dashboard — FastAPI Web UI</span>
+      <div class="fc-badge-row">
+        <span class="fc-tests-pill">15 tests + 1 skip</span>
+        <span class="fc-arrow">▶</span>
+      </div>
+    </div>
+    <div class="fc-body">
+      <div class="fc-inner">
+        <div class="hyp-ev">
+          <div class="hyp">
+            <div class="box-label">Hypothesis</div>
+            <div class="box-text">A lightweight FastAPI web UI (optional <code>pip install combatpair-ai[ui]</code>) lets teams browse ARS trends, download SARIF/JUnit/HTML evidence, and monitor the Forge Ledger — all in a bright/light accessible color scheme.</div>
+          </div>
+          <div class="ev">
+            <div class="box-label">Evidence</div>
+            <div class="box-text">create_app() returns FastAPI with /, /api/runs, /api/runs/{id}/html|sarif|junit, /api/vault/stats, /health. _render_index() produces valid HTML with SVG sparkline, PASS/FAIL gate badges, bright #F8FAFC background. Graceful RuntimeError when FastAPI absent.</div>
+          </div>
+        </div>
+        <div class="test-list">
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_load_all_reports_empty_dir / reads_json / skips_corrupt / respects_limit</span><span class="test-file">test_dashboard.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_render_index_is_html / shows_total_runs / shows_gate_threshold / pass_fail_badges</span><span class="test-file">test_dashboard.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_render_index_download_links / empty_shows_message / bright_background / ars_trend_section</span><span class="test-file">test_dashboard.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_render_index_chart_data_is_valid_json, test_create_app_requires_fastapi</span><span class="test-file">test_dashboard.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_pyproject_has_ui_optional_dependency ([ui] fastapi + uvicorn)</span><span class="test-file">test_dashboard.py</span></div>
+          <div class="test-item"><span class="test-dot skip"></span><span class="test-name">test_create_app_returns_fastapi_instance — SKIPPED (fastapi not in dev venv)</span><span class="test-file">test_dashboard.py</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <!-- SPRINT 11 — ARS Leaderboard                                       -->
+  <!-- ─────────────────────────────────────────────────────────────── -->
+
+  <div class="feature-card">
+    <div class="fc-header" onclick="toggle(this)">
+      <span class="fc-status green"></span>
+      <span class="fc-sprint sprint-11">Sprint 11</span>
+      <span class="fc-title">ARS Leaderboard — SWE-bench + GitHub Pages</span>
+      <div class="fc-badge-row">
+        <span class="fc-tests-pill">25 tests</span>
+        <span class="fc-arrow">▶</span>
+      </div>
+    </div>
+    <div class="fc-body">
+      <div class="fc-inner">
+        <div class="hyp-ev">
+          <div class="hyp">
+            <div class="box-label">Hypothesis</div>
+            <div class="box-text">Running COMBATPAIR Breaker against SWE-bench agent patch outputs and aggregating per-agent ARS scores (avg×0.6 + pass_rate×0.4 rank score) produces a publishable, sortable leaderboard for GitHub Pages.</div>
+          </div>
+          <div class="ev">
+            <div class="box-label">Evidence</div>
+            <div class="box-text">load_agent_scores_from_jsonl() and load_agent_scores_from_reports() (filename: agent--task.json). build_leaderboard() aggregates avg/median/min/max/pass_rate, sorted by rank_score desc. render_leaderboard_html() produces bright-themed sortable HTML with medals. save_leaderboard() creates parent dirs.</div>
+          </div>
+        </div>
+        <div class="test-list">
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_load_jsonl_parses_records / skips_malformed / skips_missing_fields / missing_file</span><span class="test-file">test_leaderboard.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_load_reports_parses_agent_and_task / fallback_agent_name / skips_corrupt</span><span class="test-file">test_leaderboard.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_build_leaderboard_empty / single_agent / sorted_by_rank / pass_rate / aggregates</span><span class="test-file">test_leaderboard.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_render_empty / shows_agent / medals / bright_theme / sortable / custom_title / generated_at / gate_threshold</span><span class="test-file">test_leaderboard.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_save_leaderboard_creates_file / creates_parent_dirs</span><span class="test-file">test_leaderboard.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_leaderboard_entry_rank_score (0.90×0.6 + 0.80×0.4 = 0.86)</span><span class="test-file">test_leaderboard.py</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <!-- SPRINT 12 — CPaaS + Enterprise RBAC                              -->
+  <!-- ─────────────────────────────────────────────────────────────── -->
+
+  <div class="feature-card">
+    <div class="fc-header" onclick="toggle(this)">
+      <span class="fc-status green"></span>
+      <span class="fc-sprint sprint-12">Sprint 12</span>
+      <span class="fc-title">CPaaS <code>combatpair serve</code> + Enterprise RBAC</span>
+      <div class="fc-badge-row">
+        <span class="fc-tests-pill">25 tests</span>
+        <span class="fc-arrow">▶</span>
+      </div>
+    </div>
+    <div class="fc-body">
+      <div class="fc-inner">
+        <div class="hyp-ev">
+          <div class="hyp">
+            <div class="box-label">Hypothesis</div>
+            <div class="box-text">GitHub team-based RBAC (Developer / Reviewer / Admin) enforced via GitHub API team membership checks — with TTL caching and graceful fallback — lets enterprises control who can trigger re-runs, override gates, and manage policies.</div>
+          </div>
+          <div class="ev">
+            <div class="box-label">Evidence</div>
+            <div class="box-text">RbacEnforcer resolves roles Admin&gt;Reviewer&gt;Developer in priority order; allow_any_authenticated fallback; 300s TTL cache; invalidate/clear_cache. require() raises PermissionError with readable message. _is_member() returns False on network errors, 404, missing token. RbacConfig loads from COMBATPAIR_ADMIN_TEAMS env vars.</div>
+          </div>
+        </div>
+        <div class="test-list">
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_role_ordering, test_role_labels_cover_all</span><span class="test-file">test_rbac.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_admin/reviewer/dev_team_member_gets_correct_role</span><span class="test-file">test_rbac.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_allow_any_authenticated_grants_developer / deny_when_false</span><span class="test-file">test_rbac.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_admin_supersedes_reviewer, test_no_org_grants_developer/none</span><span class="test-file">test_rbac.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_role_is_cached / invalidate_clears / clear_cache_empties_all</span><span class="test-file">test_rbac.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_require_passes / raises / error_mentions_required_role</span><span class="test-file">test_rbac.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_is_member_false_without_token / network_error / 404 / true_on_200_active</span><span class="test-file">test_rbac.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_service_config_rbac_default_disabled / from_env</span><span class="test-file">test_rbac.py</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <!-- SPRINT 13 — Forge Network                                         -->
+  <!-- ─────────────────────────────────────────────────────────────── -->
+
+  <div class="feature-card">
+    <div class="fc-header" onclick="toggle(this)">
+      <span class="fc-status green"></span>
+      <span class="fc-sprint sprint-13">Sprint 13</span>
+      <span class="fc-title">Forge Network — Opt-in Community Pattern Sharing</span>
+      <div class="fc-badge-row">
+        <span class="fc-tests-pill">26 tests</span>
+        <span class="fc-arrow">▶</span>
+      </div>
+    </div>
+    <div class="fc-body">
+      <div class="fc-inner">
+        <div class="hyp-ev">
+          <div class="hyp">
+            <div class="box-label">Hypothesis</div>
+            <div class="box-text">Opt-in sharing of anonymized attack patterns (attack_vector, CWE, severity, verdict — no code, no spec) with a stable anonymous contributor ID (SHA-256 of git remote) enables community learning while preserving privacy.</div>
+          </div>
+          <div class="ev">
+            <div class="box-label">Evidence</div>
+            <div class="box-text">push_patterns() POSTs to hub JSON-RPC; pull_patterns() GET with CWE filter; fetch_hub_stats() returns aggregate counts — all best-effort. extract_shareable_patterns() shares missed attacks + high-ARS mitigations; caps vector at 500 chars; skips empty descriptions. Contributor ID is 16-char hex, stable across calls.</div>
+          </div>
+        </div>
+        <div class="test-list">
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_network_config_default_disabled / from_env / contributor_id_is_hex / stable</span><span class="test-file">test_forge_network.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_score_to_verdict_mitigated / partial / missed</span><span class="test-file">test_forge_network.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_push_disabled / empty_list / network_error / success / sends_contributor_id</span><span class="test-file">test_forge_network.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_pull_disabled / network_error / success_parses_patterns</span><span class="test-file">test_forge_network.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_fetch_stats_disabled / network_error / success</span><span class="test-file">test_forge_network.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_extract_includes_missed / high_score / excludes_mediocre / caps_length / skips_empty / uses_fingerprint_language</span><span class="test-file">test_forge_network.py</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <!-- AVF + SARIF + Report                                              -->
+  <!-- ─────────────────────────────────────────────────────────────── -->
+
+  <div class="feature-card">
+    <div class="fc-header" onclick="toggle(this)">
+      <span class="fc-status green"></span>
+      <span class="fc-sprint sprint-1">Core</span>
+      <span class="fc-title">AVF Fixtures, SARIF 2.1.0 Output &amp; Compliance Reports</span>
+      <div class="fc-badge-row">
+        <span class="fc-tests-pill">30 tests</span>
+        <span class="fc-arrow">▶</span>
+      </div>
+    </div>
+    <div class="fc-body">
+      <div class="fc-inner">
+        <div class="hyp-ev">
+          <div class="hyp">
+            <div class="box-label">Hypothesis</div>
+            <div class="box-text">Golden AVF (Attack Verification Fixtures) provide deterministic Breaker regression testing. SARIF 2.1.0 and JUnit XML output enables GitHub Code Scanning integration and CI/CD dashboards. HTML evidence reports are downloadable per run.</div>
+          </div>
+          <div class="ev">
+            <div class="box-label">Evidence</div>
+            <div class="box-text">Golden fixtures (log4shell, others) loaded from tests/fixtures/. AVF gate passes with mock hits, fails when no attacks found. render_sarif() produces valid SARIF 2.1.0 with correct tool/results structure. render_junit_xml() produces valid JUnit XML. render_html() produces standalone HTML report.</div>
+          </div>
+        </div>
+        <div class="test-list">
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_golden_fixtures_exist / have_required_fields / log4shell_cwe</span><span class="test-file">test_avf.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_avf_gate_passes_with_mock_hits / fails_when_no_attacks / hit_rate_threshold</span><span class="test-file">test_avf.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_hits/misses_fixture_by_cwe / keyword / description_keyword / empty_attacks</span><span class="test-file">test_avf.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_report_render_sarif_valid / junit_xml / html_structure</span><span class="test-file">test_report.py</span></div>
+          <div class="test-item"><span class="test-dot pass"></span><span class="test-name">test_report_save_and_load / integrity_hash / build_report_fields</span><span class="test-file">test_report.py</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- .main -->
+
+<footer>
+  COMBATPAIR Adversarial Co-Generation Engine &nbsp;·&nbsp; Built by Sanjoy Ghosh &nbsp;·&nbsp;
+  342 tests passing · 1 skipped · 13 sprints · Generated 2026-06-28
+</footer>
+
+<script>
+function toggle(header) {
+  var body = header.nextElementSibling;
+  var arrow = header.querySelector('.fc-arrow');
+  var isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  if (arrow) arrow.classList.toggle('open', !isOpen);
+}
+</script>
+</body>
+</html>

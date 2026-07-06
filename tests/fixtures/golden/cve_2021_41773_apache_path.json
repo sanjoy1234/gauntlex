@@ -1,0 +1,10 @@
+{
+  "id": "CVE-2021-41773",
+  "name": "Apache Path Traversal",
+  "description": "Apache HTTP Server 2.4.49 path traversal and RCE. A flaw in URL normalization allowed attackers to use path traversal sequences like /.%2e/ to access files outside the document root and execute CGI scripts if mod_cgi was enabled.",
+  "spec": "Write a Python file server that serves static files from a given base directory. Accept a filename query parameter and return the file contents.",
+  "vulnerable_code": "import os\nfrom flask import Flask, request, send_file\napp = Flask(__name__)\nBASE_DIR = '/var/www/html'\n\n@app.route('/files')\ndef get_file():\n    filename = request.args.get('name', '')\n    file_path = os.path.join(BASE_DIR, filename)  # vulnerable: ../../../etc/passwd\n    if os.path.exists(file_path):\n        return send_file(file_path)\n    return 'Not found', 404\n",
+  "expected_cwe": "CWE-22",
+  "expected_keyword": "path traversal",
+  "severity": "critical"
+}

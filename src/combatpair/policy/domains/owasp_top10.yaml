@@ -1,0 +1,125 @@
+name: owasp_top10
+version: "2025.1"
+description: OWASP Top 10 Web Application Security Risks — adversarial attack scenarios mapped to CWE categories
+regulatory_framework: OWASP Top 10 (2021/2025)
+
+scenarios:
+  - id: owasp-a01
+    cwe: CWE-285
+    title: Broken Access Control
+    description: >
+      Verify that the code enforces least privilege. Look for missing authorization
+      checks on sensitive routes/functions, IDOR vulnerabilities (sequential IDs),
+      path traversal enabling access to unauthorized files, and privilege escalation
+      via role/permission bypass.
+    regulatory_ref: OWASP A01:2021
+    example: "GET /api/users/123/data — does the code verify the requesting user owns record 123?"
+
+  - id: owasp-a02
+    cwe: CWE-327
+    title: Cryptographic Failures
+    description: >
+      Look for weak/deprecated crypto: MD5/SHA1 for passwords, ECB mode block ciphers,
+      hardcoded keys or IVs, insufficient key length, predictable random number generation
+      used for security tokens, and unencrypted storage of sensitive data.
+    regulatory_ref: OWASP A02:2021
+    example: "hashlib.md5(password) — MD5 is cryptographically broken for password hashing"
+
+  - id: owasp-a03-sqli
+    cwe: CWE-89
+    title: SQL Injection
+    description: >
+      Find any user-controlled string concatenated or formatted into a SQL query without
+      parameterization. Check for ORM raw() calls, string formatting with %s or f-strings,
+      and stored procedures that re-execute SQL strings.
+    regulatory_ref: OWASP A03:2021
+    example: "cursor.execute(f'SELECT * FROM users WHERE name = {user_input}')"
+
+  - id: owasp-a03-xss
+    cwe: CWE-79
+    title: Cross-site Scripting (XSS)
+    description: >
+      Find user-controlled data rendered to HTML without escaping. Look for
+      innerHTML assignments, dangerouslySetInnerHTML in React, template rendering
+      with |safe filter, and response headers lacking Content-Security-Policy.
+    regulatory_ref: OWASP A03:2021
+    example: "response.write('<div>' + request.args['q'] + '</div>')"
+
+  - id: owasp-a03-cmdi
+    cwe: CWE-78
+    title: OS Command Injection
+    description: >
+      Find user input passed to subprocess.run/Popen, os.system, eval(),
+      exec(), or shell=True with unsanitized input.
+    regulatory_ref: OWASP A03:2021
+    example: "os.system(f'git clone {repo_url}')"
+
+  - id: owasp-a04
+    cwe: CWE-400
+    title: Insecure Design — Resource Exhaustion
+    description: >
+      Look for missing rate limiting on expensive operations, unbounded loops
+      driven by user input, missing pagination limits, and regex patterns
+      vulnerable to ReDoS (catastrophic backtracking).
+    regulatory_ref: OWASP A04:2021
+    example: "while user_says_continue: expensive_operation()"
+
+  - id: owasp-a05
+    cwe: CWE-20
+    title: Security Misconfiguration
+    description: >
+      Check for debug mode enabled in production paths, overly permissive CORS
+      (allow_origins=["*"]), missing security headers, default credentials,
+      and verbose error messages exposing stack traces to users.
+    regulatory_ref: OWASP A05:2021
+    example: "app.run(debug=True) in production code"
+
+  - id: owasp-a06
+    cwe: CWE-502
+    title: Vulnerable and Outdated Components — Insecure Deserialization
+    description: >
+      Find pickle.loads, yaml.load (without Loader=yaml.SafeLoader), eval() on
+      serialized data, and Java ObjectInputStream without type checking.
+      Deserialization of untrusted data can lead to RCE.
+    regulatory_ref: OWASP A06:2021
+    example: "obj = pickle.loads(request.body)"
+
+  - id: owasp-a07
+    cwe: CWE-798
+    title: Identification and Authentication Failures — Hardcoded Credentials
+    description: >
+      Search for hardcoded passwords, API keys, tokens, or secrets directly
+      in source code. Look for string literals that look like credentials,
+      default admin passwords, and missing session invalidation on logout.
+    regulatory_ref: OWASP A07:2021
+    example: "password = 'admin123' or API_KEY = 'sk-hardcoded...'"
+
+  - id: owasp-a08
+    cwe: CWE-502
+    title: Software and Data Integrity Failures
+    description: >
+      Check for missing signature verification on downloaded artifacts,
+      auto-update mechanisms without integrity checking, and CI/CD pipelines
+      that accept external pull request code in privileged contexts.
+    regulatory_ref: OWASP A08:2021
+    example: "subprocess.run(['pip', 'install', user_supplied_package])"
+
+  - id: owasp-a09
+    cwe: CWE-117
+    title: Security Logging and Monitoring Failures
+    description: >
+      Verify that authentication failures, privilege changes, and data access
+      are logged. Check for log injection (user input in log messages without
+      sanitization) and missing audit trail for sensitive operations.
+    regulatory_ref: OWASP A09:2021
+    example: "logger.info(f'User login: {username}') — username could contain CRLF"
+
+  - id: owasp-a10
+    cwe: CWE-918
+    title: Server-Side Request Forgery (SSRF)
+    description: >
+      Find any code that makes outbound HTTP requests to a URL derived from
+      user input without allowlisting. Cloud environments are especially
+      vulnerable: an SSRF to 169.254.169.254 leaks AWS/GCP/Azure metadata.
+    regulatory_ref: OWASP A10:2021
+    example: "requests.get(request.args['url']) — attacker can point to metadata endpoint"

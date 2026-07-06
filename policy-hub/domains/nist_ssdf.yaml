@@ -1,0 +1,77 @@
+name: nist_ssdf
+version: "1.1"
+description: "NIST SSDF v1.1 — Secure Software Development Framework adversarial scenarios"
+regulatory_framework: "NIST SSDF 1.1"
+
+scenarios:
+  - id: ssdf-001
+    cwe: CWE-20
+    title: "Missing Input Validation at Trust Boundary (PW.6)"
+    regulatory_ref: "NIST SSDF PW.6.1"
+    description: |
+      Code accepts user-supplied input at API or CLI boundaries without
+      validation — type, range, length, or format checks missing.
+    example: "Integer endpoint accepts alphabetic string, causing parse exception leaked to user"
+
+  - id: ssdf-002
+    cwe: CWE-502
+    title: "Unsafe Deserialization in Third-Party Libraries (PW.7)"
+    regulatory_ref: "NIST SSDF PW.7.1"
+    description: |
+      Application uses third-party deserialization libraries without version
+      pinning or safe-mode enforcement, enabling gadget chain RCE.
+    example: "Jackson ObjectMapper with FAIL_ON_UNKNOWN_PROPERTIES disabled accepts type gadget"
+
+  - id: ssdf-003
+    cwe: CWE-798
+    title: "Hard-Coded Credentials in Source (PW.8)"
+    regulatory_ref: "NIST SSDF PW.8.2"
+    description: |
+      API keys, passwords, or certificates embedded in source code or committed
+      to version control, violating least-privilege storage requirements.
+    example: "AWS_SECRET_KEY = 'AKIA...' in config.py committed to public repo"
+
+  - id: ssdf-004
+    cwe: CWE-327
+    title: "Deprecated Cryptographic Algorithms (PW.9)"
+    regulatory_ref: "NIST SSDF PW.9.1"
+    description: |
+      Application uses MD5, SHA-1, DES, RC4, or ECB mode for security-sensitive
+      operations (password hashing, data encryption, HMAC).
+    example: "hashlib.md5(password).hexdigest() used for stored credential comparison"
+
+  - id: ssdf-005
+    cwe: CWE-362
+    title: "Race Condition in Shared State (PW.6)"
+    regulatory_ref: "NIST SSDF PW.6.2"
+    description: |
+      Concurrent access to shared mutable state without synchronization primitives,
+      enabling TOCTOU attacks or data corruption under concurrent load.
+    example: "Balance deducted in non-atomic read-modify-write: check balance, deduct, update"
+
+  - id: ssdf-006
+    cwe: CWE-285
+    title: "Missing Authorization on Sensitive Operations (RV.2)"
+    regulatory_ref: "NIST SSDF RV.2.2"
+    description: |
+      Sensitive operations (data export, user deletion, config change) lack
+      authorization checks, relying solely on UI-level hiding.
+    example: "POST /admin/export-all-users accessible without admin role verification"
+
+  - id: ssdf-007
+    cwe: CWE-400
+    title: "Uncontrolled Resource Consumption (PW.6)"
+    regulatory_ref: "NIST SSDF PW.6.3"
+    description: |
+      No rate limiting or resource quotas on computationally expensive endpoints,
+      enabling algorithmic complexity or resource exhaustion attacks.
+    example: "Regex with catastrophic backtracking applied to user-supplied pattern string"
+
+  - id: ssdf-008
+    cwe: CWE-532
+    title: "Sensitive Data in Application Logs (RV.3)"
+    regulatory_ref: "NIST SSDF RV.3.1"
+    description: |
+      Application logs include passwords, tokens, PII, or session identifiers
+      in plaintext, creating audit-log-based information disclosure.
+    example: "logger.debug('Auth: user=%s pass=%s', username, password) in login handler"

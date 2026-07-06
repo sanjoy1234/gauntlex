@@ -1,0 +1,81 @@
+name: COMBATPAIR Adversarial Gate
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  combatpair:
+    name: Adversarial Resilience Score
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      statuses: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install COMBATPAIR
+        run: pip install combatpair-ai
+
+      # Option A: Ollama local model (zero API cost)
+      # Uncomment to run fully air-gapped with local model
+      # - name: Start Ollama
+      #   run: |
+      #     curl -fsSL https://ollama.ai/install.sh | sh
+      #     ollama serve &
+      #     sleep 5
+      #     ollama pull llama3.1:8b
+
+      - name: Validate environment
+        run: combatpair validate
+
+      - name: Run adversarial gate
+        id: combatpair_run
+        run: |
+          combatpair run \
+            --issue "${{ github.event.pull_request.html_url }}" \
+            --mode quick \
+            --domain owasp_top10 \
+            --pretty
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Post Resilience Report as PR comment
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const reports = fs.readdirSync('.combatpair/reports/').filter(f => f.endsWith('.json'));
+            if (reports.length === 0) { return; }
+            const latest = reports.sort().at(-1);
+            const report = JSON.parse(fs.readFileSync(`.combatpair/reports/${latest}`));
+            const ars = report.ars_score;
+            const icon = ars >= 0.80 ? '✅' : '❌';
+            const body = [
+              `## ${icon} COMBATPAIR Resilience Report`,
+              '',
+              `| ARS Score | Attacks | Mitigated | Missed | Elapsed |`,
+              `|-----------|---------|-----------|--------|---------|`,
+              `| **${ars.toFixed(3)}** | ${report.attack_count} | ${report.mitigated_count} | ${report.miss_count} | ${report.elapsed_seconds}s |`,
+              '',
+              `Playbook: \`${report.playbook_version}\``,
+              `Integrity: \`${report.integrity_hash}\``,
+              '',
+              `*[COMBATPAIR](https://github.com/sanjoy1234/combatpair) adversarial co-generation engine*`,
+            ].join('\n');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            });

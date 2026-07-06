@@ -1,0 +1,45 @@
+version: "3.9"
+
+services:
+  combatpair:
+    build: .
+    image: combatpair-ai:latest
+    volumes:
+      - .combatpair:/app/.combatpair
+      - ./examples:/app/examples:ro
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+    depends_on:
+      - chromadb
+    networks:
+      - combatpair-net
+    # Override to run: docker compose run combatpair combatpair run --issue examples/demo_issue.md
+    command: combatpair doctor
+
+  chromadb:
+    image: chromadb/chroma:latest
+    ports:
+      - "8000:8000"
+    volumes:
+      - chromadb_data:/chroma/chroma
+    networks:
+      - combatpair-net
+
+  # Optional: Ollama for local model support (zero API cost)
+  # Uncomment if you have NVIDIA GPU or run on ARM Mac
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama_data:/root/.ollama
+  #   networks:
+  #     - combatpair-net
+
+volumes:
+  chromadb_data:
+  # ollama_data:
+
+networks:
+  combatpair-net:
+    driver: bridge

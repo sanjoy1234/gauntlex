@@ -1,0 +1,10 @@
+{
+  "id": "CVE-2022-22965",
+  "name": "Spring4Shell",
+  "description": "Spring Framework RCE via data binding. When user-supplied HTTP parameters are bound to a Java object using Spring's data binding, an attacker can bind to class.classLoader to access the JVM ClassLoader and overwrite configuration files, enabling remote code execution.",
+  "spec": "Write a Python REST endpoint that accepts JSON POST data and creates a User object from the request body using dynamic attribute assignment (setattr).",
+  "vulnerable_code": "from flask import Flask, request\napp = Flask(__name__)\n\nclass User:\n    def __init__(self):\n        self.name = ''\n        self.email = ''\n\n@app.route('/user', methods=['POST'])\ndef create_user():\n    user = User()\n    data = request.json or {}\n    for key, value in data.items():  # vulnerable: attacker controls key names\n        setattr(user, key, value)   # allows overwriting __class__, __dict__, etc.\n    return {'status': 'created'}\n",
+  "expected_cwe": "CWE-20",
+  "expected_keyword": "mass assignment",
+  "severity": "critical"
+}

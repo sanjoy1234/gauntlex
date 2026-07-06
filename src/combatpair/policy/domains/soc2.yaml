@@ -1,0 +1,82 @@
+name: soc2
+version: "2025.1"
+description: SOC 2 Type II Trust Service Criteria — adversarial attack scenarios mapped to CC and A series criteria
+regulatory_framework: AICPA SOC 2 Trust Service Criteria (2017 with 2022 points of focus)
+
+scenarios:
+  - id: soc2-cc6-1-logical-access
+    cwe: CWE-284
+    title: CC6.1 — Logical Access Controls
+    description: >
+      Verify that logical access to systems is restricted to authorized users.
+      Look for missing authentication on internal APIs, overly permissive
+      service-to-service trust, missing revocation of access on user termination,
+      and shared accounts that prevent individual accountability.
+    regulatory_ref: SOC 2 CC6.1 — Logical and Physical Access Controls
+    example: "Internal microservice endpoint accessible without auth, or shared api_key used by multiple services"
+
+  - id: soc2-cc6-3-authentication
+    cwe: CWE-287
+    title: CC6.3 — Multi-Factor Authentication
+    description: >
+      Find authentication flows that do not enforce MFA for privileged access,
+      admin consoles, production database access, and customer-facing systems
+      with sensitive data. Check for MFA bypass paths (recovery codes
+      without rate limits, trusted device without expiry).
+    regulatory_ref: SOC 2 CC6.3 — Registration and Management of New Users
+    example: "Admin route /admin/* with only password auth; or MFA bypass via ?trust=1"
+
+  - id: soc2-cc6-6-network
+    cwe: CWE-923
+    title: CC6.6 — Network Security Controls
+    description: >
+      Identify missing network segmentation: direct internet access to database
+      ports, missing VPC security group restrictions, admin interfaces exposed
+      to public internet, and missing WAF/DDoS protection for customer-facing
+      endpoints.
+    regulatory_ref: SOC 2 CC6.6 — Security Threats from Outside the Boundaries
+    example: "DB port 5432 bound to 0.0.0.0; or admin panel at /admin without IP allowlist"
+
+  - id: soc2-cc7-2-monitoring
+    cwe: CWE-778
+    title: CC7.2 — Security Event Monitoring
+    description: >
+      Verify that security-relevant events are logged and monitored:
+      failed authentication attempts, privilege escalations, configuration
+      changes, and data export operations. Look for missing SIEM integration,
+      suppressed error logging, and admin actions without audit trail.
+    regulatory_ref: SOC 2 CC7.2 — Monitor System Components for Anomalies
+    example: "Failed logins not logged; config changes in admin panel without user attribution"
+
+  - id: soc2-cc9-2-vendor
+    cwe: CWE-829
+    title: CC9.2 — Third-Party Dependency Risk
+    description: >
+      Find dependencies loaded from external sources without integrity
+      verification: npm packages without lockfile pinning, pip install from
+      VCS URLs without commit hash, CDN-hosted scripts without SRI hashes,
+      and vendor libraries loaded over HTTP.
+    regulatory_ref: SOC 2 CC9.2 — Vendor and Business Partner Risk Management
+    example: "<script src='//cdn.example.com/lib.js'> without integrity attribute"
+
+  - id: soc2-a1-availability
+    cwe: CWE-400
+    title: A1.1 — Availability — Resource Exhaustion
+    description: >
+      Identify risks to system availability: missing rate limiting on expensive
+      endpoints, unbounded file uploads, missing memory limits on data processing,
+      N+1 query patterns that degrade under load, and synchronous operations
+      that block connection pools.
+    regulatory_ref: "SOC 2 A1.1 — Availability: Current Processing Capacity"
+    example: "No rate limit on /api/export endpoint — single user can exhaust DB connections"
+
+  - id: soc2-pi1-processing
+    cwe: CWE-20
+    title: PI1.1 — Processing Integrity — Input Validation
+    description: >
+      Verify data processing is complete, accurate, and authorized. Look for
+      missing input validation allowing corrupt data to enter the system,
+      missing idempotency on payment/transaction endpoints, and missing
+      reconciliation checks for batch processing jobs.
+    regulatory_ref: "SOC 2 PI1.1 — Processing Integrity: Completeness and Accuracy"
+    example: "Batch job processes partial results without flagging records skipped; no idempotency key"

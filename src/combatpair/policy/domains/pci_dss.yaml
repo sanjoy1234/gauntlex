@@ -1,0 +1,67 @@
+name: pci_dss
+version: "2025.1"
+description: PCI DSS v4.0 — adversarial attack scenarios for cardholder data environments (CDE)
+regulatory_framework: PCI DSS v4.0 (Payment Card Industry Data Security Standard)
+
+scenarios:
+  - id: pci-req3-pan-storage
+    cwe: CWE-312
+    title: PAN Storage in Cleartext
+    description: >
+      Find any storage of Primary Account Numbers (PAN) without truncation,
+      tokenization, or encryption. Check database schemas for full PAN columns,
+      log statements that include card numbers, API responses returning full
+      PAN, and in-memory caches holding unencrypted card data.
+    regulatory_ref: PCI DSS v4.0 Requirement 3 — Protect Stored Account Data
+    example: "card_number stored as VARCHAR(16) in plaintext; or logger.info(f'Charged card: {pan}')"
+
+  - id: pci-req3-cvv-retention
+    cwe: CWE-312
+    title: CVV/CVC Retained After Authorization
+    description: >
+      Verify that CVV, CVC, CAV, and CID codes are never stored post-authorization.
+      Look for CVV in database columns, session storage, logs, or any persistence
+      mechanism. PCI DSS prohibits CVV storage even in encrypted form.
+    regulatory_ref: PCI DSS v4.0 Requirement 3.2.1 — Sensitive Authentication Data
+    example: "session['cvv'] = request.form['cvv'] or cvv column in transactions table"
+
+  - id: pci-req4-tls
+    cwe: CWE-326
+    title: Inadequate TLS for Cardholder Data Transmission
+    description: >
+      Find TLS 1.0/1.1 allowed (deprecated), missing TLS on internal service
+      calls between CDE components, HTTP fallback paths, weak cipher suites
+      (RC4, DES, 3DES, NULL), and missing certificate validation (verify=False).
+    regulatory_ref: PCI DSS v4.0 Requirement 4 — Protect Cardholder Data in Transit
+    example: "requests.get(payment_url, verify=False) or ALLOWED_CIPHERS including RC4"
+
+  - id: pci-req6-injection
+    cwe: CWE-89
+    title: SQL Injection in Payment Processing Path
+    description: >
+      Focus on the payment processing code path: order lookup queries,
+      transaction recording, fraud check queries, and refund processing.
+      SQL injection in payment flows is a direct path to PAN exfiltration.
+    regulatory_ref: PCI DSS v4.0 Requirement 6.2.4 — Prevent Common Attacks
+    example: "cursor.execute(f'SELECT * FROM transactions WHERE order_id={order_id}')"
+
+  - id: pci-req7-least-privilege
+    cwe: CWE-250
+    title: Excessive Database Privileges in CDE
+    description: >
+      Check for application database users with DDL privileges (CREATE TABLE,
+      DROP, ALTER), cross-schema access to non-CDE tables, missing row-level
+      security on cardholder tables, and service accounts with DBA role.
+    regulatory_ref: PCI DSS v4.0 Requirement 7 — Restrict Access to System Components
+    example: "DB_USER=sa or db connection with admin role for application queries"
+
+  - id: pci-req10-logging
+    cwe: CWE-778
+    title: Insufficient CDE Audit Logging
+    description: >
+      Verify all access to PANs, all administrative actions, and all
+      authentication events in the CDE are logged with user, action, date/time,
+      and success/failure. Look for missing logs on payment API calls,
+      bulk exports, and admin panel actions.
+    regulatory_ref: PCI DSS v4.0 Requirement 10 — Log and Monitor All Access
+    example: "Payment record accessed with no audit entry; admin panel missing access log"

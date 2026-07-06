@@ -1,0 +1,38 @@
+version: 1
+
+combat_pair:
+  attack_count: 20      # N attacks per run
+  rounds_max: 5         # max Builder-Breaker cycles
+  cwe_rotation: true    # rotate through 20 CWE categories
+
+policy:
+  domains:
+    - owasp_top10@2025.1  # ships Monday
+    # - hipaa@2025.1      # week 2
+    # - finra@2025.1      # week 2
+    # - pci_dss@2025.1
+    # - soc2@2025.1
+
+gate:
+  minimum_ars: 0.80     # block merge if ARS < 80%
+  fail_open: false      # false = hard block; true = warn only
+  exempt_labels:
+    - combatpair-exempt
+    - hotfix
+
+deployment:
+  model_provider: local           # local = Ollama (zero cost, air-gapped)
+  local_model: llama3.1:8b        # override: phi3, mistral:7b, etc.
+  local_endpoint: http://localhost:11434
+  anthropic_model: claude-haiku-4-5-20251001  # used when ANTHROPIC_API_KEY is set
+
+rbac:
+  admin_teams: []         # e.g. ["org/security-platform"]
+  reviewer_teams: []      # e.g. ["org/senior-engineers"]
+
+notifications:
+  jira_project: ""        # e.g. "SEC" — creates Finding tickets on gate failure
+  slack_webhook: ""       # Slack webhook URL for ARS notifications
+
+retention_days: 365
+community_brain: false    # opt-in anonymized pattern sharing — off by default

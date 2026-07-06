@@ -1,0 +1,97 @@
+name: owasp_api_security
+version: "2023.1"
+description: "OWASP API Security Top 10 2023 — scenarios targeting REST, GraphQL, and gRPC APIs"
+regulatory_framework: "OWASP API Security"
+
+scenarios:
+  - id: api-001
+    cwe: CWE-285
+    title: "Broken Object-Level Authorization (BOLA)"
+    regulatory_ref: "API1:2023"
+    description: |
+      The API exposes object identifiers (IDs) in URLs or request bodies.
+      Attackers substitute their own object ID with another user's to access
+      resources they should not be authorized to view.
+    example: "GET /api/orders/12345 — can substitute 12346 to access another user's order"
+
+  - id: api-002
+    cwe: CWE-287
+    title: "Broken Authentication — API Keys and JWT"
+    regulatory_ref: "API2:2023"
+    description: |
+      API authentication mechanisms are misconfigured — JWTs without signature
+      verification (alg:none), weak API keys, missing rate-limiting on auth
+      endpoints, or tokens with no expiry.
+    example: "JWT with 'alg: none' accepted; /api/token endpoint allows unlimited attempts"
+
+  - id: api-003
+    cwe: CWE-200
+    title: "Broken Object Property-Level Authorization (BOPLA)"
+    regulatory_ref: "API3:2023"
+    description: |
+      The API returns more object properties than the consumer is entitled to see,
+      or allows consumers to modify properties they should not control (mass assignment).
+    example: "POST /api/users with role=admin accepted; GET /api/user/me returns hashed_password"
+
+  - id: api-004
+    cwe: CWE-400
+    title: "Unrestricted Resource Consumption"
+    regulatory_ref: "API4:2023"
+    description: |
+      API endpoints have no rate limiting, payload size limits, or query complexity
+      limits, enabling DoS via resource exhaustion or bulk data harvesting.
+    example: "GraphQL introspection + unbounded nested queries cause CPU spike; no depth limit"
+
+  - id: api-005
+    cwe: CWE-863
+    title: "Broken Function-Level Authorization"
+    regulatory_ref: "API5:2023"
+    description: |
+      Privileged API functions (admin operations) are accessible to regular users
+      because authorization checks rely on the UI rather than the API layer.
+    example: "DELETE /api/admin/users/123 accessible to role=user because only UI hides the button"
+
+  - id: api-006
+    cwe: CWE-918
+    title: "Server-Side Request Forgery (SSRF)"
+    regulatory_ref: "API6:2023"
+    description: |
+      API accepts user-controlled URLs or hostnames in request bodies, allowing
+      attackers to force the server to make requests to internal services.
+    example: "POST /api/webhook with url=http://169.254.169.254/metadata reaches AWS IMDS"
+
+  - id: api-007
+    cwe: CWE-502
+    title: "Server-Side Request Forgery via XML/JSON Injection"
+    regulatory_ref: "API7:2023"
+    description: |
+      Unsafe consumption of APIs from third-party sources without input validation —
+      deserialization of untrusted data received from external integrations.
+    example: "Webhook callback payload deserialized with pickle or yaml.load without safe loader"
+
+  - id: api-008
+    cwe: CWE-284
+    title: "Security Misconfiguration"
+    regulatory_ref: "API8:2023"
+    description: |
+      Default API configurations expose debug information, stack traces, verbose
+      errors, open CORS policies, or unauthenticated health/metrics endpoints.
+    example: "/api/health returns full dependency tree; CORS origin: * on credentialed routes"
+
+  - id: api-009
+    cwe: CWE-311
+    title: "Improper Inventory Management — Undocumented API Versions"
+    regulatory_ref: "API9:2023"
+    description: |
+      Old API versions (v1, v2) remain accessible alongside the current version
+      but lack the same security controls, enabling attackers to bypass new protections.
+    example: "/api/v1/users endpoint lacks auth middleware added in /api/v2/users"
+
+  - id: api-010
+    cwe: CWE-94
+    title: "Unsafe Consumption of APIs — Third-Party Code Injection"
+    regulatory_ref: "API10:2023"
+    description: |
+      The application blindly trusts data returned from external APIs, passing it
+      directly into templates, eval(), database queries, or OS commands.
+    example: "External payment API response injected into SQL query without parameterization"

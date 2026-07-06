@@ -1,0 +1,10 @@
+{
+  "id": "CVE-2019-14234",
+  "name": "Django JSONField SQL Injection",
+  "description": "SQL injection via unsanitized user input in raw SQL queries. When user input is directly interpolated into a SQL string rather than using parameterized queries or Django ORM, an attacker can inject arbitrary SQL.",
+  "spec": "Write a Python function that searches a SQLite database for users by name. Accept the name as a parameter and return matching rows.",
+  "vulnerable_code": "import sqlite3\n\ndef search_users(name: str) -> list:\n    conn = sqlite3.connect('users.db')\n    cursor = conn.cursor()\n    # vulnerable: user input directly interpolated into SQL\n    query = f\"SELECT * FROM users WHERE name = '{name}'\"\n    cursor.execute(query)\n    return cursor.fetchall()\n",
+  "expected_cwe": "CWE-89",
+  "expected_keyword": "sql injection",
+  "severity": "critical"
+}

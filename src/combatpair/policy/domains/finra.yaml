@@ -1,0 +1,104 @@
+name: finra
+version: "2025.1"
+description: FINRA Rule 4370 / SEC 17a-4 — adversarial attack scenarios for broker-dealer and financial systems
+regulatory_framework: FINRA Rules 4370, 3110; SEC Rule 17a-4; CFTC Regulation 1.31
+
+scenarios:
+  - id: finra-4370-bcp
+    cwe: CWE-400
+    title: Business Continuity — Single Point of Failure
+    description: >
+      Identify single points of failure in trading system critical paths:
+      uncached external dependencies, synchronous third-party calls without
+      circuit breakers, missing connection pool limits, and unbound queue
+      growth under load. A trading system that falls over fails FINRA 4370.
+    regulatory_ref: FINRA Rule 4370 — Business Continuity Plans
+    example: "synchronous call to pricing service with no timeout or fallback — cascading failure risk"
+
+  - id: finra-3110-supervision
+    cwe: CWE-778
+    title: Inadequate Trade Supervision Audit Trail
+    description: >
+      Verify that all order entry, modification, cancellation, and execution
+      events are immutably logged with trader ID, timestamp (ms precision),
+      instrument, quantity, and price. Look for mutable order logs, missing
+      pre/post-trade state captures, and async logging that can drop events.
+    regulatory_ref: FINRA Rule 3110 — Supervision
+    example: "order_log.update(...) — audit record overwritten; or fire-and-forget async log"
+
+  - id: sec-17a4-worm
+    cwe: CWE-362
+    title: SEC 17a-4 — Non-WORM Record Storage Race Condition
+    description: >
+      Check for race conditions in financial record storage: time-of-check
+      to time-of-use gaps allowing record modification after write, missing
+      atomic transactions on multi-table financial entries, and non-atomic
+      balance updates vulnerable to double-spend.
+    regulatory_ref: SEC Rule 17a-4(f) — Electronic Storage Requirements
+    example: "read balance → check → update sequence without row lock (SELECT FOR UPDATE missing)"
+
+  - id: finra-pii-customer
+    cwe: CWE-359
+    title: Customer PII / NPI Exposure
+    description: >
+      Find places where customer NPI (non-public personal information) is
+      exposed: SSN/TIN in API responses, account numbers in log messages,
+      unmasked card numbers in error messages, and PII in URL parameters
+      (logged by web servers and CDNs).
+    regulatory_ref: FINRA Rule 30 — Protection of Customer Information
+    example: "logger.error(f'Failed for SSN {ssn}') or GET /api/report?ssn=123456789"
+
+  - id: finra-best-execution
+    cwe: CWE-682
+    title: Best Execution — Pricing Calculation Error
+    description: >
+      Look for integer overflow/underflow in price calculations, floating-point
+      arithmetic used for monetary values (use Decimal), truncation instead of
+      rounding in fee calculations, and off-by-one errors in lot size validation
+      that could result in incorrect executions or overcharges.
+    regulatory_ref: FINRA Rule 5310 — Best Execution
+    example: "price * quantity using float — floating-point drift in large order calculations"
+
+  - id: finra-cftc-131
+    cwe: CWE-20
+    title: Trade Input Validation — Malformed Order Injection
+    description: >
+      Find missing validation on order parameters: negative quantities accepted,
+      price outside circuit breaker bounds not rejected, instrument symbols not
+      validated against allowlist, duplicate order IDs not detected, and
+      timestamp manipulation (future-dated trades).
+    regulatory_ref: CFTC Regulation 1.31 — Records; Keeping and Inspection
+    example: "order.quantity = int(user_input) — no bounds check; accepts negative or astronomical values"
+
+  - id: finra-aml-detection
+    cwe: CWE-682
+    title: AML — Structuring Detection Bypass
+    description: >
+      Check for structuring threshold logic that can be bypassed: hard-coded
+      thresholds without cumulative tracking, missing aggregation across related
+      accounts, integer truncation in cumulative sum, and missing detection for
+      rapid sub-threshold transactions across the CTR window.
+    regulatory_ref: FINRA Rule 3310 — Anti-Money Laundering Compliance Program
+    example: "if transaction.amount >= 10000: flag_ctr() — misses 9,999 + 9,999 structuring pattern"
+
+  - id: finra-market-manipulation
+    cwe: CWE-284
+    title: Authorization Gap — Privileged Market Operations
+    description: >
+      Look for missing authorization on market-affecting operations: order
+      modification without trader identity verification, spoofing-enabling
+      bulk cancel without audit trail, wash trade detection gaps where
+      opposing orders from the same entity are not correlated.
+    regulatory_ref: FINRA Rule 2010 — Standards of Commercial Honor
+    example: "PUT /api/orders/modify — no check that requesting trader owns the order"
+
+  - id: finra-crypto-key
+    cwe: CWE-321
+    title: Cryptographic Key Management — Static Trading Keys
+    description: >
+      Check for static or embedded signing keys used for trade messages and
+      order authentication: hardcoded HMAC secrets, keys with no rotation
+      mechanism, missing key scoping (one key for all operations), and
+      absence of key derivation for per-session trade authentication.
+    regulatory_ref: FINRA Rule 4370 — Business Continuity, Cybersecurity
+    example: "TRADE_HMAC_SECRET = 'static-key-2019' in trading_auth.py — rotated? never."

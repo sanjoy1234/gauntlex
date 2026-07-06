@@ -1,0 +1,10 @@
+{
+  "id": "CVE-2020-11022",
+  "name": "jQuery XSS via html()",
+  "description": "Passing HTML containing <script> or event handlers to jQuery's html(), append(), prepend(), or similar DOM manipulation methods executes the script. When user-controlled data is passed to these methods without sanitization, it results in stored or reflected XSS.",
+  "spec": "Write a Python endpoint that accepts a user comment via POST and returns an HTML page displaying the comment.",
+  "vulnerable_code": "from flask import Flask, request\napp = Flask(__name__)\n\n@app.route('/comment', methods=['POST'])\ndef comment():\n    text = request.form.get('comment', '')\n    # vulnerable: user input rendered directly into HTML without escaping\n    return f'<html><body><div id=\"comment\">{text}</div></body></html>'\n",
+  "expected_cwe": "CWE-79",
+  "expected_keyword": "cross-site scripting",
+  "severity": "high"
+}
