@@ -45,10 +45,10 @@ scanner to catch up to code that shipped last week.
 ## See it run
 **📊 One-page overview** — what it is, what's different, how it deploys. Built for sharing with a technical lead or architecture review board.
 
-<img src="docs/media/COMBATPAIR_Overview_slide1.jpg" alt="COMBATPAIR overview — slide 1" width="800">
-<img src="docs/media/COMBATPAIR_Overview_slide2.jpg" alt="COMBATPAIR overview — slide 2" width="800">
+<img src="docs/media/GAUNTLEX_Overview_slide1.jpg" alt="GAUNTLEX overview — slide 1" width="800">
+<img src="docs/media/GAUNTLEX_Overview_slide2.jpg" alt="GAUNTLEX overview — slide 2" width="800">
 
-**[Download the full PDF](docs/media/COMBATPAIR_Overview.pdf)**
+**[Download the full PDF](docs/media/GAUNTLEX_Overview.pdf)**
 
 <a href="docs/media/COMBATPAIR_Demo.mp4">
   <img src="docs/media/COMBATPAIR_Demo_thumbnail.png" alt="COMBATPAIR demo video" width="640">
