@@ -50,11 +50,11 @@ scanner to catch up to code that shipped last week.
 
 **[Download the full PDF](docs/media/GAUNTLEX_Overview.pdf)**
 
-<a href="docs/media/COMBATPAIR_Demo.mp4">
-  <img src="docs/media/COMBATPAIR_Demo_thumbnail.png" alt="COMBATPAIR demo video" width="640">
+<a href="docs/media/GAUNTLEX_Demo.mp4">
+  <img src="docs/media/GAUNTLEX_Demo_thumbnail.png" alt="GAUNTLEX demo video" width="640">
 </a>
 
-**▶ [Watch the demo](docs/media/COMBATPAIR_Demo.mp4)** — setup through CI gate, real terminal output, real dashboard.
+**▶ [Watch the demo](docs/media/GAUNTLEX_Demo.mp4)** — setup through CI gate, real terminal output, real dashboard.
 
 ---
 
