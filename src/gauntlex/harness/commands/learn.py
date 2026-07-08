@@ -29,7 +29,6 @@ def execute(run_id: str, config_path: str | None = None) -> LearnResult:
     from gauntlex.config import AppConfig
     from gauntlex.output.report import load_report
     from gauntlex.memory.forge import KnowledgeForge
-    from gauntlex.memory.tagger import tag_attack, tags_to_metadata
     from gauntlex.brain.effectiveness import AttackEffectivenessTracker
 
     cfg = AppConfig.load(config_path)
@@ -65,26 +64,20 @@ def execute(run_id: str, config_path: str | None = None) -> LearnResult:
         verdict = attack.get("verdict", "MISSED")
         score = 1.0 if verdict == "MITIGATED" else (0.5 if verdict == "PARTIAL" else 0.0)
 
-        tags = tag_attack(
-            cwe=cwe,
-            severity=attack.get("severity", "medium"),
-            confidence=attack.get("confidence", 5),
-            policy_domains=[report.get("playbook_version", "").split("@")[0]],
-        )
-        metadata = tags_to_metadata(tags, run_id=run_id, round_number=0)
-        metadata["run_id"] = run_id
-        metadata["score"] = score
+        fp = report.get("spec_fingerprint", {})
 
         forge.store_attack(
-            attack_text=f"{title}\n{description}",
+            attack_id=attack.get("id", f"{cwe}-{stored}"),
+            description=f"{title}\n{description}",
             cwe=cwe,
+            severity=attack.get("severity", "medium"),
+            run_id=run_id,
             effectiveness=score,
-            metadata=metadata,
+            codebase_fingerprint=str(fp),
         )
         stored += 1
 
-        fp = report.get("spec_fingerprint", {})
-        tracker.record(cwe=cwe, fingerprint=str(fp), score=score)
+        tracker.update(cwe=cwe, score=score, fingerprint=str(fp))
 
     return LearnResult(
         run_id=run_id,
