@@ -20,7 +20,9 @@ from combatpair.cli import (
     _issue_label,
     _fmt_elapsed,
     _await_with_heartbeat,
+    _run_async,
 )
+from combatpair.dashboard.app import _load_active_runs
 
 
 # ── _RunProgress and _render_live_panel ───────────────────────────────────────
@@ -121,6 +123,39 @@ class TestWriteRunStatus:
         assert not runs_dir.exists()
         _write_run_status("run-002", runs_dir, status="starting")
         assert runs_dir.exists()
+
+
+# ── Foreground `combatpair run` must be visible to the dashboard's Active ──────
+# Runs panel while in progress. Regression: the initial status write for a
+# foreground (non---background) run never included `pid`, so the dashboard's
+# liveness check (`_load_active_runs`, which treats a missing/dead pid as a
+# stale run) deleted the status file on the very first poll — a run in
+# progress would vanish from /api/runs/active the instant anyone looked.
+
+class TestForegroundRunStatusHasPid:
+    def test_run_async_writes_own_pid_before_failing(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / ".combatpair.yml").write_text("reports_dir: .combatpair/reports\n")
+
+        with pytest.raises(SystemExit):
+            asyncio.run(_run_async(
+                issue=str(tmp_path / "does-not-exist.md"),
+                mode="quick", domain="owasp_top10", intent_ref=None,
+                pretty=False, config_path=None,
+            ))
+
+        status_files = list((tmp_path / ".combatpair" / "runs").glob("*.json"))
+        assert len(status_files) == 1
+        data = json.loads(status_files[0].read_text())
+        assert data["pid"] == os.getpid()
+
+    def test_load_active_runs_keeps_running_entry_with_live_pid(self, tmp_path):
+        runs_dir = tmp_path / "runs"
+        _write_run_status("combatpair-live-run", runs_dir,
+                           status="running", phase="combat", pid=os.getpid())
+        active = _load_active_runs(runs_dir)
+        assert [a["run_id"] for a in active] == ["combatpair-live-run"]
+        assert (runs_dir / "combatpair-live-run.json").exists()  # not deleted as stale
 
 
 # ── _issue_label ──────────────────────────────────────────────────────────────

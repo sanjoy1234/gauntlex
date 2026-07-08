@@ -325,6 +325,8 @@ async def _run_async(
     config_path: str | None,
     preset_run_id: str | None = None,
 ):
+    import os
+
     cfg = AppConfig.load(config_path)
     runs_dir = cfg.reports_dir.parent / "runs"
 
@@ -356,7 +358,7 @@ async def _run_async(
             for m in msg:
                 print(f"[{ts}] {m}", flush=True)
 
-    _status(status="running", issue=issue, mode=mode,
+    _status(status="running", issue=issue, mode=mode, pid=os.getpid(),
             started_at=datetime.now(timezone.utc).isoformat())
 
     # ── Phase 1: Load spec ────────────────────────────────────────────────────
