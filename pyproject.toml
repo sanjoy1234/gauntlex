@@ -3,7 +3,7 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "combatpair-ai"
+name = "gauntlex-ai"
 version = "0.1.0"
 description = "Adversarial Co-Generation Engine — concurrent Builder + Breaker agents for production-grade AI-generated code"
 readme = "README.md"
@@ -48,19 +48,19 @@ dev = [
 ]
 
 [project.scripts]
-combatpair = "combatpair.cli:main"
+gauntlex = "gauntlex.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/sanjoy1234/combatpair"
-Issues = "https://github.com/sanjoy1234/combatpair/issues"
+Homepage = "https://github.com/sanjoy1234/gauntlex"
+Issues = "https://github.com/sanjoy1234/gauntlex/issues"
 
 # src/ layout — PyPA recommended for enterprise packages
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-"combatpair.data" = ["*.json"]
-"combatpair.policy.domains" = ["*.yaml"]
+"gauntlex.data" = ["*.json"]
+"gauntlex.policy.domains" = ["*.yaml"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

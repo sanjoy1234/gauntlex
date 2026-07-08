@@ -1,4 +1,4 @@
-"""Tests for live progress display, --background flag, and combatpair status command."""
+"""Tests for live progress display, --background flag, and gauntlex status command."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from click.testing import CliRunner
 
-from combatpair.cli import (
+from gauntlex.cli import (
     main,
     _RunProgress,
     _render_live_panel,
@@ -22,7 +22,7 @@ from combatpair.cli import (
     _await_with_heartbeat,
     _run_async,
 )
-from combatpair.dashboard.app import _load_active_runs
+from gauntlex.dashboard.app import _load_active_runs
 
 
 # ── _RunProgress and _render_live_panel ───────────────────────────────────────
@@ -100,13 +100,13 @@ class TestRenderLivePanel:
 class TestWriteRunStatus:
     def test_creates_status_file(self, tmp_path):
         runs_dir = tmp_path / "runs"
-        _write_run_status("combatpair-test-001", runs_dir, status="running", pid=12345)
-        status_file = runs_dir / "combatpair-test-001.json"
+        _write_run_status("gauntlex-test-001", runs_dir, status="running", pid=12345)
+        status_file = runs_dir / "gauntlex-test-001.json"
         assert status_file.exists()
         data = json.loads(status_file.read_text())
         assert data["status"] == "running"
         assert data["pid"] == 12345
-        assert data["run_id"] == "combatpair-test-001"
+        assert data["run_id"] == "gauntlex-test-001"
         assert "updated_at" in data
 
     def test_updates_existing_status(self, tmp_path):
@@ -125,7 +125,7 @@ class TestWriteRunStatus:
         assert runs_dir.exists()
 
 
-# ── Foreground `combatpair run` must be visible to the dashboard's Active ──────
+# ── Foreground `gauntlex run` must be visible to the dashboard's Active ──────
 # Runs panel while in progress. Regression: the initial status write for a
 # foreground (non---background) run never included `pid`, so the dashboard's
 # liveness check (`_load_active_runs`, which treats a missing/dead pid as a
@@ -135,7 +135,7 @@ class TestWriteRunStatus:
 class TestForegroundRunStatusHasPid:
     def test_run_async_writes_own_pid_before_failing(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        (tmp_path / ".combatpair.yml").write_text("reports_dir: .combatpair/reports\n")
+        (tmp_path / ".gauntlex.yml").write_text("reports_dir: .gauntlex/reports\n")
 
         with pytest.raises(SystemExit):
             asyncio.run(_run_async(
@@ -144,18 +144,18 @@ class TestForegroundRunStatusHasPid:
                 pretty=False, config_path=None,
             ))
 
-        status_files = list((tmp_path / ".combatpair" / "runs").glob("*.json"))
+        status_files = list((tmp_path / ".gauntlex" / "runs").glob("*.json"))
         assert len(status_files) == 1
         data = json.loads(status_files[0].read_text())
         assert data["pid"] == os.getpid()
 
     def test_load_active_runs_keeps_running_entry_with_live_pid(self, tmp_path):
         runs_dir = tmp_path / "runs"
-        _write_run_status("combatpair-live-run", runs_dir,
+        _write_run_status("gauntlex-live-run", runs_dir,
                            status="running", phase="combat", pid=os.getpid())
         active = _load_active_runs(runs_dir)
-        assert [a["run_id"] for a in active] == ["combatpair-live-run"]
-        assert (runs_dir / "combatpair-live-run.json").exists()  # not deleted as stale
+        assert [a["run_id"] for a in active] == ["gauntlex-live-run"]
+        assert (runs_dir / "gauntlex-live-run.json").exists()  # not deleted as stale
 
 
 # ── _issue_label ──────────────────────────────────────────────────────────────
@@ -197,7 +197,7 @@ class TestFmtElapsed:
         assert _fmt_elapsed(0) == "0s"
 
 
-# ── combatpair status command ───────────────────────────────────────────────────
+# ── gauntlex status command ───────────────────────────────────────────────────
 
 class TestStatusCommand:
     def test_no_runs_shows_helpful_message(self):
@@ -205,15 +205,15 @@ class TestStatusCommand:
         with runner.isolated_filesystem():
             result = runner.invoke(main, ["status"])
         assert result.exit_code == 0
-        assert "No runs found" in result.output or "combatpair run" in result.output
+        assert "No runs found" in result.output or "gauntlex run" in result.output
 
     def test_completed_run_shown_in_table(self):
         runner = CliRunner()
         with runner.isolated_filesystem():
-            reports_dir = Path(".combatpair/reports")
+            reports_dir = Path(".gauntlex/reports")
             reports_dir.mkdir(parents=True)
             report = {
-                "run_id": "combatpair-test-abc",
+                "run_id": "gauntlex-test-abc",
                 "ars_score": 0.85,
                 "attack_count": 5,
                 "miss_count": 1,
@@ -221,19 +221,19 @@ class TestStatusCommand:
                 "spec_ref": "https://github.com/pallets/flask",
                 "attacks": [],
             }
-            (reports_dir / "combatpair-test-abc.json").write_text(json.dumps(report))
+            (reports_dir / "gauntlex-test-abc.json").write_text(json.dumps(report))
             result = runner.invoke(main, ["status"])
         assert result.exit_code == 0
-        assert "combatpair-test-abc" in result.output or "0.850" in result.output
+        assert "gauntlex-test-abc" in result.output or "0.850" in result.output
 
     def test_running_status_shown_with_alive_pid(self):
         runner = CliRunner()
         with runner.isolated_filesystem():
-            runs_dir = Path(".combatpair/runs")
+            runs_dir = Path(".gauntlex/runs")
             runs_dir.mkdir(parents=True)
             # Use current process PID so it appears "alive"
             status = {
-                "run_id": "combatpair-bg-run",
+                "run_id": "gauntlex-bg-run",
                 "status": "running",
                 "pid": os.getpid(),
                 "issue": "https://github.com/encode/django-rest-framework",
@@ -241,7 +241,7 @@ class TestStatusCommand:
                 "started_at": "2026-07-04T12:00:00+00:00",
                 "updated_at": "2026-07-04T12:00:01+00:00",
             }
-            (runs_dir / "combatpair-bg-run.json").write_text(json.dumps(status))
+            (runs_dir / "gauntlex-bg-run.json").write_text(json.dumps(status))
             result = runner.invoke(main, ["status"])
         assert result.exit_code == 0
         assert "RUNNING" in result.output
@@ -249,10 +249,10 @@ class TestStatusCommand:
     def test_dead_pid_removed_from_running(self):
         runner = CliRunner()
         with runner.isolated_filesystem():
-            runs_dir = Path(".combatpair/runs")
+            runs_dir = Path(".gauntlex/runs")
             runs_dir.mkdir(parents=True)
             status = {
-                "run_id": "combatpair-dead-run",
+                "run_id": "gauntlex-dead-run",
                 "status": "running",
                 "pid": 999999999,  # almost certainly not a real PID
                 "issue": "https://github.com/pallets/flask",
@@ -260,7 +260,7 @@ class TestStatusCommand:
                 "started_at": "2026-07-04T12:00:00+00:00",
                 "updated_at": "2026-07-04T12:00:01+00:00",
             }
-            sf = runs_dir / "combatpair-dead-run.json"
+            sf = runs_dir / "gauntlex-dead-run.json"
             sf.write_text(json.dumps(status))
             result = runner.invoke(main, ["status"])
         assert result.exit_code == 0
@@ -299,7 +299,7 @@ class TestBackgroundFlag:
                 ])
             # Assertions must be inside the isolated_filesystem context
             # before its temp dir is cleaned up on exit
-            runs_dir = Path(".combatpair/runs")
+            runs_dir = Path(".gauntlex/runs")
             status_files = list(runs_dir.glob("*.json")) if runs_dir.exists() else []
             assert len(status_files) == 1
             data = json.loads(status_files[0].read_text())
@@ -317,7 +317,7 @@ class TestBackgroundFlag:
                     "run", "--issue", "examples/demo_issue.md",
                     "--mode", "quick", "--background",
                 ])
-        assert "combatpair status" in result.output
+        assert "gauntlex status" in result.output
         assert "Run ID" in result.output
 
     def test_background_uses_start_new_session(self):

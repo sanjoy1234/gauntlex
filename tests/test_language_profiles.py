@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from combatpair.brain.language_profiles import (
+from gauntlex.brain.language_profiles import (
     get_profile,
     language_from_fingerprint,
     priority_cwes_for_spec,
     attack_context_for_spec,
     PROFILES,
 )
-from combatpair.brain.fingerprint import fingerprint_spec, _detect_language
+from gauntlex.brain.fingerprint import fingerprint_spec, _detect_language
 
 
 # ── language_from_fingerprint ──────────────────────────────────────────────────
@@ -207,7 +207,7 @@ def test_ts_profile_includes_csrf_cwe():
 def test_cwe_taxonomy_includes_prototype_pollution():
     import json
     from pathlib import Path
-    taxonomy_path = Path(__file__).parent.parent / "src" / "combatpair" / "data" / "cwe_taxonomy.json"
+    taxonomy_path = Path(__file__).parent.parent / "src" / "gauntlex" / "data" / "cwe_taxonomy.json"
     taxonomy = json.loads(taxonomy_path.read_text())
     assert "CWE-1321" in taxonomy
     assert "CWE-94" in taxonomy

@@ -2,14 +2,14 @@
   "schema_version": "1",
   "updated_at": "2026-06-28",
   "maintainer": "Sanjoy Ghosh <sanjoy.sghosh@gmail.com>",
-  "index_url": "https://raw.githubusercontent.com/sanjoy1234/combatpair/main/policy-hub/index.json",
+  "index_url": "https://raw.githubusercontent.com/sanjoy1234/gauntlex/main/policy-hub/index.json",
   "domains": [
     {
       "name": "owasp_api_security",
       "version": "2023.1",
       "description": "OWASP API Security Top 10 2023 — broken object-level auth, excessive data exposure, SSRF, and more",
       "regulatory_framework": "OWASP API Security",
-      "url": "https://raw.githubusercontent.com/sanjoy1234/combatpair/main/policy-hub/domains/owasp_api_security.yaml",
+      "url": "https://raw.githubusercontent.com/sanjoy1234/gauntlex/main/policy-hub/domains/owasp_api_security.yaml",
       "scenarios_count": 10,
       "tags": ["api", "rest", "graphql", "owasp"]
     },
@@ -18,7 +18,7 @@
       "version": "1.1",
       "description": "NIST Secure Software Development Framework — RV (Review/Verify), PW (Produce Well-Secured) practices",
       "regulatory_framework": "NIST SSDF 1.1",
-      "url": "https://raw.githubusercontent.com/sanjoy1234/combatpair/main/policy-hub/domains/nist_ssdf.yaml",
+      "url": "https://raw.githubusercontent.com/sanjoy1234/gauntlex/main/policy-hub/domains/nist_ssdf.yaml",
       "scenarios_count": 8,
       "tags": ["nist", "ssdf", "government", "supply-chain"]
     }

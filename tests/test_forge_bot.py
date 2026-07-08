@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from combatpair.output.forge_bot import render_pr_comment, _ars_bar
+from gauntlex.output.forge_bot import render_pr_comment, _ars_bar
 
 
 # ── _ars_bar ───────────────────────────────────────────────────────────────────

@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import pytest
 
-from combatpair.policy.engine import (
+from gauntlex.policy.engine import (
     combine_policy_context,
     list_available_domains,
     load_domain,
     load_domains,
     validate_domain_yaml,
 )
-from combatpair.policy.schema import PolicyDomain, AttackScenario
+from gauntlex.policy.schema import PolicyDomain, AttackScenario
 
 
 # ── list_available_domains ────────────────────────────────────────────────────

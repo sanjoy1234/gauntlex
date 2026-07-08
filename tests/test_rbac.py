@@ -5,14 +5,14 @@ from __future__ import annotations
 import time
 import pytest
 
-from combatpair.service.rbac import (
+from gauntlex.service.rbac import (
     Role,
     RbacConfig,
     RbacEnforcer,
     ROLE_LABELS,
     require_role,
 )
-from combatpair.service.config import ServiceConfig
+from gauntlex.service.config import ServiceConfig
 
 
 # ── Role enum ──────────────────────────────────────────────────────────────────
@@ -38,9 +38,9 @@ def test_rbac_config_defaults():
 
 def test_rbac_config_from_env(monkeypatch):
     monkeypatch.setenv("GITHUB_ORG", "acme")
-    monkeypatch.setenv("COMBATPAIR_ADMIN_TEAMS", "security-leads,platform-admin")
-    monkeypatch.setenv("COMBATPAIR_REVIEWER_TEAMS", "backend-leads")
-    monkeypatch.setenv("COMBATPAIR_ALLOW_ANY_AUTH", "false")
+    monkeypatch.setenv("GAUNTLEX_ADMIN_TEAMS", "security-leads,platform-admin")
+    monkeypatch.setenv("GAUNTLEX_REVIEWER_TEAMS", "backend-leads")
+    monkeypatch.setenv("GAUNTLEX_ALLOW_ANY_AUTH", "false")
     cfg = RbacConfig.from_env()
     assert cfg.org == "acme"
     assert "security-leads" in cfg.admin_teams
@@ -232,7 +232,7 @@ def test_service_config_rbac_default_disabled():
 
 
 def test_service_config_rbac_from_env(monkeypatch):
-    monkeypatch.setenv("COMBATPAIR_RBAC_ENABLED", "true")
+    monkeypatch.setenv("GAUNTLEX_RBAC_ENABLED", "true")
     monkeypatch.setenv("GITHUB_ORG", "myorg")
     cfg = ServiceConfig.from_env()
     assert cfg.rbac_enabled is True

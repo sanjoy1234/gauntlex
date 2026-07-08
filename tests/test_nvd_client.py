@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from combatpair.brain.nvd_client import (
+from gauntlex.brain.nvd_client import (
     NvdClient,
     NvdCve,
     NvdResult,

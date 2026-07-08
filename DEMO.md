@@ -1,8 +1,8 @@
-# COMBATPAIR — Demo & Testing Guide
+# GAUNTLEX — Demo & Testing Guide
 
 **Audience:** Engineering Managers and CTOs  
 **Primary surface:** CLI (dashboard as supporting visual)  
-**Model setup:** Run `combatpair setup` once — interactive wizard picks the best available model
+**Model setup:** Run `gauntlex setup` once — interactive wizard picks the best available model
 
 ---
 
@@ -11,7 +11,7 @@
 ### Step 0 — First-time setup (run once, stay in terminal)
 
 ```bash
-combatpair setup
+gauntlex setup
 ```
 
 This interactive wizard will:
@@ -23,7 +23,7 @@ This interactive wizard will:
 After setup, verify everything is green:
 
 ```bash
-combatpair doctor
+gauntlex doctor
 ```
 
 **If Ollama shows `Model reachable: ✓` but runs fail with 404:**
@@ -38,7 +38,7 @@ ollama pull llama3.1:8b    # ~4.7 GB, recommended quality
 ### Step 1 — Run your first adversarial session (the core feature)
 
 ```bash
-combatpair run --issue examples/demo_issue.md --pretty
+gauntlex run --issue examples/demo_issue.md --pretty
 ```
 
 **What happens:** Builder generates a Flask login endpoint. Breaker simultaneously attacks it. Arbiter scores each attack. ARS score gates the result.
@@ -53,13 +53,13 @@ combatpair run --issue examples/demo_issue.md --pretty
 ### Step 2 — View the vulnerability findings in detail
 
 ```bash
-combatpair findings
+gauntlex findings
 ```
 
 Shows the last run's findings only — no score, no noise. Good for a PR comment view.
 
 ```bash
-combatpair findings --format md
+gauntlex findings --format md
 ```
 
 Markdown output — exactly what would be posted as a GitHub PR comment.
@@ -69,7 +69,7 @@ Markdown output — exactly what would be posted as a GitHub PR comment.
 ### Step 3 — Open the full HTML report
 
 ```bash
-combatpair report --format html > /tmp/last_report.html
+gauntlex report --format html > /tmp/last_report.html
 open /tmp/last_report.html
 ```
 
@@ -80,7 +80,7 @@ The HTML report is executive-ready: findings cards, severity color-coding, remed
 ### Step 4 — Launch the animated dashboard
 
 ```bash
-combatpair dashboard
+gauntlex dashboard
 ```
 
 Open `http://localhost:8080` in a browser.
@@ -97,7 +97,7 @@ Open `http://localhost:8080` in a browser.
 ### Step 5 — Test IDE integration (zero-setup claim)
 
 ```bash
-combatpair integrate --dry-run
+gauntlex integrate --dry-run
 ```
 
 Shows the exact MCP configs that would be written for Claude Code, Cursor, Windsurf, GitHub Copilot, Codex, and GitHub Actions — without writing anything.
@@ -105,43 +105,43 @@ Shows the exact MCP configs that would be written for Claude Code, Cursor, Winds
 To actually wire it up:
 
 ```bash
-combatpair integrate
+gauntlex integrate
 ```
 
 ---
 
 ### Step 6 — Run against a public repo (multi-repo test)
 
-Pick any of the repos below. COMBATPAIR walks the folder, extracts source files, and attacks the codebase.
+Pick any of the repos below. GAUNTLEX walks the folder, extracts source files, and attacks the codebase.
 
 **Python:**
 ```bash
 git clone https://github.com/pallets/flask /tmp/flask-demo
-combatpair run --issue /tmp/flask-demo --pretty
+gauntlex run --issue /tmp/flask-demo --pretty
 ```
 
 **JavaScript:**
 ```bash
 git clone https://github.com/axios/axios /tmp/axios-demo
-combatpair run --issue /tmp/axios-demo --pretty
+gauntlex run --issue /tmp/axios-demo --pretty
 ```
 
 **Go:**
 ```bash
 git clone https://github.com/gin-gonic/gin /tmp/gin-demo
-combatpair run --issue /tmp/gin-demo --pretty
+gauntlex run --issue /tmp/gin-demo --pretty
 ```
 
 **Java:**
 ```bash
 git clone https://github.com/spring-projects/spring-petclinic /tmp/petclinic
-combatpair run --issue /tmp/petclinic --pretty
+gauntlex run --issue /tmp/petclinic --pretty
 ```
 
 **TypeScript:**
 ```bash
 git clone https://github.com/microsoft/vscode-extension-samples /tmp/vscode-samples
-combatpair run --issue /tmp/vscode-samples --pretty
+gauntlex run --issue /tmp/vscode-samples --pretty
 ```
 
 ---
@@ -164,14 +164,14 @@ Run these in order. Each command is one talking point.
 
 ### Scene 1 — The problem (30 seconds, no commands)
 
-*"Security testing today requires security engineers to write tests manually. That's expensive, slow, and doesn't scale. COMBATPAIR eliminates that cost entirely — it generates attacks at the same time it generates code."*
+*"Security testing today requires security engineers to write tests manually. That's expensive, slow, and doesn't scale. GAUNTLEX eliminates that cost entirely — it generates attacks at the same time it generates code."*
 
 ---
 
 ### Scene 2 — Zero setup
 
 ```bash
-combatpair doctor
+gauntlex doctor
 ```
 
 *"One command. No YAML to write, no rules to configure, no security expertise required. It just works."*
@@ -181,10 +181,10 @@ combatpair doctor
 ### Scene 3 — Run a session — the core demo
 
 ```bash
-combatpair run --issue examples/demo_issue.md --pretty
+gauntlex run --issue examples/demo_issue.md --pretty
 ```
 
-*"I give it a spec — the same thing I'd give to any AI coding assistant. COMBATPAIR's Builder generates the code. Simultaneously — not after — the Breaker attacks it. In the time it takes to write one story ticket, we've done a full adversarial security review."*
+*"I give it a spec — the same thing I'd give to any AI coding assistant. GAUNTLEX's Builder generates the code. Simultaneously — not after — the Breaker attacks it. In the time it takes to write one story ticket, we've done a full adversarial security review."*
 
 Wait for output. Point out:
 
@@ -195,22 +195,22 @@ Wait for output. Point out:
 
 ### Scene 4 — The business intent angle
 
-*"Most security tools only see the code. COMBATPAIR sees the business intent too."*
+*"Most security tools only see the code. GAUNTLEX sees the business intent too."*
 
 ```bash
 # If JIRA_URL / JIRA_EMAIL / JIRA_TOKEN are set:
-combatpair run --issue examples/demo_issue.md --intent PROJ-42 --pretty
+gauntlex run --issue examples/demo_issue.md --intent PROJ-42 --pretty
 ```
 
-*"A FINRA requirement in Jira plus a payment spec in the code creates a vulnerability surface that neither document creates alone. COMBATPAIR finds it. Sonar doesn't even know Jira exists."*
+*"A FINRA requirement in Jira plus a payment spec in the code creates a vulnerability surface that neither document creates alone. GAUNTLEX finds it. Sonar doesn't even know Jira exists."*
 
 ---
 
 ### Scene 5 — Findings view (for developers)
 
 ```bash
-combatpair findings
-combatpair findings --format md
+gauntlex findings
+gauntlex findings --format md
 ```
 
 *"The developer gets this in their PR. Not a scan report from 1998. A specific finding, the CWE, the severity, and a one-line fix. No security team review required."*
@@ -220,7 +220,7 @@ combatpair findings --format md
 ### Scene 6 — Dashboard (for the audience watching)
 
 ```bash
-combatpair dashboard
+gauntlex dashboard
 # open http://localhost:8080
 ```
 
@@ -231,18 +231,18 @@ combatpair dashboard
 ### Scene 7 — IDE integration (for the developer in the room)
 
 ```bash
-combatpair integrate --dry-run
+gauntlex integrate --dry-run
 ```
 
-*"Developers don't change their workflow. They use Claude Code, Cursor, Copilot, whatever they want. COMBATPAIR wires itself in as an MCP server — one command, zero config. The next time they use their AI assistant, COMBATPAIR is already there."*
+*"Developers don't change their workflow. They use Claude Code, Cursor, Copilot, whatever they want. GAUNTLEX wires itself in as an MCP server — one command, zero config. The next time they use their AI assistant, GAUNTLEX is already there."*
 
 ---
 
 ### Scene 8 — CI/CD gate (for the engineering manager)
 
 ```bash
-combatpair integrate --platform github-actions
-cat .github/workflows/combatpair.yml
+gauntlex integrate --platform github-actions
+cat .github/workflows/gauntlex.yml
 ```
 
 *"Every pull request hits this gate. If the ARS score drops below threshold, the PR is blocked. No human security review in the loop. The gate is automated, tamper-evident — SHA-256 hash on every report — and auditable."*
@@ -252,22 +252,22 @@ cat .github/workflows/combatpair.yml
 ### Scene 9 — Multi-repo (scale argument)
 
 ```bash
-combatpair run --issue /tmp/flask-demo --pretty
+gauntlex run --issue /tmp/flask-demo --pretty
 ```
 
 *"We just ran the same pipeline against Flask — a real-world Python web framework with 60,000 GitHub stars. No reconfiguration. No language-specific rules. Folder path in, findings out."*
 
 ---
 
-## Part 3 — Competitive Comparison (Sonar vs COMBATPAIR)
+## Part 3 — Competitive Comparison (Sonar vs GAUNTLEX)
 
-| | SonarQube | COMBATPAIR |
+| | SonarQube | GAUNTLEX |
 |---|---|---|
 | Test authoring | Manual rules | Zero — generated automatically |
 | Attack surface | Code only | Intent (Jira/Confluence/Aha!) + code |
 | Output | Rule violations | Exploitable vulnerabilities with fix |
 | Speed | Minutes to hours | ~30–60 seconds |
-| CI integration | Complex agent setup | `combatpair integrate` one command |
+| CI integration | Complex agent setup | `gauntlex integrate` one command |
 | Business context | None | Jira, Confluence, Aha! adapters |
 | Score type | Quality gate | Adversarial Resilience Score (ARS) |
 
@@ -277,7 +277,7 @@ combatpair run --issue /tmp/flask-demo --pretty
 
 ### For the Engineering Manager
 
-- *"It's TDD for security — but without the cost barrier that killed TDD adoption. You don't write the tests. COMBATPAIR does."*
+- *"It's TDD for security — but without the cost barrier that killed TDD adoption. You don't write the tests. GAUNTLEX does."*
 - *"Near-zero overhead. No training, no rules, no security headcount."*
 - *"Every PR has an ARS score. You know, in real time, whether your codebase is getting more or less resilient."*
 
@@ -292,14 +292,14 @@ combatpair run --issue /tmp/flask-demo --pretty
 
 ## Part 5 — Troubleshooting
 
-**`combatpair run` hangs or times out**  
+**`gauntlex run` hangs or times out**  
 → Ollama isn't running. Start it: `ollama serve`
 
 **`Model reachable: ✗` in doctor**  
 → Pull a model first: `ollama pull llama3`
 
-**`combatpair dashboard` command not found after install**  
-→ FastAPI and uvicorn are included in the base install. Try reinstalling: `pip install --upgrade combatpair-ai`
+**`gauntlex dashboard` command not found after install**  
+→ FastAPI and uvicorn are included in the base install. Try reinstalling: `pip install --upgrade gauntlex-ai`
 
 **Findings are empty / no attacks generated**  
 → The model returned malformed JSON. Try a larger model: `ollama pull llama3:70b`
@@ -308,4 +308,4 @@ combatpair run --issue /tmp/flask-demo --pretty
 → Set `GITHUB_TOKEN` in your `.env` for private repos. Public repos work without it.
 
 **Intent adapter (Jira) does nothing**  
-→ Set `JIRA_URL`, `JIRA_EMAIL`, `JIRA_TOKEN` in `.env`. Without them, COMBATPAIR falls back silently to spec-only mode — no error, no degradation.
+→ Set `JIRA_URL`, `JIRA_EMAIL`, `JIRA_TOKEN` in `.env`. Without them, GAUNTLEX falls back silently to spec-only mode — no error, no degradation.

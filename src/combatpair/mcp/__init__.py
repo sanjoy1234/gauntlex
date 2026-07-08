@@ -1,1 +1,0 @@
-"""COMBATPAIR MCP Server package."""

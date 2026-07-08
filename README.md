@@ -1,14 +1,14 @@
 <div align="center">
 
-# ⚔️ COMBATPAIR
+# ⚔️ GAUNTLEX
 
 ### Adversarial Co-Generation Engine
 
 **Generates code and adversarial attacks from the same specification, at the same time — before a commit exists.**
 
-[![Tests](https://img.shields.io/badge/tests-554%20passing-brightgreen)](https://github.com/sanjoy1234/combatpair/actions)
-[![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://pypi.org/project/combatpair-ai/)
-[![PyPI](https://img.shields.io/pypi/v/combatpair-ai)](https://pypi.org/project/combatpair-ai/)
+[![Tests](https://img.shields.io/badge/tests-554%20passing-brightgreen)](https://github.com/sanjoy1234/gauntlex/actions)
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://pypi.org/project/gauntlex-ai/)
+[![PyPI](https://img.shields.io/pypi/v/gauntlex-ai)](https://pypi.org/project/gauntlex-ai/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![OS](https://img.shields.io/badge/OS-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)](#requirements)
 
@@ -26,7 +26,7 @@
 ## What it is
 
 Every AI coding tool ships code and hopes someone tests it for security later.
-COMBATPAIR removes the "later." It runs two agents concurrently against the same
+GAUNTLEX removes the "later." It runs two agents concurrently against the same
 specification:
 
 - **Builder** — generates the implementation
@@ -63,7 +63,7 @@ scanner to catch up to code that shipped last week.
 Three properties, not features — the reasoning behind each is in the [Deep Dive](docs/DEEP_DIVE.md):
 
 1. **Concurrent, not sequential.** Builder and Breaker fire at the same instant via `asyncio.gather()`. The Breaker never sees generated code — it reasons from the specification alone, the same surface a real attacker would work from before your implementation choices exist.
-2. **A native MCP integration, both directions.** COMBATPAIR exposes itself as an MCP server so Claude Code, Cursor, Windsurf, or Zed can trigger and poll runs directly from your coding tool — and it consumes external MCP servers (plus built-in CISA KEV / NIST NVD feeds) to enrich every run with live threat data. See the [Domain Intelligence](docs/DOMAIN_INTELLIGENCE.md) page for exactly what's live vs. static.
+2. **A native MCP integration, both directions.** GAUNTLEX exposes itself as an MCP server so Claude Code, Cursor, Windsurf, or Zed can trigger and poll runs directly from your coding tool — and it consumes external MCP servers (plus built-in CISA KEV / NIST NVD feeds) to enrich every run with live threat data. See the [Domain Intelligence](docs/DOMAIN_INTELLIGENCE.md) page for exactly what's live vs. static.
 3. **Regulatory domains as first-class input.** FINRA, HIPAA, PCI DSS, SOC 2, and OWASP Top 10 playbooks steer the Breaker toward the scenarios that actually matter for a regulated codebase — not a generic scan re-labeled per industry.
 
 ---
@@ -72,23 +72,23 @@ Three properties, not features — the reasoning behind each is in the [Deep Div
 
 ```bash
 # 1. Install
-pip install combatpair-ai
+pip install gauntlex-ai
 
 # 2. Interactive setup — detects and validates the best model for your environment
 #    (Ollama for free/air-gapped, OpenRouter free tier, or your own API key)
-combatpair setup
+gauntlex setup
 
 # 3. Run on the included demo spec
-combatpair run --issue examples/demo_issue.md --mode quick --pretty
+gauntlex run --issue examples/demo_issue.md --mode quick --pretty
 ```
 
-`combatpair setup` writes a `.combatpair.yml` for you — there is no manual
+`gauntlex setup` writes a `.gauntlex.yml` for you — there is no manual
 configuration step, and no fallback to whatever API key happens to be lying
 around the environment. What you configure is what runs.
 
 ```
 ──────────────────────────────────────────────────────────────────────
-  COMBATPAIR Adversarial Run
+  GAUNTLEX Adversarial Run
   Mode:      quick (5 attacks)
   Language:  python  [signals: filesystem, async]
   Domain:    owasp_top10
@@ -111,7 +111,7 @@ Attack count is fixed per mode regardless of provider: `quick` = 5, `standard` =
 ### Run against a GitHub issue directly
 
 ```bash
-combatpair run --issue https://github.com/your-org/your-repo/issues/42 --mode standard --domain hipaa --pretty
+gauntlex run --issue https://github.com/your-org/your-repo/issues/42 --mode standard --domain hipaa --pretty
 ```
 
 ### Requirements
@@ -128,40 +128,40 @@ All 22 commands, grouped by when you'd reach for them:
 
 | Getting started | |
 |---|---|
-| `combatpair setup` | Configure model provider and integrations (run any time to reconfigure) |
-| `combatpair init` | Scaffold `.combatpair.yml` with sensible defaults |
-| `combatpair doctor` | Full environment health check |
-| `combatpair validate` | Dry run — checks config and connectivity, fires zero attacks |
+| `gauntlex setup` | Configure model provider and integrations (run any time to reconfigure) |
+| `gauntlex init` | Scaffold `.gauntlex.yml` with sensible defaults |
+| `gauntlex doctor` | Full environment health check |
+| `gauntlex validate` | Dry run — checks config and connectivity, fires zero attacks |
 
 | Running assessments | |
 |---|---|
-| `combatpair run` | Run adversarial Builder + Breaker on a spec |
-| `combatpair status` | Show running and recently completed runs |
-| `combatpair findings` | Vulnerability findings from the last run — fix-first, score last |
-| `combatpair compare` | Diff two Resilience Reports — ARS delta and attack-level changes |
-| `combatpair learn` | Feed a completed run into the Knowledge Forge |
+| `gauntlex run` | Run adversarial Builder + Breaker on a spec |
+| `gauntlex status` | Show running and recently completed runs |
+| `gauntlex findings` | Vulnerability findings from the last run — fix-first, score last |
+| `gauntlex compare` | Diff two Resilience Reports — ARS delta and attack-level changes |
+| `gauntlex learn` | Feed a completed run into the Knowledge Forge |
 
 | Evidence & compliance | |
 |---|---|
-| `combatpair report` | Render a stored report in any output format (HTML/SARIF/JUnit/JSON) |
-| `combatpair verify` | Re-derive SHA-256 integrity hash, confirm a report hasn't been altered |
-| `combatpair audit` | List all reports with compliance control mapping over a time window |
-| `combatpair vault` | Browse the Forge Ledger — human-readable Markdown attack records |
-| `combatpair stats` | ARS trends, learning-curve, and cost metrics |
+| `gauntlex report` | Render a stored report in any output format (HTML/SARIF/JUnit/JSON) |
+| `gauntlex verify` | Re-derive SHA-256 integrity hash, confirm a report hasn't been altered |
+| `gauntlex audit` | List all reports with compliance control mapping over a time window |
+| `gauntlex vault` | Browse the Forge Ledger — human-readable Markdown attack records |
+| `gauntlex stats` | ARS trends, learning-curve, and cost metrics |
 
 | Domains & policy | |
 |---|---|
-| `combatpair policy` | List, install, search, or validate policy domains — see [Domain Intelligence](docs/DOMAIN_INTELLIGENCE.md) |
+| `gauntlex policy` | List, install, search, or validate policy domains — see [Domain Intelligence](docs/DOMAIN_INTELLIGENCE.md) |
 
 | Team & CI deployment | |
 |---|---|
-| `combatpair integrate` | One command: wire COMBATPAIR into Claude Code, Cursor, Windsurf, Copilot, Codex, or GitHub Actions |
-| `combatpair mcp-server` | Start COMBATPAIR as an MCP server (stdio transport) for local IDE use |
-| `combatpair serve` | Start COMBATPAIR as a webhook/CI service, with optional GitHub team-based RBAC |
-| `combatpair dashboard` | Launch the Combat Dashboard web UI |
-| `combatpair leaderboard` | Build an ARS leaderboard across multiple agents/runs |
-| `combatpair forge-network` | Opt-in community adversarial pattern sharing |
-| `combatpair prune` | Remove expired reports |
+| `gauntlex integrate` | One command: wire GAUNTLEX into Claude Code, Cursor, Windsurf, Copilot, Codex, or GitHub Actions |
+| `gauntlex mcp-server` | Start GAUNTLEX as an MCP server (stdio transport) for local IDE use |
+| `gauntlex serve` | Start GAUNTLEX as a webhook/CI service, with optional GitHub team-based RBAC |
+| `gauntlex dashboard` | Launch the Combat Dashboard web UI |
+| `gauntlex leaderboard` | Build an ARS leaderboard across multiple agents/runs |
+| `gauntlex forge-network` | Opt-in community adversarial pattern sharing |
+| `gauntlex prune` | Remove expired reports |
 
 Full usage, flags, and examples for every command: [Deep Dive → Complete CLI Reference](docs/DEEP_DIVE.md#complete-cli-reference).
 
@@ -193,7 +193,7 @@ mapped to a specific rule or control, not a generic label:
 | `soc2` | 7 | AICPA SOC 2 Trust Service Criteria |
 | `pci_dss` | 6 | PCI DSS v4.0 |
 
-Two more (`owasp_api_security`, `nist_ssdf`) are available via `combatpair
+Two more (`owasp_api_security`, `nist_ssdf`) are available via `gauntlex
 policy install`. GDPR, FedRAMP, and DORA are on the [roadmap](docs/DEEP_DIVE.md#roadmap)
 — not available today.
 
@@ -205,9 +205,9 @@ bring your own domain, see the full
 
 ## Enterprise deployment
 
-- **`combatpair dashboard`** — ARS trend, gate status, and attack-outcome breakdown across every connected repository. One URL for the team.
-- **`combatpair serve --rbac`** — GitHub team-based access control (admin / reviewer / developer) across a shared instance.
-- **`combatpair audit`** — every run listed with NIST SSDF / OWASP SAMM / SOC 2 control mapping, for a configurable window.
+- **`gauntlex dashboard`** — ARS trend, gate status, and attack-outcome breakdown across every connected repository. One URL for the team.
+- **`gauntlex serve --rbac`** — GitHub team-based access control (admin / reviewer / developer) across a shared instance.
+- **`gauntlex audit`** — every run listed with NIST SSDF / OWASP SAMM / SOC 2 control mapping, for a configurable window.
 - **Air-gapped operation** — the full engine runs on local Ollama with zero outbound calls, for environments that can't reach the internet.
 
 Full detail on each: [Deep Dive → Enterprise Features](docs/DEEP_DIVE.md#enterprise-features).
@@ -216,7 +216,7 @@ Full detail on each: [Deep Dive → Enterprise Features](docs/DEEP_DIVE.md#enter
 
 ## Learn more
 
-- **[Deep Dive](docs/DEEP_DIVE.md)** — the full story: why concurrent execution matters, how COMBATPAIR compares to SAST/DAST/pentest, the complete CLI and configuration reference, architecture, FAQ, and roadmap.
+- **[Deep Dive](docs/DEEP_DIVE.md)** — the full story: why concurrent execution matters, how GAUNTLEX compares to SAST/DAST/pentest, the complete CLI and configuration reference, architecture, FAQ, and roadmap.
 - **[Domain Intelligence](docs/DOMAIN_INTELLIGENCE.md)** — exactly what's covered per regulated domain, what's live vs. static, and how to extend it.
 - **[Contributing](docs/DEEP_DIVE.md#contributing)** — how to add a policy domain, a language profile, or a feature.
 

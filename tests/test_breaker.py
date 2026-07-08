@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from combatpair.agents.breaker import Breaker, _parse_attacks, _load_cwe_pool
+from gauntlex.agents.breaker import Breaker, _parse_attacks, _load_cwe_pool
 
 
 def test_cwe_pool_loads():

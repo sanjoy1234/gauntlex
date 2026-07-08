@@ -1,14 +1,14 @@
-# Contributing Playbooks to COMBATPAIR
+# Contributing Playbooks to GAUNTLEX
 
 The Adversarial Policy Engine (APE) is driven by YAML playbooks. Each playbook maps
 a regulatory framework to concrete CWE attack scenarios. Contributing a new playbook
-extends COMBATPAIR's coverage to a new compliance domain.
+extends GAUNTLEX's coverage to a new compliance domain.
 
 ---
 
 ## Playbook Schema
 
-Each playbook is a YAML file in `src/combatpair/policy/domains/`. The schema:
+Each playbook is a YAML file in `src/gauntlex/policy/domains/`. The schema:
 
 ```yaml
 name: <domain_name>             # e.g. hipaa
@@ -35,7 +35,7 @@ scenarios:
 Before opening a PR, validate your playbook:
 
 ```bash
-combatpair policy:validate --file src/combatpair/policy/domains/your_domain.yaml
+gauntlex policy:validate --file src/gauntlex/policy/domains/your_domain.yaml
 ```
 
 All errors must be resolved. The validator checks:
@@ -91,7 +91,7 @@ and a migration note in `CHANGELOG.md`.
 ## Opening a PR
 
 1. Fork the repository
-2. Create your playbook at `src/combatpair/policy/domains/<name>.yaml`
-3. Run `combatpair policy:validate --file <path>`
+2. Create your playbook at `src/gauntlex/policy/domains/<name>.yaml`
+3. Run `gauntlex policy:validate --file <path>`
 4. Add a test in `tests/test_policy.py` that loads your domain
 5. Open a PR with the regulatory framework document as a reference link

@@ -1,6 +1,6 @@
 """Tests for codebase fingerprinting."""
 
-from combatpair.brain.fingerprint import fingerprint_spec, _detect_language
+from gauntlex.brain.fingerprint import fingerprint_spec, _detect_language
 
 
 def test_detects_django():

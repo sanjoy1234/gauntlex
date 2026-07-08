@@ -8,13 +8,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from combatpair.harness.commands.validate import _hits_fixture, _run_avf_gate
+from gauntlex.harness.commands.validate import _hits_fixture, _run_avf_gate
 
 
 # ── Fixture helpers ────────────────────────────────────────────────────────────
 
 def _make_attack(cwe: str, title: str, description: str = ""):
-    from combatpair.agents.breaker import Attack
+    from gauntlex.agents.breaker import Attack
     return Attack(id="atk-001", cwe=cwe, title=title, description=description)
 
 
@@ -85,8 +85,8 @@ def test_golden_fixture_log4shell_cwe():
 @pytest.mark.asyncio
 async def test_avf_gate_passes_with_mock_hits():
     """AVF gate logic: model finds keyword in each fixture → hit_rate=1.0."""
-    from combatpair.agents.breaker import BreakerResult, Attack
-    from combatpair.agents.base import ModelResponse
+    from gauntlex.agents.breaker import BreakerResult, Attack
+    from gauntlex.agents.base import ModelResponse
 
     # Attacks that match every golden fixture's expected_keyword
     def make_result_for_fixture(fixture_path):
@@ -116,8 +116,8 @@ async def test_avf_gate_passes_with_mock_hits():
         call_count += 1
         return r
 
-    with patch("combatpair.agents.breaker.Breaker.attack", new=mock_attack):
-        from combatpair.config import AppConfig
+    with patch("gauntlex.agents.breaker.Breaker.attack", new=mock_attack):
+        from gauntlex.config import AppConfig
         cfg = AppConfig.load()
         hit_rate = await _run_avf_gate(cfg)
 
@@ -127,8 +127,8 @@ async def test_avf_gate_passes_with_mock_hits():
 @pytest.mark.asyncio
 async def test_avf_gate_fails_when_no_attacks_found():
     """AVF gate: Breaker returns empty attacks → hit_rate=0.0."""
-    from combatpair.agents.breaker import BreakerResult
-    from combatpair.agents.base import ModelResponse
+    from gauntlex.agents.breaker import BreakerResult
+    from gauntlex.agents.base import ModelResponse
 
     empty_result = BreakerResult(
         attacks=[],
@@ -139,8 +139,8 @@ async def test_avf_gate_fails_when_no_attacks_found():
     async def mock_attack(*args, **kwargs):
         return empty_result
 
-    with patch("combatpair.agents.breaker.Breaker.attack", new=mock_attack):
-        from combatpair.config import AppConfig
+    with patch("gauntlex.agents.breaker.Breaker.attack", new=mock_attack):
+        from gauntlex.config import AppConfig
         cfg = AppConfig.load()
         hit_rate = await _run_avf_gate(cfg)
 

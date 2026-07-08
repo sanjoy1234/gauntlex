@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>COMBATPAIR — Feature Evidence Traceability Dashboard</title>
+<title>GAUNTLEX — Feature Evidence Traceability Dashboard</title>
 <style>
   /* ── Reset & base ─────────────────────────────────────── */
   *{box-sizing:border-box;margin:0;padding:0}
@@ -103,7 +103,7 @@
 <body>
 
 <header>
-  <h1>⚔️ COMBATPAIR — Feature Evidence Traceability</h1>
+  <h1>⚔️ GAUNTLEX — Feature Evidence Traceability</h1>
   <p>Every feature mapped to its hypothesis, implementation, and test evidence</p>
   <div class="header-meta">
     <span class="hbadge">342 Tests Passing</span>
@@ -266,7 +266,7 @@
           </div>
           <div class="ev">
             <div class="box-label">Evidence</div>
-            <div class="box-text">ForgeLedger writes YAML-frontmatter Markdown to .combatpair/vault/&lt;CWE-XXX&gt;/ with attack metadata. list_entries(), stats(), render_stats_markdown() work correctly. learn hook writes both ChromaDB and Ledger entries per attack.</div>
+            <div class="box-text">ForgeLedger writes YAML-frontmatter Markdown to .gauntlex/vault/&lt;CWE-XXX&gt;/ with attack metadata. list_entries(), stats(), render_stats_markdown() work correctly. learn hook writes both ChromaDB and Ledger entries per attack.</div>
           </div>
         </div>
         <div class="test-list">
@@ -300,7 +300,7 @@
         <div class="hyp-ev">
           <div class="hyp">
             <div class="box-label">Hypothesis</div>
-            <div class="box-text">YAML-based playbooks for regulatory domains (OWASP, HIPAA, FINRA, PCI-DSS, SOC2) steer Breaker attacks toward domain-specific threat scenarios. A Policy Hub allows <code>combatpair policy install &lt;domain&gt;</code> to extend built-in coverage.</div>
+            <div class="box-text">YAML-based playbooks for regulatory domains (OWASP, HIPAA, FINRA, PCI-DSS, SOC2) steer Breaker attacks toward domain-specific threat scenarios. A Policy Hub allows <code>gauntlex policy install &lt;domain&gt;</code> to extend built-in coverage.</div>
           </div>
           <div class="ev">
             <div class="box-label">Evidence</div>
@@ -376,7 +376,7 @@
         <div class="hyp-ev">
           <div class="hyp">
             <div class="box-label">Hypothesis</div>
-            <div class="box-text">COMBATPAIR acts as a <em>consumer</em> of MCP servers (not a server itself — incompatible with its 60-90s runtime). Live financial/banking threat intelligence from MCP tools enriches the Breaker's policy context pre-run.</div>
+            <div class="box-text">GAUNTLEX acts as a <em>consumer</em> of MCP servers (not a server itself — incompatible with its 60-90s runtime). Live financial/banking threat intelligence from MCP tools enriches the Breaker's policy context pre-run.</div>
           </div>
           <div class="ev">
             <div class="box-label">Evidence</div>
@@ -451,7 +451,7 @@
         <div class="hyp-ev">
           <div class="hyp">
             <div class="box-label">Hypothesis</div>
-            <div class="box-text">A lightweight FastAPI web UI (optional <code>pip install combatpair-ai[ui]</code>) lets teams browse ARS trends, download SARIF/JUnit/HTML evidence, and monitor the Forge Ledger — all in a bright/light accessible color scheme.</div>
+            <div class="box-text">A lightweight FastAPI web UI (optional <code>pip install gauntlex-ai[ui]</code>) lets teams browse ARS trends, download SARIF/JUnit/HTML evidence, and monitor the Forge Ledger — all in a bright/light accessible color scheme.</div>
           </div>
           <div class="ev">
             <div class="box-label">Evidence</div>
@@ -489,7 +489,7 @@
         <div class="hyp-ev">
           <div class="hyp">
             <div class="box-label">Hypothesis</div>
-            <div class="box-text">Running COMBATPAIR Breaker against SWE-bench agent patch outputs and aggregating per-agent ARS scores (avg×0.6 + pass_rate×0.4 rank score) produces a publishable, sortable leaderboard for GitHub Pages.</div>
+            <div class="box-text">Running GAUNTLEX Breaker against SWE-bench agent patch outputs and aggregating per-agent ARS scores (avg×0.6 + pass_rate×0.4 rank score) produces a publishable, sortable leaderboard for GitHub Pages.</div>
           </div>
           <div class="ev">
             <div class="box-label">Evidence</div>
@@ -516,7 +516,7 @@
     <div class="fc-header" onclick="toggle(this)">
       <span class="fc-status green"></span>
       <span class="fc-sprint sprint-12">Sprint 12</span>
-      <span class="fc-title">CPaaS <code>combatpair serve</code> + Enterprise RBAC</span>
+      <span class="fc-title">CPaaS <code>gauntlex serve</code> + Enterprise RBAC</span>
       <div class="fc-badge-row">
         <span class="fc-tests-pill">25 tests</span>
         <span class="fc-arrow">▶</span>
@@ -531,7 +531,7 @@
           </div>
           <div class="ev">
             <div class="box-label">Evidence</div>
-            <div class="box-text">RbacEnforcer resolves roles Admin&gt;Reviewer&gt;Developer in priority order; allow_any_authenticated fallback; 300s TTL cache; invalidate/clear_cache. require() raises PermissionError with readable message. _is_member() returns False on network errors, 404, missing token. RbacConfig loads from COMBATPAIR_ADMIN_TEAMS env vars.</div>
+            <div class="box-text">RbacEnforcer resolves roles Admin&gt;Reviewer&gt;Developer in priority order; allow_any_authenticated fallback; 300s TTL cache; invalidate/clear_cache. require() raises PermissionError with readable message. _is_member() returns False on network errors, 404, missing token. RbacConfig loads from GAUNTLEX_ADMIN_TEAMS env vars.</div>
           </div>
         </div>
         <div class="test-list">
@@ -626,7 +626,7 @@
 </div><!-- .main -->
 
 <footer>
-  COMBATPAIR Adversarial Co-Generation Engine &nbsp;·&nbsp; Built by Sanjoy Ghosh &nbsp;·&nbsp;
+  GAUNTLEX Adversarial Co-Generation Engine &nbsp;·&nbsp; Built by Sanjoy Ghosh &nbsp;·&nbsp;
   342 tests passing · 1 skipped · 13 sprints · Generated 2026-06-28
 </footer>
 

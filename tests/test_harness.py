@@ -1,11 +1,11 @@
-"""Tests for the CombatPairHarness hook chain."""
+"""Tests for the GauntlexHarness hook chain."""
 
 from __future__ import annotations
 
 import pytest
 
-from combatpair.harness.runner import CombatPairHarness, RunContext
-from combatpair.config import AppConfig
+from gauntlex.harness.runner import GauntlexHarness, RunContext
+from gauntlex.config import AppConfig
 
 
 # ── RunContext ─────────────────────────────────────────────────────────────────
@@ -22,7 +22,7 @@ def test_run_context_defaults():
 # ── Hook registration ──────────────────────────────────────────────────────────
 
 def test_register_sync_hook():
-    harness = CombatPairHarness.__new__(CombatPairHarness)
+    harness = GauntlexHarness.__new__(GauntlexHarness)
     harness._hooks = {"pre_run": [], "post_round": [], "post_run": [], "learn": []}
 
     called = []
@@ -35,7 +35,7 @@ def test_register_sync_hook():
 
 
 def test_register_invalid_event_raises():
-    harness = CombatPairHarness.__new__(CombatPairHarness)
+    harness = GauntlexHarness.__new__(GauntlexHarness)
     harness._hooks = {"pre_run": [], "post_round": [], "post_run": [], "learn": []}
 
     with pytest.raises(ValueError, match="Unknown hook event"):
@@ -46,7 +46,7 @@ def test_register_invalid_event_raises():
 
 @pytest.mark.asyncio
 async def test_fire_sync_hook_executes():
-    harness = CombatPairHarness.__new__(CombatPairHarness)
+    harness = GauntlexHarness.__new__(GauntlexHarness)
     harness._hooks = {"pre_run": [], "post_round": [], "post_run": [], "learn": []}
 
     results = []
@@ -66,7 +66,7 @@ async def test_fire_sync_hook_executes():
 
 @pytest.mark.asyncio
 async def test_fire_async_hook_executes():
-    harness = CombatPairHarness.__new__(CombatPairHarness)
+    harness = GauntlexHarness.__new__(GauntlexHarness)
     harness._hooks = {"pre_run": [], "post_round": [], "post_run": [], "learn": []}
 
     results = []
@@ -84,7 +84,7 @@ async def test_fire_async_hook_executes():
 
 @pytest.mark.asyncio
 async def test_fire_multiple_hooks_in_order():
-    harness = CombatPairHarness.__new__(CombatPairHarness)
+    harness = GauntlexHarness.__new__(GauntlexHarness)
     harness._hooks = {"pre_run": [], "post_round": [], "post_run": [], "learn": []}
 
     order = []
@@ -101,7 +101,7 @@ async def test_fire_multiple_hooks_in_order():
 
 def test_harness_init_registers_builtin_hooks():
     cfg = AppConfig.load()
-    harness = CombatPairHarness(config=cfg)
+    harness = GauntlexHarness(config=cfg)
     assert len(harness._hooks["pre_run"]) >= 1    # avf_gate + fingerprint_inject
     assert len(harness._hooks["post_round"]) >= 1  # entropy_guard
     assert len(harness._hooks["post_run"]) >= 1    # emit_report
@@ -111,8 +111,8 @@ def test_harness_init_registers_builtin_hooks():
 # ── harness/commands programmatic API ─────────────────────────────────────────
 
 def test_harness_commands_importable():
-    from combatpair.harness.commands import run, validate, learn, compare
-    from combatpair.harness.commands import doctor, init, report, verify
+    from gauntlex.harness.commands import run, validate, learn, compare
+    from gauntlex.harness.commands import doctor, init, report, verify
     assert callable(run.execute)
     assert callable(validate.execute)
     assert callable(learn.execute)

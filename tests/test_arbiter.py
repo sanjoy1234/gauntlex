@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from combatpair.agents.breaker import Attack
-from combatpair.core.arbiter import Arbiter, _parse_score
+from gauntlex.agents.breaker import Attack
+from gauntlex.core.arbiter import Arbiter, _parse_score
 
 
 def _make_attack(cwe: str, score: float) -> Attack:

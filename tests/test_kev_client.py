@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from combatpair.brain.kev_client import (
+from gauntlex.brain.kev_client import (
     KevClient,
     KevEntry,
     KevResult,

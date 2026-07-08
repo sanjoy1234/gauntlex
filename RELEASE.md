@@ -1,7 +1,7 @@
-# COMBATPAIR Release Notes
+# GAUNTLEX Release Notes
 
 > "Release notes written before the code."
-> — COMBATPAIR Design Principle 6 (Stanford TKI — Rule 6: Ship Confidence)
+> — GAUNTLEX Design Principle 6 (Stanford TKI — Rule 6: Ship Confidence)
 
 ---
 
@@ -11,18 +11,18 @@
 
 ### What's New
 
-COMBATPAIR v0.1.0 introduces the world's first production Python library that runs
+GAUNTLEX v0.1.0 introduces the world's first production Python library that runs
 a Builder agent and a Breaker agent **concurrently** — not sequentially — on the
 same specification. The result is an Adversarial Resilience Score (ARS) and a
 tamper-evident Resilience Report, delivered as a first-class CI/CD artifact.
 
 No existing tool (Devin, OpenHands, GitHub Copilot, Amazon Q) does this.
-They all generate code and test it after the fact. COMBATPAIR attacks during
+They all generate code and test it after the fact. GAUNTLEX attacks during
 construction via `asyncio.gather(builder, breaker)`.
 
 ### Core Engine
 
-- **CombatPair** — `asyncio.gather(builder.generate, breaker.attack)` concurrent execution
+- **Gauntlex** — `asyncio.gather(builder.generate, breaker.attack)` concurrent execution
 - **Adversarial Resilience Score (ARS)** — `Σ(attack_scores) / N` where 1.0=mitigated, 0.5=partial, 0.0=miss
 - **Arbiter** — impartial LLM judge, never generates attacks or code
 - **Resilience Report** — JSON artifact with SHA-256 integrity hash + NIST SSDF / SOC 2 / OWASP SAMM / ISO 27001 control mappings
@@ -44,32 +44,32 @@ construction via `asyncio.gather(builder, breaker)`.
 
 ### Harness
 
-- **CombatPairHarness** — custom hook chain (pre_run, post_round, post_run, learn); no LangChain, no AutoGen
+- **GauntlexHarness** — custom hook chain (pre_run, post_round, post_run, learn); no LangChain, no AutoGen
 - **Harness Commands** — programmatic API layer (run, validate, learn, compare, doctor, init, report, verify)
-- **Developer CLI Skills** — `/combatpair:run`, `/combatpair:validate`, `/combatpair:learn`, `/combatpair:compare`, `/combatpair:doctor`, `/combatpair:report`, `/combatpair:verify`
+- **Developer CLI Skills** — `/gauntlex:run`, `/gauntlex:validate`, `/gauntlex:learn`, `/gauntlex:compare`, `/gauntlex:doctor`, `/gauntlex:report`, `/gauntlex:verify`
 
 ### CLI
 
 ```
-combatpair run       --issue <spec> --mode quick|standard|thorough
-combatpair validate  [--spec <file>]
-combatpair doctor    [--network-check]
-combatpair learn     <run_id>
-combatpair compare   <run_id_a> <run_id_b>
-combatpair audit     [--days N]
-combatpair policy    list | validate <domain>
-combatpair stats     [--days N] [--learning-curve]
-combatpair report    <run_id> [--format md|json]
-combatpair verify    <run_id>
-combatpair prune     [--older-than 90d] [--dry-run]
-combatpair init      [--domain <domain>]
+gauntlex run       --issue <spec> --mode quick|standard|thorough
+gauntlex validate  [--spec <file>]
+gauntlex doctor    [--network-check]
+gauntlex learn     <run_id>
+gauntlex compare   <run_id_a> <run_id_b>
+gauntlex audit     [--days N]
+gauntlex policy    list | validate <domain>
+gauntlex stats     [--days N] [--learning-curve]
+gauntlex report    <run_id> [--format md|json]
+gauntlex verify    <run_id>
+gauntlex prune     [--older-than 90d] [--dry-run]
+gauntlex init      [--domain <domain>]
 ```
 
 ### Infrastructure
 
 - **GitHub Action** — posts ARS as PR comment; blocks merge when ARS < threshold
-- **Docker** — `docker compose up` for full stack (COMBATPAIR + ChromaDB)
-- **CPaaS** — `service/` layer for GitHub App webhook handler (CombatPair-as-a-Service)
+- **Docker** — `docker compose up` for full stack (GAUNTLEX + ChromaDB)
+- **CPaaS** — `service/` layer for GitHub App webhook handler (Gauntlex-as-a-Service)
 - **ForgeBot** — auto-post Resilience Report as GitHub PR comment
 - **Beam Executor** — experimental stochastic parallel Breaker ensemble (N beams)
 
@@ -82,8 +82,8 @@ combatpair init      [--domain <domain>]
 
 ### `fail_open: false`
 
-By default, COMBATPAIR **blocks** the merge when ARS falls below `gate.minimum_ars` (default: 0.80).
-This is intentional. Security is not optional. Set `fail_open: true` in `.combatpair.yml` to downgrade
+By default, GAUNTLEX **blocks** the merge when ARS falls below `gate.minimum_ars` (default: 0.80).
+This is intentional. Security is not optional. Set `fail_open: true` in `.gauntlex.yml` to downgrade
 to a warning if your team is still calibrating thresholds.
 
 ### ARS Formula
@@ -104,12 +104,12 @@ bash scripts/ship_gate.sh
 
 All 7 checks must pass:
 1. Package installs cleanly (`pip install -e .`)
-2. Environment health (`combatpair doctor --network-check`)
-3. AVF gate (`combatpair validate` — Breaker finds ≥75% of golden CVE fixtures)
+2. Environment health (`gauntlex doctor --network-check`)
+3. AVF gate (`gauntlex validate` — Breaker finds ≥75% of golden CVE fixtures)
 4. Unit tests (`pytest tests/ -q` — 50+ tests passing)
 5. Standalone demo (`python examples/standalone_demo.py --mode quick`)
-6. CLI integration (`combatpair init → validate → run`)
-7. Report integrity (`combatpair verify <latest_run_id>`)
+6. CLI integration (`gauntlex init → validate → run`)
+7. Report integrity (`gauntlex verify <latest_run_id>`)
 
 ### Breaking Changes
 
@@ -118,9 +118,9 @@ None — this is the initial release.
 ### Upgrade Path
 
 ```bash
-pip install combatpair-ai==0.1.0
-combatpair init  # creates .combatpair.yml with defaults
-combatpair validate  # verify environment
+pip install gauntlex-ai==0.1.0
+gauntlex init  # creates .gauntlex.yml with defaults
+gauntlex validate  # verify environment
 ```
 
 ---
@@ -133,7 +133,7 @@ combatpair validate  # verify environment
 - Playwright integration for frontend XSS detection
 - HIPAA playbook refinements for EHR-specific patterns
 - HTML report format for Resilience Report
-- `combatpair serve` — start CPaaS GitHub App server
+- `gauntlex serve` — start CPaaS GitHub App server
 
 ### v0.3.0 — Week 4 (2026-07-21)
 
@@ -151,4 +151,4 @@ combatpair validate  # verify environment
 
 ---
 
-*COMBATPAIR is MIT licensed. Contributions welcome — see [CONTRIBUTING-PLAYBOOKS.md](CONTRIBUTING-PLAYBOOKS.md).*
+*GAUNTLEX is MIT licensed. Contributions welcome — see [CONTRIBUTING-PLAYBOOKS.md](CONTRIBUTING-PLAYBOOKS.md).*

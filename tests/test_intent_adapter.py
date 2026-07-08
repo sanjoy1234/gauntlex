@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from combatpair.brain.intent_adapter import (
+from gauntlex.brain.intent_adapter import (
     IntentAdapter,
     IntentResult,
     _adf_to_text,

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from combatpair.core.break_context import (
+from gauntlex.core.break_context import (
     compress_target,
     compress_forge_recall,
     compress_cwe_context,
@@ -298,20 +298,20 @@ def test_compress_breaker_inputs_empty_recall():
 # ── Breaker integration ────────────────────────────────────────────────────────
 
 def test_breaker_has_break_context_enabled_attribute():
-    from combatpair.agents.breaker import Breaker
+    from gauntlex.agents.breaker import Breaker
     b = Breaker(provider="ollama", model="llama3.1:8b")
     assert b.break_context_enabled is True
 
 
 def test_breaker_break_context_disabled_via_constructor():
-    from combatpair.agents.breaker import Breaker
+    from gauntlex.agents.breaker import Breaker
     b = Breaker(provider="ollama", model="llama3.1:8b", break_context_enabled=False)
     assert b.break_context_enabled is False
 
 
 def test_breaker_result_has_compression_stats_field():
-    from combatpair.agents.breaker import BreakerResult
-    from combatpair.agents.base import ModelResponse
+    from gauntlex.agents.breaker import BreakerResult
+    from gauntlex.agents.base import ModelResponse
     r = BreakerResult(
         attacks=[],
         model_response=ModelResponse(content="[]", model="test"),
@@ -321,20 +321,20 @@ def test_breaker_result_has_compression_stats_field():
 
 
 def test_config_break_context_enabled_default():
-    from combatpair.config import CombatPairConfig
-    assert CombatPairConfig().break_context_enabled is True
+    from gauntlex.config import GauntlexConfig
+    assert GauntlexConfig().break_context_enabled is True
 
 
 def test_config_break_context_enabled_loadable():
     import tempfile, os
     from pathlib import Path
-    from combatpair.config import AppConfig
-    yaml_content = "version: 1\ncombat_pair:\n  break_context_enabled: false\n"
+    from gauntlex.config import AppConfig
+    yaml_content = "version: 1\ngauntlex:\n  break_context_enabled: false\n"
     with tempfile.NamedTemporaryFile(mode="w", suffix=".yml", delete=False) as f:
         f.write(yaml_content)
         tmp = f.name
     try:
         cfg = AppConfig.load(tmp)
-        assert cfg.combat_pair.break_context_enabled is False
+        assert cfg.gauntlex.break_context_enabled is False
     finally:
         os.unlink(tmp)

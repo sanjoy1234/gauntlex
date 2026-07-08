@@ -7,13 +7,13 @@ from pathlib import Path
 
 import os
 
-from combatpair.dashboard.app import (
+from gauntlex.dashboard.app import (
     _load_active_runs,
     _load_all_reports,
     _render_index,
     create_app,
 )
-from combatpair.config import AppConfig
+from gauntlex.config import AppConfig
 
 
 # ── _load_all_reports ──────────────────────────────────────────────────────────
@@ -25,13 +25,13 @@ def test_load_all_reports_empty_dir(tmp_path):
 
 def test_load_all_reports_reads_json(tmp_path):
     report = {
-        "run_id": "combatpair-test-001", "ars_score": 0.85,
+        "run_id": "gauntlex-test-001", "ars_score": 0.85,
         "attack_count": 5, "miss_count": 1, "generated_at": "2026-06-28T12:00:00Z",
     }
-    (tmp_path / "combatpair-test-001.json").write_text(json.dumps(report))
+    (tmp_path / "gauntlex-test-001.json").write_text(json.dumps(report))
     reports = _load_all_reports(tmp_path)
     assert len(reports) == 1
-    assert reports[0]["run_id"] == "combatpair-test-001"
+    assert reports[0]["run_id"] == "gauntlex-test-001"
 
 
 def test_load_all_reports_skips_corrupt_json(tmp_path):
@@ -66,11 +66,11 @@ def test_load_active_runs_empty_dir(tmp_path):
 def test_load_active_runs_returns_running_with_live_pid(tmp_path):
     # Use this test process's own PID — guaranteed alive for the test's duration.
     (tmp_path / "run-a.json").write_text(
-        json.dumps(_make_run_state("combatpair-run-a", "running", os.getpid()))
+        json.dumps(_make_run_state("gauntlex-run-a", "running", os.getpid()))
     )
     active = _load_active_runs(tmp_path)
     assert len(active) == 1
-    assert active[0]["run_id"] == "combatpair-run-a"
+    assert active[0]["run_id"] == "gauntlex-run-a"
     assert active[0]["issue"] == "demo_issue.md"
     assert active[0]["mode"] == "quick"
 
@@ -78,7 +78,7 @@ def test_load_active_runs_returns_running_with_live_pid(tmp_path):
 def test_load_active_runs_skips_dead_pid_and_cleans_up(tmp_path):
     # PID 999999 is extremely unlikely to be alive.
     state_file = tmp_path / "run-b.json"
-    state_file.write_text(json.dumps(_make_run_state("combatpair-run-b", "running", 999999)))
+    state_file.write_text(json.dumps(_make_run_state("gauntlex-run-b", "running", 999999)))
     active = _load_active_runs(tmp_path)
     assert active == []
     assert not state_file.exists()  # stale state file cleaned up
@@ -86,7 +86,7 @@ def test_load_active_runs_skips_dead_pid_and_cleans_up(tmp_path):
 
 def test_load_active_runs_ignores_completed_status(tmp_path):
     (tmp_path / "run-c.json").write_text(
-        json.dumps(_make_run_state("combatpair-run-c", "completed", os.getpid()))
+        json.dumps(_make_run_state("gauntlex-run-c", "completed", os.getpid()))
     )
     assert _load_active_runs(tmp_path) == []
 
@@ -173,7 +173,7 @@ def test_render_index_has_ars_trend_section():
 
 def test_render_index_shows_active_runs():
     cfg = AppConfig()
-    active = [{"run_id": "combatpair-active-001", "issue": "demo_issue.md",
+    active = [{"run_id": "gauntlex-active-001", "issue": "demo_issue.md",
                "mode": "quick", "elapsed_seconds": 72.0, "elapsed": "1m 12s"}]
     html = _render_index([], cfg, active)
     assert "RUNNING" in html
@@ -189,19 +189,19 @@ def test_render_index_no_active_runs_shows_nothing_extra():
 
 
 def test_render_index_warns_when_no_project_found():
-    """cfg.config_source is None when no .combatpair.yml was found anywhere up the
+    """cfg.config_source is None when no .gauntlex.yml was found anywhere up the
     tree — the dashboard must warn loudly instead of silently showing 0 runs."""
     cfg = AppConfig()
     assert cfg.config_source is None
     html = _render_index([], cfg, [])
-    assert "No COMBATPAIR project found" in html
+    assert "No GAUNTLEX project found" in html
 
 
 def test_render_index_no_warning_when_project_found(tmp_path):
     cfg = AppConfig()
-    cfg.config_source = tmp_path / ".combatpair.yml"
+    cfg.config_source = tmp_path / ".gauntlex.yml"
     html = _render_index([], cfg, [])
-    assert "No COMBATPAIR project found" not in html
+    assert "No GAUNTLEX project found" not in html
 
 
 def test_render_index_chart_data_is_valid_json():
@@ -221,13 +221,13 @@ def test_render_index_chart_data_is_valid_json():
 
 def test_create_app_requires_fastapi(monkeypatch):
     """If FastAPI is not installed, create_app should raise RuntimeError."""
-    import combatpair.dashboard.app as dash_module
+    import gauntlex.dashboard.app as dash_module
     monkeypatch.setattr(dash_module, "_FASTAPI_AVAILABLE", False)
     try:
         create_app()
         assert False, "expected RuntimeError"
     except RuntimeError as e:
-        assert "pip install combatpair-ai[ui]" in str(e)
+        assert "pip install gauntlex-ai[ui]" in str(e)
 
 
 def test_create_app_returns_fastapi_instance():
@@ -266,13 +266,13 @@ def test_api_runs_active_endpoint_reflects_running_process(tmp_path):
     runs_dir = tmp_path / "runs"
     runs_dir.mkdir()
     (runs_dir / "r1.json").write_text(
-        json.dumps(_make_run_state("combatpair-live-001", "running", os.getpid()))
+        json.dumps(_make_run_state("gauntlex-live-001", "running", os.getpid()))
     )
     resp = client.get("/api/runs/active")
     assert resp.status_code == 200
     data = resp.json()
     assert len(data) == 1
-    assert data[0]["run_id"] == "combatpair-live-001"
+    assert data[0]["run_id"] == "gauntlex-live-001"
 
 
 def test_api_runs_active_endpoint_not_shadowed_by_run_id_route(tmp_path):
@@ -308,14 +308,14 @@ def test_status_page_shows_active_run_count(tmp_path):
     runs_dir = tmp_path / "runs"
     runs_dir.mkdir()
     (runs_dir / "r1.json").write_text(
-        json.dumps(_make_run_state("combatpair-live-002", "running", os.getpid()))
+        json.dumps(_make_run_state("gauntlex-live-002", "running", os.getpid()))
     )
     resp = client.get("/status")
     assert "Active Runs" in resp.text
 
 
 def test_status_page_warns_when_no_project_found(tmp_path):
-    """create_app(config=None) with no COMBATPAIR_CONFIG_PATH and no .combatpair.yml
+    """create_app(config=None) with no GAUNTLEX_CONFIG_PATH and no .gauntlex.yml
     reachable from cwd must warn on /status, not silently show an empty project."""
     import pytest
     try:
@@ -328,7 +328,7 @@ def test_status_page_warns_when_no_project_found(tmp_path):
     client = TestClient(create_app(cfg))
 
     resp = client.get("/status")
-    assert "No COMBATPAIR project found" in resp.text
+    assert "No GAUNTLEX project found" in resp.text
 
 
 # ── pyproject.toml [ui] extra ──────────────────────────────────────────────────

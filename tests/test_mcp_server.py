@@ -1,4 +1,4 @@
-"""Tests for COMBATPAIR MCP Server — Sprint A."""
+"""Tests for GAUNTLEX MCP Server — Sprint A."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import asyncio
 import json
 import pytest
 
-from combatpair.mcp.server import MCPServer, _McpError, _eta, _ATTACK_COUNTS, _TOOLS
+from gauntlex.mcp.server import MCPServer, _McpError, _eta, _ATTACK_COUNTS, _TOOLS
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -33,7 +33,7 @@ async def _error_engine(run_id, spec, mode, domain, language, config):
 
 
 def _server(engine=None):
-    from combatpair.config import AppConfig
+    from gauntlex.config import AppConfig
     return MCPServer(config=AppConfig(), engine_fn=engine or _fake_engine)
 
 
@@ -44,7 +44,7 @@ async def test_initialize_returns_protocol_version():
     s = _server()
     resp = await s.handle_message({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}})
     assert resp["result"]["protocolVersion"] == "2024-11-05"
-    assert resp["result"]["serverInfo"]["name"] == "combatpair"
+    assert resp["result"]["serverInfo"]["name"] == "gauntlex"
 
 
 @pytest.mark.asyncio
@@ -77,7 +77,7 @@ async def test_tools_list_returns_all_five_tools():
     resp = await s.handle_message({"jsonrpc": "2.0", "id": 4, "method": "tools/list", "params": {}})
     tools = resp["result"]["tools"]
     names = {t["name"] for t in tools}
-    assert names == {"combatpair_run", "combatpair_status", "combatpair_vault_stats", "combatpair_policy_list", "combatpair_verify"}
+    assert names == {"gauntlex_run", "gauntlex_status", "gauntlex_vault_stats", "gauntlex_policy_list", "gauntlex_verify"}
 
 
 @pytest.mark.asyncio
@@ -90,86 +90,86 @@ async def test_tools_list_each_has_input_schema():
 
 
 @pytest.mark.asyncio
-async def test_combatpair_run_has_required_spec_field():
+async def test_gauntlex_run_has_required_spec_field():
     s = _server()
     resp = await s.handle_message({"jsonrpc": "2.0", "id": 6, "method": "tools/list", "params": {}})
-    run_tool = next(t for t in resp["result"]["tools"] if t["name"] == "combatpair_run")
+    run_tool = next(t for t in resp["result"]["tools"] if t["name"] == "gauntlex_run")
     assert "spec" in run_tool["inputSchema"]["required"]
 
 
-# ── combatpair_run ───────────────────────────────────────────────────────────────
+# ── gauntlex_run ───────────────────────────────────────────────────────────────
 
 @pytest.mark.asyncio
-async def test_combatpair_run_returns_run_id():
+async def test_gauntlex_run_returns_run_id():
     s = _server()
     resp = await s.handle_message({
         "jsonrpc": "2.0", "id": 10,
         "method": "tools/call",
-        "params": {"name": "combatpair_run", "arguments": {"spec": "Build a login endpoint"}},
+        "params": {"name": "gauntlex_run", "arguments": {"spec": "Build a login endpoint"}},
     })
     result = resp["result"]
-    assert result["run_id"].startswith("combatpair-mcp-")
+    assert result["run_id"].startswith("gauntlex-mcp-")
     assert result["status"] == "started"
 
 
 @pytest.mark.asyncio
-async def test_combatpair_run_empty_spec_returns_error():
+async def test_gauntlex_run_empty_spec_returns_error():
     s = _server()
     resp = await s.handle_message({
         "jsonrpc": "2.0", "id": 11,
         "method": "tools/call",
-        "params": {"name": "combatpair_run", "arguments": {"spec": ""}},
+        "params": {"name": "gauntlex_run", "arguments": {"spec": ""}},
     })
     assert "error" in resp
     assert resp["error"]["code"] == -32602
 
 
 @pytest.mark.asyncio
-async def test_combatpair_run_missing_spec_returns_error():
+async def test_gauntlex_run_missing_spec_returns_error():
     s = _server()
     resp = await s.handle_message({
         "jsonrpc": "2.0", "id": 12,
         "method": "tools/call",
-        "params": {"name": "combatpair_run", "arguments": {}},
+        "params": {"name": "gauntlex_run", "arguments": {}},
     })
     assert "error" in resp
 
 
 @pytest.mark.asyncio
-async def test_combatpair_run_invalid_mode_defaults_to_quick():
+async def test_gauntlex_run_invalid_mode_defaults_to_quick():
     s = _server()
     resp = await s.handle_message({
         "jsonrpc": "2.0", "id": 13,
         "method": "tools/call",
-        "params": {"name": "combatpair_run", "arguments": {"spec": "spec text", "mode": "ultrafast"}},
+        "params": {"name": "gauntlex_run", "arguments": {"spec": "spec text", "mode": "ultrafast"}},
     })
     # should succeed with mode normalised to quick
     assert "run_id" in resp["result"]
 
 
 @pytest.mark.asyncio
-async def test_combatpair_run_content_includes_run_id():
+async def test_gauntlex_run_content_includes_run_id():
     s = _server()
     resp = await s.handle_message({
         "jsonrpc": "2.0", "id": 14,
         "method": "tools/call",
-        "params": {"name": "combatpair_run", "arguments": {"spec": "Build a user profile API"}},
+        "params": {"name": "gauntlex_run", "arguments": {"spec": "Build a user profile API"}},
     })
     run_id = resp["result"]["run_id"]
     content_text = resp["result"]["content"][0]["text"]
     assert run_id in content_text
 
 
-# ── combatpair_status ────────────────────────────────────────────────────────────
+# ── gauntlex_status ────────────────────────────────────────────────────────────
 
 @pytest.mark.asyncio
-async def test_combatpair_status_running_before_completion():
+async def test_gauntlex_status_running_before_completion():
     s = _server()
     # Start a run (engine returns instantly but task hasn't been awaited yet)
     run_resp = await s.handle_message({
         "jsonrpc": "2.0", "id": 20,
         "method": "tools/call",
-        "params": {"name": "combatpair_run", "arguments": {"spec": "Build an API", "mode": "quick"}},
+        "params": {"name": "gauntlex_run", "arguments": {"spec": "Build an API", "mode": "quick"}},
     })
     run_id = run_resp["result"]["run_id"]
 
@@ -177,19 +177,19 @@ async def test_combatpair_status_running_before_completion():
     status_resp = await s.handle_message({
         "jsonrpc": "2.0", "id": 21,
         "method": "tools/call",
-        "params": {"name": "combatpair_status", "arguments": {"run_id": run_id}},
+        "params": {"name": "gauntlex_status", "arguments": {"run_id": run_id}},
     })
     assert status_resp["result"]["run_id"] == run_id
     assert status_resp["result"]["status"] in ("running", "complete")
 
 
 @pytest.mark.asyncio
-async def test_combatpair_status_complete_after_await():
+async def test_gauntlex_status_complete_after_await():
     s = _server()
     run_resp = await s.handle_message({
         "jsonrpc": "2.0", "id": 22,
         "method": "tools/call",
-        "params": {"name": "combatpair_run", "arguments": {"spec": "Build a payment API"}},
+        "params": {"name": "gauntlex_run", "arguments": {"spec": "Build a payment API"}},
     })
     run_id = run_resp["result"]["run_id"]
 
@@ -199,7 +199,7 @@ async def test_combatpair_status_complete_after_await():
     status_resp = await s.handle_message({
         "jsonrpc": "2.0", "id": 23,
         "method": "tools/call",
-        "params": {"name": "combatpair_status", "arguments": {"run_id": run_id}},
+        "params": {"name": "gauntlex_status", "arguments": {"run_id": run_id}},
     })
     assert status_resp["result"]["status"] == "complete"
     result = status_resp["result"]["result"]
@@ -208,24 +208,24 @@ async def test_combatpair_status_complete_after_await():
 
 
 @pytest.mark.asyncio
-async def test_combatpair_status_unknown_run_id_returns_error():
+async def test_gauntlex_status_unknown_run_id_returns_error():
     s = _server()
     resp = await s.handle_message({
         "jsonrpc": "2.0", "id": 24,
         "method": "tools/call",
-        "params": {"name": "combatpair_status", "arguments": {"run_id": "nonexistent-run-id"}},
+        "params": {"name": "gauntlex_status", "arguments": {"run_id": "nonexistent-run-id"}},
     })
     assert "error" in resp
     assert resp["error"]["code"] == -32602
 
 
 @pytest.mark.asyncio
-async def test_combatpair_status_engine_error_surfaced():
+async def test_gauntlex_status_engine_error_surfaced():
     s = _server(engine=_error_engine)
     run_resp = await s.handle_message({
         "jsonrpc": "2.0", "id": 25,
         "method": "tools/call",
-        "params": {"name": "combatpair_run", "arguments": {"spec": "error spec"}},
+        "params": {"name": "gauntlex_run", "arguments": {"spec": "error spec"}},
     })
     run_id = run_resp["result"]["run_id"]
     await asyncio.sleep(0.05)
@@ -233,12 +233,12 @@ async def test_combatpair_status_engine_error_surfaced():
     status_resp = await s.handle_message({
         "jsonrpc": "2.0", "id": 26,
         "method": "tools/call",
-        "params": {"name": "combatpair_status", "arguments": {"run_id": run_id}},
+        "params": {"name": "gauntlex_status", "arguments": {"run_id": run_id}},
     })
     assert status_resp["result"]["status"] == "error"
 
 
-# ── combatpair_vault_stats ───────────────────────────────────────────────────────
+# ── gauntlex_vault_stats ───────────────────────────────────────────────────────
 
 @pytest.mark.asyncio
 async def test_vault_stats_no_vault_returns_zero():
@@ -246,7 +246,7 @@ async def test_vault_stats_no_vault_returns_zero():
     resp = await s.handle_message({
         "jsonrpc": "2.0", "id": 30,
         "method": "tools/call",
-        "params": {"name": "combatpair_vault_stats", "arguments": {}},
+        "params": {"name": "gauntlex_vault_stats", "arguments": {}},
     })
     stats = resp["result"]["stats"]
     assert stats["total"] == 0
@@ -259,13 +259,13 @@ async def test_vault_stats_has_content_key():
     resp = await s.handle_message({
         "jsonrpc": "2.0", "id": 31,
         "method": "tools/call",
-        "params": {"name": "combatpair_vault_stats", "arguments": {}},
+        "params": {"name": "gauntlex_vault_stats", "arguments": {}},
     })
     assert "content" in resp["result"]
     assert resp["result"]["content"][0]["type"] == "text"
 
 
-# ── combatpair_policy_list ───────────────────────────────────────────────────────
+# ── gauntlex_policy_list ───────────────────────────────────────────────────────
 
 @pytest.mark.asyncio
 async def test_policy_list_returns_seven_domains():
@@ -273,7 +273,7 @@ async def test_policy_list_returns_seven_domains():
     resp = await s.handle_message({
         "jsonrpc": "2.0", "id": 40,
         "method": "tools/call",
-        "params": {"name": "combatpair_policy_list", "arguments": {}},
+        "params": {"name": "gauntlex_policy_list", "arguments": {}},
     })
     domains = resp["result"]["domains"]
     assert len(domains) == 7
@@ -285,7 +285,7 @@ async def test_policy_list_includes_hipaa_and_finra():
     resp = await s.handle_message({
         "jsonrpc": "2.0", "id": 41,
         "method": "tools/call",
-        "params": {"name": "combatpair_policy_list", "arguments": {}},
+        "params": {"name": "gauntlex_policy_list", "arguments": {}},
     })
     names = {d["name"] for d in resp["result"]["domains"]}
     assert "hipaa" in names
@@ -294,7 +294,7 @@ async def test_policy_list_includes_hipaa_and_finra():
     assert "nist_ssdf" in names
 
 
-# ── combatpair_verify ────────────────────────────────────────────────────────────
+# ── gauntlex_verify ────────────────────────────────────────────────────────────
 
 @pytest.mark.asyncio
 async def test_verify_missing_run_id_returns_error():
@@ -302,7 +302,7 @@ async def test_verify_missing_run_id_returns_error():
     resp = await s.handle_message({
         "jsonrpc": "2.0", "id": 50,
         "method": "tools/call",
-        "params": {"name": "combatpair_verify", "arguments": {}},
+        "params": {"name": "gauntlex_verify", "arguments": {}},
     })
     assert "error" in resp
     assert resp["error"]["code"] == -32602
@@ -314,7 +314,7 @@ async def test_verify_nonexistent_report_returns_not_found():
     resp = await s.handle_message({
         "jsonrpc": "2.0", "id": 51,
         "method": "tools/call",
-        "params": {"name": "combatpair_verify", "arguments": {"run_id": "no-such-run"}},
+        "params": {"name": "gauntlex_verify", "arguments": {"run_id": "no-such-run"}},
     })
     assert resp["result"]["verified"] is False
     assert "not found" in resp["result"]["content"][0]["text"].lower()
@@ -328,7 +328,7 @@ async def test_unknown_tool_returns_error():
     resp = await s.handle_message({
         "jsonrpc": "2.0", "id": 60,
         "method": "tools/call",
-        "params": {"name": "combatpair_nonexistent", "arguments": {}},
+        "params": {"name": "gauntlex_nonexistent", "arguments": {}},
     })
     assert "error" in resp
     assert resp["error"]["code"] == -32601

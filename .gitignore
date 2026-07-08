@@ -28,14 +28,14 @@ htmlcov/
 .tox/
 *.log
 
-# COMBATPAIR runtime data — local state, not source code
-.combatpair/reports/
-.combatpair/forge/
-.combatpair/brain/
-.combatpair/runs/
-.combatpair/vault/
-.combatpair/policies/
-# Keep .combatpair.yml (config template) — DO commit it
+# GAUNTLEX runtime data — local state, not source code
+.gauntlex/reports/
+.gauntlex/forge/
+.gauntlex/brain/
+.gauntlex/runs/
+.gauntlex/vault/
+.gauntlex/policies/
+# Keep .gauntlex.yml (config template) — DO commit it
 
 # IDE / OS
 .DS_Store
@@ -55,7 +55,7 @@ htmlcov/
 *.pem
 *.key
 secrets.json
-combatpair-app.private-key.pem
+gauntlex-app.private-key.pem
 
 # Claude Code workspace config — not for public repo
 CLAUDE.md

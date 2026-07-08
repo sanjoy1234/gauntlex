@@ -8,9 +8,9 @@ from pathlib import Path
 
 import pytest
 
-from combatpair.agents.breaker import Attack
-from combatpair.core.combat_pair import CombatResult
-from combatpair.output.report import (
+from gauntlex.agents.breaker import Attack
+from gauntlex.core.gauntlex import CombatResult
+from gauntlex.output.report import (
     build_report,
     generate_run_id,
     render_markdown,
@@ -37,7 +37,7 @@ def _make_result(scores: list[float]) -> CombatResult:
 
 def test_run_id_format():
     run_id = generate_run_id()
-    assert run_id.startswith("combatpair-")
+    assert run_id.startswith("gauntlex-")
     assert len(run_id) > 20
 
 
@@ -82,7 +82,7 @@ def test_render_markdown_contains_ars():
     report = build_report(result, generate_run_id())
     md = render_markdown(report)
     assert "ARS Score" in md
-    assert "COMBATPAIR" in md
+    assert "GAUNTLEX" in md
     assert "sha256:" in md
 
 
@@ -149,7 +149,7 @@ def test_render_sarif_has_runs():
     sarif = json.loads(render_sarif(report))
     assert len(sarif["runs"]) == 1
     run = sarif["runs"][0]
-    assert run["tool"]["driver"]["name"] == "COMBATPAIR"
+    assert run["tool"]["driver"]["name"] == "GAUNTLEX"
 
 
 def test_render_sarif_missed_attack_is_error():
@@ -222,13 +222,13 @@ def test_render_junit_xml_test_counts():
 # ── Harness command ───────────────────────────────────────────────────────────
 
 def test_harness_report_supported_formats_constant():
-    from combatpair.harness.commands.report import SUPPORTED_FORMATS
+    from gauntlex.harness.commands.report import SUPPORTED_FORMATS
     for fmt in ("md", "json", "html", "sarif", "junit"):
         assert fmt in SUPPORTED_FORMATS
 
 
 def test_harness_report_unknown_format_raises():
-    from combatpair.harness.commands.report import execute
+    from gauntlex.harness.commands.report import execute
     try:
         execute("any-run-id", fmt="pdf")
         assert False, "expected ValueError"

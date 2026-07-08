@@ -1,7 +1,7 @@
 FROM python:3.11-slim
 
 LABEL maintainer="sanjoy.sghosh@gmail.com"
-LABEL description="COMBATPAIR — Adversarial Co-Generation Engine"
+LABEL description="GAUNTLEX — Adversarial Co-Generation Engine"
 
 # System deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -19,12 +19,12 @@ COPY src/ ./src/
 RUN pip install --no-cache-dir -e .
 
 # Create reports and forge dirs
-RUN mkdir -p .combatpair/reports .combatpair/forge .combatpair/brain
+RUN mkdir -p .gauntlex/reports .gauntlex/forge .gauntlex/brain
 
 # Non-root user for security
-RUN useradd --create-home combatpair
-RUN chown -R combatpair:combatpair /app
-USER combatpair
+RUN useradd --create-home gauntlex
+RUN chown -R gauntlex:gauntlex /app
+USER gauntlex
 
 # Default: run validate to confirm environment health
-CMD ["combatpair", "doctor"]
+CMD ["gauntlex", "doctor"]

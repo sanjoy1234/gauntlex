@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from combatpair.memory.forge_ledger import ForgeLedger, _slugify, _entry_to_markdown, LedgerEntry
+from gauntlex.memory.forge_ledger import ForgeLedger, _slugify, _entry_to_markdown, LedgerEntry
 
 
 # ── _slugify ───────────────────────────────────────────────────────────────────
@@ -31,7 +31,7 @@ def _make_entry(**kwargs) -> LedgerEntry:
     defaults = dict(
         cwe="CWE-89", attack_id="atk-0001", title="SQL Injection test",
         description="Attacker manipulates query via username field.",
-        severity="high", effectiveness=0.0, run_id="combatpair-test-run",
+        severity="high", effectiveness=0.0, run_id="gauntlex-test-run",
         fingerprint="python:django:sql_direct", recorded_at="2026-06-28T12:00:00Z",
     )
     defaults.update(kwargs)

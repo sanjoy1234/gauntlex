@@ -1,4 +1,4 @@
-"""Tests for Policy Hub — combatpair policy install (Sprint 5)."""
+"""Tests for Policy Hub — gauntlex policy install (Sprint 5)."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from combatpair.policy.hub import (
+from gauntlex.policy.hub import (
     HubDomainEntry,
     InstallResult,
     fetch_index,
@@ -15,7 +15,7 @@ from combatpair.policy.hub import (
     list_installed,
     search_index,
 )
-from combatpair.policy.engine import list_available_domains, load_domain
+from gauntlex.policy.engine import list_available_domains, load_domain
 
 
 # ── Fixtures ───────────────────────────────────────────────────────────────────
@@ -157,7 +157,7 @@ def test_install_domain_already_installed_with_force(tmp_path, monkeypatch):
             def raise_for_status(self): pass
         return FakeResp()
 
-    monkeypatch.setattr("combatpair.policy.hub.fetch_index", mock_fetch)
+    monkeypatch.setattr("gauntlex.policy.hub.fetch_index", mock_fetch)
     import httpx
     monkeypatch.setattr(httpx, "get", mock_get)
 
@@ -168,7 +168,7 @@ def test_install_domain_already_installed_with_force(tmp_path, monkeypatch):
 
 
 def test_install_domain_not_in_index(tmp_path, monkeypatch):
-    monkeypatch.setattr("combatpair.policy.hub.fetch_index", lambda _url: [])
+    monkeypatch.setattr("gauntlex.policy.hub.fetch_index", lambda _url: [])
     result = install_domain("nonexistent_domain", policies_dir=tmp_path)
     assert not result.success
     assert "not found" in result.error.lower()
@@ -177,7 +177,7 @@ def test_install_domain_not_in_index(tmp_path, monkeypatch):
 def test_install_domain_network_error(tmp_path, monkeypatch):
     def bad_fetch(_url):
         raise RuntimeError("Connection refused")
-    monkeypatch.setattr("combatpair.policy.hub.fetch_index", bad_fetch)
+    monkeypatch.setattr("gauntlex.policy.hub.fetch_index", bad_fetch)
     result = install_domain("owasp_api_security", policies_dir=tmp_path)
     assert not result.success
     assert "Connection refused" in result.error
@@ -200,7 +200,7 @@ def test_install_domain_creates_policies_dir(tmp_path, monkeypatch):
             def raise_for_status(self): pass
         return FakeResp()
 
-    monkeypatch.setattr("combatpair.policy.hub.fetch_index", mock_fetch)
+    monkeypatch.setattr("gauntlex.policy.hub.fetch_index", mock_fetch)
     import httpx
     monkeypatch.setattr(httpx, "get", mock_get)
 
@@ -217,7 +217,7 @@ def test_search_index_by_name(monkeypatch):
         HubDomainEntry("owasp_api_security", "2023.1", "OWASP API Security", "OWASP", "http://x", 10, ["api"]),
         HubDomainEntry("nist_ssdf", "1.1", "NIST SSDF", "NIST", "http://y", 8, ["government"]),
     ]
-    monkeypatch.setattr("combatpair.policy.hub.fetch_index", lambda _url: entries)
+    monkeypatch.setattr("gauntlex.policy.hub.fetch_index", lambda _url: entries)
     results = search_index("owasp")
     assert len(results) == 1
     assert results[0].name == "owasp_api_security"
@@ -228,7 +228,7 @@ def test_search_index_by_tag(monkeypatch):
         HubDomainEntry("owasp_api_security", "2023.1", "OWASP API Security", "OWASP", "http://x", 10, ["api", "rest"]),
         HubDomainEntry("nist_ssdf", "1.1", "NIST SSDF", "NIST", "http://y", 8, ["government"]),
     ]
-    monkeypatch.setattr("combatpair.policy.hub.fetch_index", lambda _url: entries)
+    monkeypatch.setattr("gauntlex.policy.hub.fetch_index", lambda _url: entries)
     results = search_index("api")
     assert any(e.name == "owasp_api_security" for e in results)
 
@@ -237,7 +237,7 @@ def test_search_index_no_match(monkeypatch):
     entries = [
         HubDomainEntry("owasp_api_security", "2023.1", "OWASP API Security", "OWASP", "http://x", 10, ["api"]),
     ]
-    monkeypatch.setattr("combatpair.policy.hub.fetch_index", lambda _url: entries)
+    monkeypatch.setattr("gauntlex.policy.hub.fetch_index", lambda _url: entries)
     results = search_index("pci_dss")
     assert results == []
 
@@ -246,14 +246,14 @@ def test_search_index_no_match(monkeypatch):
 
 def test_installed_domain_appears_in_list_available(tmp_path, monkeypatch):
     (tmp_path / "my_custom.yaml").write_text("name: my_custom")
-    monkeypatch.setattr("combatpair.policy.engine._USER_POLICIES_DIR", tmp_path)
+    monkeypatch.setattr("gauntlex.policy.engine._USER_POLICIES_DIR", tmp_path)
     domains = list_available_domains()
     assert "my_custom" in domains
 
 
 def test_installed_domain_loadable(tmp_path, monkeypatch):
     (tmp_path / "owasp_api_security.yaml").write_text(_SAMPLE_YAML)
-    monkeypatch.setattr("combatpair.policy.engine._USER_POLICIES_DIR", tmp_path)
+    monkeypatch.setattr("gauntlex.policy.engine._USER_POLICIES_DIR", tmp_path)
     domain = load_domain("owasp_api_security")
     assert domain.name == "owasp_api_security"
     assert len(domain.scenarios) == 1
@@ -261,7 +261,7 @@ def test_installed_domain_loadable(tmp_path, monkeypatch):
 
 
 def test_builtin_domains_still_loadable_with_user_dir(tmp_path, monkeypatch):
-    monkeypatch.setattr("combatpair.policy.engine._USER_POLICIES_DIR", tmp_path)
+    monkeypatch.setattr("gauntlex.policy.engine._USER_POLICIES_DIR", tmp_path)
     domain = load_domain("owasp_top10")
     assert domain.name is not None
     assert len(domain.scenarios) > 0
@@ -288,7 +288,7 @@ def test_hub_domain_yamls_exist():
 
 def test_hub_domain_yaml_loadable_via_engine(tmp_path, monkeypatch):
     hub_domains_dir = Path(__file__).parent.parent / "policy-hub" / "domains"
-    monkeypatch.setattr("combatpair.policy.engine._USER_POLICIES_DIR", hub_domains_dir)
+    monkeypatch.setattr("gauntlex.policy.engine._USER_POLICIES_DIR", hub_domains_dir)
     domain = load_domain("owasp_api_security")
     assert domain.name == "owasp_api_security"
     assert len(domain.scenarios) >= 5

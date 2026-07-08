@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from combatpair.policy.engine import load_domain, validate_domain_yaml
-from combatpair.output.notifications import (
+from gauntlex.policy.engine import load_domain, validate_domain_yaml
+from gauntlex.output.notifications import (
     send_slack,
     create_jira_ticket,
     notify_low_ars,
@@ -94,7 +94,7 @@ def test_send_slack_success(monkeypatch):
 
     ok, err = send_slack(
         webhook_url="https://hooks.slack.com/test",
-        run_id="combatpair-2026-06-28T12-00-00Z-abcd",
+        run_id="gauntlex-2026-06-28T12-00-00Z-abcd",
         ars=0.62,
         miss_count=3,
         top_misses=[
@@ -160,7 +160,7 @@ def test_create_jira_success(monkeypatch):
         jira_base_url="https://jira.example.com",
         jira_project="SEC",
         jira_token="my-token",
-        run_id="combatpair-test-run",
+        run_id="gauntlex-test-run",
         ars=0.55,
         miss_count=2,
         top_misses=[{"cwe": "CWE-89", "title": "SQL Injection", "severity": "high", "description": "..."}],
@@ -200,7 +200,7 @@ def test_notify_slack_called_on_low_ars(monkeypatch):
         called["slack"] = True
         return True, ""
 
-    monkeypatch.setattr("combatpair.output.notifications.send_slack", mock_send_slack)
+    monkeypatch.setattr("gauntlex.output.notifications.send_slack", mock_send_slack)
 
     result = notify_low_ars(
         "run-id", 0.6,
@@ -221,7 +221,7 @@ def test_notify_jira_called_when_env_set(monkeypatch):
 
     monkeypatch.setenv("JIRA_BASE_URL", "https://jira.example.com")
     monkeypatch.setenv("JIRA_TOKEN", "test-token")
-    monkeypatch.setattr("combatpair.output.notifications.create_jira_ticket", mock_create_jira)
+    monkeypatch.setattr("gauntlex.output.notifications.create_jira_ticket", mock_create_jira)
 
     result = notify_low_ars("run-id", 0.6, [], 0.80, jira_project="SEC")
     assert called.get("jira") is True

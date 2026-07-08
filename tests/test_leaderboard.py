@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from combatpair.leaderboard.engine import (
+from gauntlex.leaderboard.engine import (
     AgentScore,
     LeaderboardEntry,
     build_leaderboard,

@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import pytest
 
-from combatpair.brain.domain_intelligence import (
+from gauntlex.brain.domain_intelligence import (
     McpServerConfig,
     DiaResult,
     DomainIntelligenceAdapter,
@@ -199,7 +199,7 @@ def test_dia_enrich_appends_enrichment(monkeypatch):
         return DiaResult(server=server.name, tool=server.tool,
                          enrichment=f"Intel from {server.name}", error="")
 
-    monkeypatch.setattr("combatpair.brain.domain_intelligence.call_mcp_tool", mock_call)
+    monkeypatch.setattr("gauntlex.brain.domain_intelligence.call_mcp_tool", mock_call)
 
     dia = DomainIntelligenceAdapter([
         McpServerConfig("fin-intel", "http://x/mcp", "threats"),
@@ -215,7 +215,7 @@ def test_dia_enrich_skips_failed_servers(monkeypatch):
         return DiaResult(server=server.name, tool=server.tool,
                          enrichment="", error="timeout")
 
-    monkeypatch.setattr("combatpair.brain.domain_intelligence.call_mcp_tool", mock_call)
+    monkeypatch.setattr("gauntlex.brain.domain_intelligence.call_mcp_tool", mock_call)
 
     dia = DomainIntelligenceAdapter([
         McpServerConfig("bad-server", "http://x/mcp", "t"),
@@ -230,7 +230,7 @@ def test_dia_enrich_multiple_servers(monkeypatch):
         return DiaResult(server=server.name, tool=server.tool,
                          enrichment=f"[{server.name}] threat data", error="")
 
-    monkeypatch.setattr("combatpair.brain.domain_intelligence.call_mcp_tool", mock_call)
+    monkeypatch.setattr("gauntlex.brain.domain_intelligence.call_mcp_tool", mock_call)
 
     dia = DomainIntelligenceAdapter([
         McpServerConfig("server-a", "http://a/mcp", "t"),
@@ -245,14 +245,14 @@ def test_dia_enrich_multiple_servers(monkeypatch):
 # ── Config integration ─────────────────────────────────────────────────────────
 
 def test_config_mcp_servers_default_empty():
-    from combatpair.config import AppConfig
+    from gauntlex.config import AppConfig
     cfg = AppConfig()
     assert cfg.mcp_servers == []
 
 
 def test_config_mcp_servers_loadable():
     import tempfile, os
-    from combatpair.config import AppConfig
+    from gauntlex.config import AppConfig
 
     yaml_content = """\
 version: 1
@@ -277,7 +277,7 @@ mcp_servers:
 
 
 def test_dia_from_config_no_servers():
-    from combatpair.config import AppConfig
+    from gauntlex.config import AppConfig
     cfg = AppConfig()
     dia = DomainIntelligenceAdapter.from_config(cfg)
     assert dia.available_servers() == []

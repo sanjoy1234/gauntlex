@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-COMBATPAIR standalone demo — no installation required beyond the package itself.
+GAUNTLEX standalone demo — no installation required beyond the package itself.
 
-Demonstrates the full CombatPair flow on a realistic Flask authentication spec.
+Demonstrates the full Gauntlex flow on a realistic Flask authentication spec.
 Uses Ollama by default (zero cost). Set ANTHROPIC_API_KEY to use Anthropic API.
 
 Usage:
@@ -22,11 +22,11 @@ from pathlib import Path
 # Ensure package is importable from repo root
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from combatpair.config import AppConfig
-from combatpair.core.combat_pair import CombatPair
-from combatpair.core.arbiter import Arbiter
-from combatpair.output.report import build_report, generate_run_id, render_markdown, save_report
-from combatpair.brain.fingerprint import fingerprint_spec
+from gauntlex.config import AppConfig
+from gauntlex.core.gauntlex import Gauntlex
+from gauntlex.core.arbiter import Arbiter
+from gauntlex.output.report import build_report, generate_run_id, render_markdown, save_report
+from gauntlex.brain.fingerprint import fingerprint_spec
 
 DEMO_SPEC = """
 Implement a Python Flask endpoint POST /login that:
@@ -41,7 +41,7 @@ Implement a Python Flask endpoint POST /login that:
 
 BANNER = """
 ╔══════════════════════════════════════════════════════╗
-║  COMBATPAIR — Adversarial Co-Generation Engine         ║
+║  GAUNTLEX — Adversarial Co-Generation Engine         ║
 ║  Concurrent Builder + Breaker on the same spec       ║
 ╚══════════════════════════════════════════════════════╝
 """
@@ -78,8 +78,8 @@ async def run_demo(mode: str = "quick") -> None:
             return
 
     cfg = AppConfig()
-    cfg.combat_pair.attack_count = attack_count
-    cfg.combat_pair.rounds_max = 2
+    cfg.gauntlex.attack_count = attack_count
+    cfg.gauntlex.rounds_max = 2
     cfg.deployment.model_provider = provider
     if provider == "anthropic":
         cfg.deployment.anthropic_model = model
@@ -88,12 +88,12 @@ async def run_demo(mode: str = "quick") -> None:
 
     model_kwargs = {"provider": provider, "model": model}
 
-    print("Starting CombatPair...")
+    print("Starting Gauntlex...")
     print("  Builder and Breaker running CONCURRENTLY via asyncio.gather()")
     print()
 
     arbiter = Arbiter(**model_kwargs)
-    pair = CombatPair(config=cfg)
+    pair = Gauntlex(config=cfg)
 
     try:
         result = await pair.run(DEMO_SPEC, arbiter)
@@ -112,8 +112,8 @@ async def run_demo(mode: str = "quick") -> None:
     run_id = generate_run_id()
     report = build_report(result, run_id, spec_ref="examples/demo_issue.md")
 
-    # Save to .combatpair/reports/
-    reports_dir = Path(".combatpair/reports")
+    # Save to .gauntlex/reports/
+    reports_dir = Path(".gauntlex/reports")
     reports_dir.mkdir(parents=True, exist_ok=True)
     report_path = save_report(report, reports_dir)
 

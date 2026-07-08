@@ -1,20 +1,20 @@
 version: "3.9"
 
 services:
-  combatpair:
+  gauntlex:
     build: .
-    image: combatpair-ai:latest
+    image: gauntlex-ai:latest
     volumes:
-      - .combatpair:/app/.combatpair
+      - .gauntlex:/app/.gauntlex
       - ./examples:/app/examples:ro
     environment:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
     depends_on:
       - chromadb
     networks:
-      - combatpair-net
-    # Override to run: docker compose run combatpair combatpair run --issue examples/demo_issue.md
-    command: combatpair doctor
+      - gauntlex-net
+    # Override to run: docker compose run gauntlex gauntlex run --issue examples/demo_issue.md
+    command: gauntlex doctor
 
   chromadb:
     image: chromadb/chroma:latest
@@ -23,7 +23,7 @@ services:
     volumes:
       - chromadb_data:/chroma/chroma
     networks:
-      - combatpair-net
+      - gauntlex-net
 
   # Optional: Ollama for local model support (zero API cost)
   # Uncomment if you have NVIDIA GPU or run on ARM Mac
@@ -34,12 +34,12 @@ services:
   #   volumes:
   #     - ollama_data:/root/.ollama
   #   networks:
-  #     - combatpair-net
+  #     - gauntlex-net
 
 volumes:
   chromadb_data:
   # ollama_data:
 
 networks:
-  combatpair-net:
+  gauntlex-net:
     driver: bridge

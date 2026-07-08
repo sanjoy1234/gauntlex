@@ -1,6 +1,6 @@
 ← [Back to README](../README.md) · [Domain Intelligence](DOMAIN_INTELLIGENCE.md)
 
-# COMBATPAIR — Deep Dive
+# GAUNTLEX — Deep Dive
 
 The full story: why concurrent adversarial testing exists, how it compares to
 existing AppSec tooling, the complete CLI and configuration reference,
@@ -12,11 +12,11 @@ get started; this page covers why it works and every detail underneath it.
 ## Table of contents
 
 - [The problem that started this](#the-problem-that-started-this)
-- [If your team adopted TDD, you already understand why COMBATPAIR exists](#if-your-team-adopted-tdd-you-already-understand-why-combatpair-exists)
+- [If your team adopted TDD, you already understand why GAUNTLEX exists](#if-your-team-adopted-tdd-you-already-understand-why-gauntlex-exists)
 - [The three differentiators, in full](#the-three-differentiators-in-full)
 - [The perimeter security fallacy](#the-perimeter-security-fallacy--a-message-for-enterprise-architecture-boards)
 - [What "adversarially resilient" actually means](#what-does-adversarially-resilient-ai-generated-code-actually-mean)
-- [The twelve levers of resilience](#the-twelve-levers-of-resilience-combatpair-tests)
+- [The twelve levers of resilience](#the-twelve-levers-of-resilience-gauntlex-tests)
 - [Why the spec is the right attack surface](#why-the-spec-is-the-right-attack-surface--not-the-code)
 - [Why Devin, Copilot, SWE-agent, and OpenHands don't do this](#why-devin-copilot-swe-agent-and-openhands-dont-do-this--and-structurally-cannot)
 - [The Adversarial Resilience Score — formal definition](#the-adversarial-resilience-score-ars-a-formal-definition)
@@ -24,8 +24,8 @@ get started; this page covers why it works and every detail underneath it.
 - [Features in depth](#features-in-depth)
 - [Installation](#installation)
 - [GitHub Actions CI/CD](#github-actions--cicd-adversarial-gate)
-- [Competitive positioning](#combatpair-in-the-security-toolchain--competitive-positioning)
-- [How COMBATPAIR works](#how-combatpair-works)
+- [Competitive positioning](#gauntlex-in-the-security-toolchain--competitive-positioning)
+- [How GAUNTLEX works](#how-gauntlex-works)
 - [Complete CLI reference](#complete-cli-reference)
 - [Configuration reference](#configuration-reference)
 - [Output formats](#output-formats)
@@ -54,20 +54,20 @@ This is not hypothetical. It is happening across every regulated industry — fi
 
 ---
 
-## If your team adopted TDD, you already understand why COMBATPAIR exists
+## If your team adopted TDD, you already understand why GAUNTLEX exists
 
 Engineering managers who shipped the TDD transition remember the argument: *"We don't have time to write tests."* Then they measured what "no time" actually cost — defects found in QA cost 10× more than defects found in development; defects found in production cost 100× more. Once those numbers were on the table, the conversation changed. TDD was not a cost — it was the cheapest defect-removal process available at the point of creation.
 
-COMBATPAIR applies the same logic to adversarial security:
+GAUNTLEX applies the same logic to adversarial security:
 
-| | TDD | COMBATPAIR |
+| | TDD | GAUNTLEX |
 |---|---|---|
 | **What it attacks** | Functional defects | Security weaknesses |
 | **When it runs** | While code is written | While code is generated |
 | **What it prevents** | Broken features in QA | Exploitable code in production |
 | **Artifact produced** | Test suite | Adversarial Resilience Score + compliance evidence |
 
-The difference is that TDD requires a human to write the test cases. COMBATPAIR generates adversarial attacks from your specification automatically, using the same source of truth your AI coding tool is already reading.
+The difference is that TDD requires a human to write the test cases. GAUNTLEX generates adversarial attacks from your specification automatically, using the same source of truth your AI coding tool is already reading.
 
 ---
 
@@ -77,7 +77,7 @@ The difference is that TDD requires a human to write the test cases. COMBATPAIR 
 
 Every AI coding tool today follows the same sequential pattern: generate code, run tests, maybe run a scanner. The security check happens after the code exists — and after the team has committed to shipping it.
 
-COMBATPAIR's architecture is different at the foundation. The **Builder** (generates code from the spec) and the **Breaker** (generates adversarial attacks from the same spec) are fired simultaneously via `asyncio.gather()`:
+GAUNTLEX's architecture is different at the foundation. The **Builder** (generates code from the spec) and the **Breaker** (generates adversarial attacks from the same spec) are fired simultaneously via `asyncio.gather()`:
 
 ```
                          asyncio.gather()
@@ -98,14 +98,14 @@ By the time the Builder finishes, you have code **and** an Adversarial Resilienc
 
 ### 🔌 2. A Native MCP Integration, Both Directions
 
-COMBATPAIR both **exposes** an MCP server (so your IDE can trigger and poll runs) and **consumes** external MCP servers plus two free live-CVE feeds (so every run is enriched with current threat data). These are two independent mechanisms — full detail, including exactly which IDEs are confirmed supported for which purpose, is in [Domain Intelligence → COMBATPAIR as an MCP server vs. consumer](DOMAIN_INTELLIGENCE.md#combatpair-as-an-mcp-server-vs-combatpair-as-an-mcp-consumer).
+GAUNTLEX both **exposes** an MCP server (so your IDE can trigger and poll runs) and **consumes** external MCP servers plus two free live-CVE feeds (so every run is enriched with current threat data). These are two independent mechanisms — full detail, including exactly which IDEs are confirmed supported for which purpose, is in [Domain Intelligence → GAUNTLEX as an MCP server vs. consumer](DOMAIN_INTELLIGENCE.md#gauntlex-as-an-mcp-server-vs-gauntlex-as-an-mcp-consumer).
 
 **One config line to add it to Claude Code** (`~/.claude/mcp_servers.json`):
 
 ```json
 {
   "mcpServers": {
-    "combatpair": { "command": "combatpair", "args": ["mcp-server"] }
+    "gauntlex": { "command": "gauntlex", "args": ["mcp-server"] }
   }
 }
 ```
@@ -113,26 +113,26 @@ COMBATPAIR both **exposes** an MCP server (so your IDE can trigger and poll runs
 Once added, five tools appear in your coding tool:
 
 ```
-combatpair_run         — fire adversarial assessment; returns run_id in <1s
-combatpair_status      — poll for ARS score and attack breakdown
-combatpair_vault_stats — how many adversarial patterns your Forge has learned
-combatpair_policy_list — list available security domain playbooks
-combatpair_verify      — verify SHA-256 integrity of any Resilience Report
+gauntlex_run         — fire adversarial assessment; returns run_id in <1s
+gauntlex_status      — poll for ARS score and attack breakdown
+gauntlex_vault_stats — how many adversarial patterns your Forge has learned
+gauntlex_policy_list — list available security domain playbooks
+gauntlex_verify      — verify SHA-256 integrity of any Resilience Report
 ```
 
 What this looks like in practice inside Claude Code:
 
 ```
-You:        "Run a COMBATPAIR quick assessment on this payment API spec"
+You:        "Run a GAUNTLEX quick assessment on this payment API spec"
 
-COMBATPAIR:   Adversarial assessment started.
-            run_id: combatpair-mcp-a1b2c3d4  (mode: quick — 5 attacks)
+GAUNTLEX:   Adversarial assessment started.
+            run_id: gauntlex-mcp-a1b2c3d4  (mode: quick — 5 attacks)
 
             [some time later — depends on your configured model provider]
 
 You:        "Check results"
 
-COMBATPAIR:   ARS: 0.83  ✅ PASSED  (gate: ≥ 0.80)
+GAUNTLEX:   ARS: 0.83  ✅ PASSED  (gate: ≥ 0.80)
             Attacks: 5 total · 1 missed
 
             ✅ CWE-89    SQL injection via login form        score: 1.0
@@ -142,7 +142,7 @@ COMBATPAIR:   ARS: 0.83  ✅ PASSED  (gate: ≥ 0.80)
             ✅ CWE-862   Missing object-level authorization  score: 1.0
 ```
 
-`combatpair_run` fires an `asyncio.Task` and returns the `run_id` immediately, because a full run can take anywhere from under a minute to several minutes depending on mode and model provider — far longer than MCP's interactive-use expectations. `combatpair_status` polls until it's done. For team deployments, `combatpair serve --mcp` exposes the same tools over HTTP alongside the Combat Dashboard, so a whole team can share one COMBATPAIR instance.
+`gauntlex_run` fires an `asyncio.Task` and returns the `run_id` immediately, because a full run can take anywhere from under a minute to several minutes depending on mode and model provider — far longer than MCP's interactive-use expectations. `gauntlex_status` polls until it's done. For team deployments, `gauntlex serve --mcp` exposes the same tools over HTTP alongside the Combat Dashboard, so a whole team can share one GAUNTLEX instance.
 
 ### 🌐 3. Regulatory Domains and Live Threat Enrichment as First-Class Input
 
@@ -250,7 +250,7 @@ The pattern is not that AI writes uniquely dangerous code. The pattern is that *
 3. **Every framework you are regulated by** — PCI DSS, NIST SSDF, HIPAA Security Rule, FFIEC — explicitly requires application-layer security controls as a separate compliance domain from network controls.
 4. **The AI coding agent adoption your organization has made has increased your application-layer risk surface** at a rate human security review cannot match.
 
-COMBATPAIR is a mechanism for the layer network security cannot reach — it does not replace network security, and it is not a substitute for the tools covered in [Competitive Positioning](#combatpair-in-the-security-toolchain--competitive-positioning) below.
+GAUNTLEX is a mechanism for the layer network security cannot reach — it does not replace network security, and it is not a substitute for the tools covered in [Competitive Positioning](#gauntlex-in-the-security-toolchain--competitive-positioning) below.
 
 ---
 
@@ -282,7 +282,7 @@ This code does exactly what the spec says. Every functional test passes. But an 
 
 **1. Completeness of defense** — the code defends against the *full threat model implied by its business context*, not just the attacks the developer happened to think of while writing it.
 
-**2. Correctness of defense** — having a defense is not enough if it is bypassable. COMBATPAIR scores partial defenses at 0.5, not 1.0, because a partial defense gives false confidence.
+**2. Correctness of defense** — having a defense is not enough if it is bypassable. GAUNTLEX scores partial defenses at 0.5, not 1.0, because a partial defense gives false confidence.
 
 **3. Depth of defense** — security controls must be applied at the right layers. The Breaker probes for defense-in-depth failures: does every path from untrusted input to sensitive operation have a checkpoint?
 
@@ -292,9 +292,9 @@ Security invariants that every experienced engineer knows are **implicit, unstat
 
 ---
 
-## The Twelve Levers of Resilience COMBATPAIR Tests
+## The Twelve Levers of Resilience GAUNTLEX Tests
 
-COMBATPAIR's Breaker probes generated code against twelve categories of adversarial attack, selected and weighted by the language and business domain detected from the specification.
+GAUNTLEX's Breaker probes generated code against twelve categories of adversarial attack, selected and weighted by the language and business domain detected from the specification.
 
 ### 1. Injection Resistance (CWE-89, CWE-78, CWE-94, CWE-1343)
 Does the generated code safely handle user-controlled data that flows into interpreters — SQL, OS shell, `eval()`, LDAP, XPath, template engines?
@@ -338,11 +338,11 @@ Avoids leaking sensitive data in error messages, logs, API responses, or headers
 
 Static analysis (Bandit, Semgrep, CodeQL) reads the **generated code** and pattern-matches against known bad patterns. Valuable, but bounded: it only finds what it was programmed to look for.
 
-COMBATPAIR's Breaker reads the **specification**. It asks: "Given what this code is *supposed to do*, what would a motivated attacker *try to do with it*?" — a different question, and the one that matters for security.
+GAUNTLEX's Breaker reads the **specification**. It asks: "Given what this code is *supposed to do*, what would a motivated attacker *try to do with it*?" — a different question, and the one that matters for security.
 
 1. **The spec defines the trust boundary.** "Accept user input" is the trust boundary declaration.
 2. **The spec implies the business domain.** "HIPAA patient portal" implies PHI protection even if the spec never says "protect PHI."
-3. **The spec survives implementation changes.** Refactor the code and COMBATPAIR's attacks against the spec remain valid — they test intent, not implementation.
+3. **The spec survives implementation changes.** Refactor the code and GAUNTLEX's attacks against the spec remain valid — they test intent, not implementation.
 4. **The spec is where AI hallucination risk concentrates.** The Breaker tests the exact assumptions the AI had to infer.
 
 ---
@@ -383,29 +383,29 @@ ARS range: [0.0, 1.0]
 
 **ARS is not a test pass rate.** A test pass rate measures whether the code does what it should. ARS measures whether the code holds up against what it should *not* allow. Code can be 100% test-passing and 0.0 ARS simultaneously.
 
-**ARS is tamper-evident.** Every report carries a SHA-256 hash over the ordered attack array. `combatpair verify <run_id>` re-derives this hash at any future point.
+**ARS is tamper-evident.** Every report carries a SHA-256 hash over the ordered attack array. `gauntlex verify <run_id>` re-derives this hash at any future point.
 
-**ARS is a gate, not a suggestion.** With `fail_open: false`, ARS below `minimum_ars` causes `combatpair run` to exit 1 — blocking the CI pipeline.
+**ARS is a gate, not a suggestion.** With `fail_open: false`, ARS below `minimum_ars` causes `gauntlex run` to exit 1 — blocking the CI pipeline.
 
 ---
 
 ## Why Concurrent Matters — The Value You Are Actually Getting
 
-> *"You could test security after the build. So why does it matter that COMBATPAIR attacks at the same time as generation?"*
+> *"You could test security after the build. So why does it matter that GAUNTLEX attacks at the same time as generation?"*
 
 The answer is **not about speed**. Concurrent execution provides value sequential execution cannot provide, regardless of how fast the sequential approach is.
 
 ### The difference is not time — it is the attack surface
 
-A scanner that runs **after** code is built attacks the **implementation** — what the AI decided to do. COMBATPAIR's Breaker, running concurrently from the **specification**, attacks the **intent** — what the system was supposed to do. Attackers attack intent, not implementation.
+A scanner that runs **after** code is built attacks the **implementation** — what the AI decided to do. GAUNTLEX's Breaker, running concurrently from the **specification**, attacks the **intent** — what the system was supposed to do. Attackers attack intent, not implementation.
 
 ### The anchoring problem that sequential testing cannot escape
 
-A human reviewer (or a post-build scanner) who sees code first unconsciously anchors to "what does this code do?" COMBATPAIR's Breaker **never sees the generated code** — it reasons purely from the specification, without any anchor to the Builder's implementation choices.
+A human reviewer (or a post-build scanner) who sees code first unconsciously anchors to "what does this code do?" GAUNTLEX's Breaker **never sees the generated code** — it reasons purely from the specification, without any anchor to the Builder's implementation choices.
 
 ### The commitment trap — why post-build security review fails in practice
 
-By the time a security review runs on generated code: the AI generated it, a developer approved the PR, CI passed, and the team has moved on. A vulnerability found now requires a new PR, a re-context-switch, a new review cycle — under timeline pressure, because the feature was "already done." In practice, findings from post-build review get negotiated, deferred, or closed as "acceptable risk" at a rate pre-commit findings simply are not. COMBATPAIR catches findings before the first commit exists — there is no sunk cost to overcome.
+By the time a security review runs on generated code: the AI generated it, a developer approved the PR, CI passed, and the team has moved on. A vulnerability found now requires a new PR, a re-context-switch, a new review cycle — under timeline pressure, because the feature was "already done." In practice, findings from post-build review get negotiated, deferred, or closed as "acceptable risk" at a rate pre-commit findings simply are not. GAUNTLEX catches findings before the first commit exists — there is no sunk cost to overcome.
 
 ### The "same timestamp" proof — concurrency creates a causal chain
 
@@ -421,17 +421,17 @@ When Builder and Breaker run against the same spec at the same timestamp, every 
 | QA / test | $5,000 |
 | Production | $30,000 – $300,000 |
 
-Traditional security testing operates at code review or QA. COMBATPAIR operates at the design/implementation boundary. The cost difference is not a multiplier — it is an order of magnitude.
+Traditional security testing operates at code review or QA. GAUNTLEX operates at the design/implementation boundary. The cost difference is not a multiplier — it is an order of magnitude.
 
 ### What concurrent execution is NOT
 
-- **Not a replacement for penetration testing.** Human pentesters with full system access will always discover attacks COMBATPAIR misses.
-- **Not a SAST/DAST replacement.** COMBATPAIR does not scan your existing codebase; it adversarially tests each spec-to-code generation event.
+- **Not a replacement for penetration testing.** Human pentesters with full system access will always discover attacks GAUNTLEX misses.
+- **Not a SAST/DAST replacement.** GAUNTLEX does not scan your existing codebase; it adversarially tests each spec-to-code generation event.
 - **Not faster security testing.** It is a different operation — adversarial specification review — at a different point in the pipeline.
 
 ### Summary — the six structural advantages of concurrent adversarial testing
 
-| Property | Post-Build Security Testing | COMBATPAIR Concurrent Testing |
+| Property | Post-Build Security Testing | GAUNTLEX Concurrent Testing |
 |----------|---------------------------|---------------------------|
 | **Attack surface** | Implementation (code as-is) | Specification (intent, same surface as real attackers) |
 | **Anchoring bias** | Scanner / reviewer anchored to code | Breaker never sees code — pure adversarial reasoning |
@@ -444,9 +444,9 @@ Traditional security testing operates at code review or QA. COMBATPAIR operates 
 
 ## Features in depth
 
-### Feature 1 — The CombatPair Engine
+### Feature 1 — The Gauntlex Engine
 
-Sequential security testing is fundamentally reactive — by the time you run a scanner, the code already exists, is often already reviewed, sometimes already merged. The CombatPair runs Builder and Breaker concurrently against the same spec using `asyncio.gather()`. When both finish, the Arbiter scores every attack and produces the ARS.
+Sequential security testing is fundamentally reactive — by the time you run a scanner, the code already exists, is often already reviewed, sometimes already merged. The Gauntlex runs Builder and Breaker concurrently against the same spec using `asyncio.gather()`. When both finish, the Arbiter scores every attack and produces the ARS.
 
 | Mode | Attacks | Use case |
 |------|---------|---------|
@@ -457,33 +457,33 @@ Sequential security testing is fundamentally reactive — by the time you run a 
 Wall-clock time and API cost scale with attack count and depend entirely on your configured model provider — see [Model Options](../README.md#requirements) in the README.
 
 ```bash
-combatpair run --issue spec.md --mode standard --pretty
+gauntlex run --issue spec.md --mode standard --pretty
 ```
 
 ### Feature 2 — The Knowledge Forge
 
-Every time a new AI coding tool runs, it starts cold. After every COMBATPAIR run, every scored attack is written into the **Knowledge Forge** — a [ChromaDB](https://www.trychroma.com/) vector database embedded in `.combatpair/forge/`. On the next run, the Breaker recalls the most semantically similar past attacks for this codebase fingerprint and starts from a higher adversarial baseline — a learning curve rather than a cold start every time.
+Every time a new AI coding tool runs, it starts cold. After every GAUNTLEX run, every scored attack is written into the **Knowledge Forge** — a [ChromaDB](https://www.trychroma.com/) vector database embedded in `.gauntlex/forge/`. On the next run, the Breaker recalls the most semantically similar past attacks for this codebase fingerprint and starts from a higher adversarial baseline — a learning curve rather than a cold start every time.
 
 The Forge is local by default — fully air-gapped, no data leaves your environment, unless you opt into the [Forge Network](#feature-11--forge-network-opt-in-community-pattern-sharing).
 
 ```bash
-combatpair stats --learning-curve   # visualize the compound improvement
-combatpair stats --by-cwe           # ARS breakdown by vulnerability category
-combatpair stats --days 90          # 90-day trend
+gauntlex stats --learning-curve   # visualize the compound improvement
+gauntlex stats --by-cwe           # ARS breakdown by vulnerability category
+gauntlex stats --days 90          # 90-day trend
 ```
 
 ### Feature 3 — The Forge Ledger
 
-ChromaDB is powerful for similarity search but opaque to human readers. The **Forge Ledger** is a human-readable Markdown vault alongside the Knowledge Forge — every attack from every run written as an individual Markdown file with YAML frontmatter at `.combatpair/vault/<CWE-XXX>/<slug>.md`, readable in any text editor, diffable in a PR, attachable to a compliance ticket.
+ChromaDB is powerful for similarity search but opaque to human readers. The **Forge Ledger** is a human-readable Markdown vault alongside the Knowledge Forge — every attack from every run written as an individual Markdown file with YAML frontmatter at `.gauntlex/vault/<CWE-XXX>/<slug>.md`, readable in any text editor, diffable in a PR, attachable to a compliance ticket.
 
 ```bash
-combatpair vault --stats                          # aggregate stats
-combatpair vault --cwe CWE-89 --format md         # Markdown table, filtered by CWE
+gauntlex vault --stats                          # aggregate stats
+gauntlex vault --cwe CWE-89 --format md         # Markdown table, filtered by CWE
 ```
 
 ### Feature 4 — Language Profiles and Spec Fingerprinting
 
-A generic "run all attacks" approach wastes rounds on CWEs that don't apply to the target language — prototype pollution against a Java service, nil-pointer dereference against a Python REST API. COMBATPAIR fingerprints the specification first — detecting language and surface signals from the spec text, never from generated code. Detection runs in priority order: TypeScript → JavaScript → Java → Go → Python.
+A generic "run all attacks" approach wastes rounds on CWEs that don't apply to the target language — prototype pollution against a Java service, nil-pointer dereference against a Python REST API. GAUNTLEX fingerprints the specification first — detecting language and surface signals from the spec text, never from generated code. Detection runs in priority order: TypeScript → JavaScript → Java → Go → Python.
 
 | Language | Priority CWEs | Key attack context |
 |----------|-------------|-------------------|
@@ -493,7 +493,7 @@ A generic "run all attacks" approach wastes rounds on CWEs that don't apply to t
 | **Java** | CWE-89, CWE-502, CWE-78, CWE-611, CWE-918, CWE-863, CWE-362, CWE-22 | Deserialization, XXE, Spring auth gaps |
 | **Go** | CWE-89, CWE-78, CWE-362, CWE-476, CWE-22, CWE-918, CWE-770, CWE-674 | Race conditions, nil deref, goroutine leaks |
 
-Beyond language, COMBATPAIR detects surface signals that select sub-profiles: async/Promise patterns prioritize race conditions; filesystem access prioritizes path traversal; `eval`/dynamic exec prioritizes injection; React/Next.js prioritizes XSS and CORS; NestJS/Spring prioritizes authentication and BOLA; Go web frameworks prioritize SSRF and resource exhaustion.
+Beyond language, GAUNTLEX detects surface signals that select sub-profiles: async/Promise patterns prioritize race conditions; filesystem access prioritizes path traversal; `eval`/dynamic exec prioritizes injection; React/Next.js prioritizes XSS and CORS; NestJS/Spring prioritizes authentication and BOLA; Go web frameworks prioritize SSRF and resource exhaustion.
 
 ### Feature 5 — BreakContext Token Compression
 
@@ -503,10 +503,10 @@ In thorough mode with 50 attacks and a rich Forge recall, naive prompts can exce
 2. **Forge recall deduplication** — removes past attacks with >65% Jaccard word overlap; retained attacks truncated to 250 characters.
 3. **CWE context collapsing** — multi-line CWE descriptions collapsed to single lines capped at 120 characters.
 
-Enabled by default; disable per-project in `.combatpair.yml`:
+Enabled by default; disable per-project in `.gauntlex.yml`:
 
 ```yaml
-combat_pair:
+gauntlex:
   break_context_enabled: false   # disable for maximum Breaker context fidelity
 ```
 
@@ -515,29 +515,29 @@ combat_pair:
 A generic OWASP Top 10 scan gives generic results. A healthcare company's threat model is different from a fintech's threat model. The **Adversarial Policy Engine** loads YAML domain playbooks that encode domain-specific threat scenarios, regulatory control mappings, and CWE priorities — passed to the Breaker as policy context.
 
 ```bash
-combatpair run --issue patient_api_spec.md --mode standard --domain hipaa --pretty
+gauntlex run --issue patient_api_spec.md --mode standard --domain hipaa --pretty
 ```
 
 For exactly which domains exist today, their real scenario counts, and how to add your own — see **[Domain Intelligence](DOMAIN_INTELLIGENCE.md)**, the single source of truth for this, rather than repeating a table here that could drift out of sync.
 
 ```bash
-combatpair policy list                            # all available domains
-combatpair policy hub                             # browse community-contributed domains
-combatpair policy install owasp_api_security      # install one
-combatpair policy search "broker dealer"          # search by tag or keyword
+gauntlex policy list                            # all available domains
+gauntlex policy hub                             # browse community-contributed domains
+gauntlex policy install owasp_api_security      # install one
+gauntlex policy search "broker dealer"          # search by tag or keyword
 ```
 
 ### Feature 7 — SARIF 2.1.0, JUnit XML, and HTML Resilience Reports
 
-COMBATPAIR emits three output formats simultaneously from every run, each for a different audience:
+GAUNTLEX emits three output formats simultaneously from every run, each for a different audience:
 
 - **SARIF 2.1.0 → GitHub Code Scanning.** Every missed attack appears as an open security alert in Security → Code Scanning.
 - **JUnit XML → CI dashboards.** Every attack becomes a test case — mitigated passes, missed fails with a descriptive message. Works with GitHub Actions, Jenkins, GitLab CI, CircleCI.
 - **HTML Resilience Report → compliance evidence.** A self-contained document with the full run summary, attack table, control mappings, and tamper-evident hash.
 
 ```bash
-combatpair run --issue spec.md --output-sarif combatpair.sarif --output-junit combatpair.xml
-combatpair report <run_id> --format html > report.html
+gauntlex run --issue spec.md --output-sarif gauntlex.sarif --output-junit gauntlex.xml
+gauntlex report <run_id> --format html > report.html
 ```
 
 ### Feature 8 — Combat Dashboard
@@ -545,8 +545,8 @@ combatpair report <run_id> --format html > report.html
 For a security team managing many repositories and hundreds of runs per week: a centralized ARS trend, gate pass/fail history, and evidence download, in a browser.
 
 ```bash
-pip install "combatpair-ai[ui]"
-combatpair dashboard --port 8080
+pip install "gauntlex-ai[ui]"
+gauntlex dashboard --port 8080
 ```
 
 Exposes a REST API (`/api/runs`, `/api/runs/{id}`) for integration with existing dashboards (Grafana, Splunk, Datadog) via standard HTTP.
@@ -556,26 +556,26 @@ Exposes a REST API (`/api/runs`, `/api/runs/{id}`) for integration with existing
 SWE-bench measures whether an agent fixed the bug — not whether the fix introduced new vulnerabilities. Score multiple AI agents against the same task set and rank by adversarial resilience:
 
 ```bash
-combatpair leaderboard --reports-dir .combatpair/reports --output docs/leaderboard.html
+gauntlex leaderboard --reports-dir .gauntlex/reports --output docs/leaderboard.html
 ```
 
 Rank score = `avg_ARS × 0.6 + pass_rate × 0.4`. Output is a self-contained, sortable HTML page — publish to GitHub Pages. A JSONL input format is also supported for importing scores from external tools.
 
 ### Feature 10 — Enterprise RBAC (GitHub Team-Based Access Control)
 
-Not everyone sharing a COMBATPAIR instance should have the same permissions. Three roles, mapped to GitHub team membership, cached 5 minutes; role lookups degrade gracefully to `DEVELOPER` (least privilege) on API unavailability.
+Not everyone sharing a GAUNTLEX instance should have the same permissions. Three roles, mapped to GitHub team membership, cached 5 minutes; role lookups degrade gracefully to `DEVELOPER` (least privilege) on API unavailability.
 
 | Role | Capabilities | Env var |
 |------|-----------------|---------------------|
-| **Admin** | Manage policies, configure ARS gate, manage team assignments | `COMBATPAIR_ADMIN_TEAMS` |
-| **Reviewer** | Trigger re-runs, override gate on individual PRs | `COMBATPAIR_REVIEWER_TEAMS` |
-| **Developer** | View reports, download evidence (read-only) | `COMBATPAIR_DEV_TEAMS` (default: any authenticated user) |
+| **Admin** | Manage policies, configure ARS gate, manage team assignments | `GAUNTLEX_ADMIN_TEAMS` |
+| **Reviewer** | Trigger re-runs, override gate on individual PRs | `GAUNTLEX_REVIEWER_TEAMS` |
+| **Developer** | View reports, download evidence (read-only) | `GAUNTLEX_DEV_TEAMS` (default: any authenticated user) |
 
 ```bash
-export COMBATPAIR_RBAC_ENABLED=true
+export GAUNTLEX_RBAC_ENABLED=true
 export GITHUB_ORG=your-org
-export COMBATPAIR_ADMIN_TEAMS=security-leads,platform-admin
-export COMBATPAIR_REVIEWER_TEAMS=backend-leads,security-review
+export GAUNTLEX_ADMIN_TEAMS=security-leads,platform-admin
+export GAUNTLEX_REVIEWER_TEAMS=backend-leads,security-review
 ```
 
 ### Feature 11 — Forge Network (Opt-In Community Pattern Sharing)
@@ -588,14 +588,14 @@ The Knowledge Forge learns from your runs — but only your runs, by default. Th
 A stable 16-character anonymous contributor ID (SHA-256 of your git remote URL) identifies contributions.
 
 ```bash
-export COMBATPAIR_FORGE_NETWORK_ENABLED=true
-combatpair forge-network status
-combatpair forge-network pull CWE-89
+export GAUNTLEX_FORGE_NETWORK_ENABLED=true
+gauntlex forge-network status
+gauntlex forge-network pull CWE-89
 ```
 
 ### Feature 12 — Slack + Jira Alerts on Low-ARS Runs
 
-A failed CI gate stops a merge but doesn't, by itself, notify a security team or create a tracking ticket. When ARS falls below `minimum_ars`, COMBATPAIR can dispatch a Slack attachment (top missed attacks, link to the report) and/or a Jira ticket (full attack details, CWE references, run ID). Both are best-effort — a notification failure never blocks the CI gate or report generation.
+A failed CI gate stops a merge but doesn't, by itself, notify a security team or create a tracking ticket. When ARS falls below `minimum_ars`, GAUNTLEX can dispatch a Slack attachment (top missed attacks, link to the report) and/or a Jira ticket (full attack details, CWE references, run ID). Both are best-effort — a notification failure never blocks the CI gate or report generation.
 
 ```bash
 export SLACK_WEBHOOK_URL=https://hooks.slack.com/services/T.../B.../...
@@ -610,7 +610,7 @@ Covered in full, including exactly what's live vs. static and how the two MCP re
 
 ### Feature 14 — Air-Gap / Full On-Premises Operation
 
-For organizations where sending a specification to an external API is itself a compliance risk (PHI, defense, data sovereignty constraints): COMBATPAIR's entire engine runs offline using [Ollama](https://ollama.ai). No internet connection required. ChromaDB runs embedded — no external vector DB service needed.
+For organizations where sending a specification to an external API is itself a compliance risk (PHI, defense, data sovereignty constraints): GAUNTLEX's entire engine runs offline using [Ollama](https://ollama.ai). No internet connection required. ChromaDB runs embedded — no external vector DB service needed.
 
 ```yaml
 deployment:
@@ -619,14 +619,14 @@ deployment:
 ```
 
 ```bash
-combatpair doctor --strict
+gauntlex doctor --strict
 # ✅ Model:   llama3.3:70b (local Ollama, no outbound calls)
-# ✅ Forge:   ChromaDB embedded at .combatpair/forge/ (no external DB)
+# ✅ Forge:   ChromaDB embedded at .gauntlex/forge/ (no external DB)
 # ✅ Telemetry: NONE
 ```
 
 ```bash
-docker compose up -d    # ChromaDB + COMBATPAIR + (optionally) Ollama, self-contained
+docker compose up -d    # ChromaDB + GAUNTLEX + (optionally) Ollama, self-contained
 ```
 
 ---
@@ -636,29 +636,29 @@ docker compose up -d    # ChromaDB + COMBATPAIR + (optionally) Ollama, self-cont
 ### pip
 
 ```bash
-pip install combatpair-ai                   # core engine (Ollama or API key)
-pip install "combatpair-ai[ui]"             # + Combat Dashboard (FastAPI web UI)
+pip install gauntlex-ai                   # core engine (Ollama or API key)
+pip install "gauntlex-ai[ui]"             # + Combat Dashboard (FastAPI web UI)
 ```
 
 ### From source
 
 ```bash
-git clone https://github.com/sanjoy1234/combatpair.git
-cd combatpair
+git clone https://github.com/sanjoy1234/gauntlex.git
+cd gauntlex
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
-combatpair doctor                           # verify all systems
+gauntlex doctor                           # verify all systems
 ```
 
 ### Docker Compose (full stack — ChromaDB included)
 
 ```bash
-git clone https://github.com/sanjoy1234/combatpair.git
-cd combatpair
-docker compose up -d                      # ChromaDB + COMBATPAIR
+git clone https://github.com/sanjoy1234/gauntlex.git
+cd gauntlex
+docker compose up -d                      # ChromaDB + GAUNTLEX
 
-docker compose run combatpair \
-  combatpair run --issue /app/examples/demo_issue.md --mode quick
+docker compose run gauntlex \
+  gauntlex run --issue /app/examples/demo_issue.md --mode quick
 
 open http://localhost:8080                # Combat Dashboard
 ```
@@ -667,16 +667,16 @@ open http://localhost:8080                # Combat Dashboard
 
 ## GitHub Actions — CI/CD Adversarial Gate
 
-Add this to `.github/workflows/combatpair.yml`. Every PR is adversarially tested before it can merge — zero changes to the developer's workflow.
+Add this to `.github/workflows/gauntlex.yml`. Every PR is adversarially tested before it can merge — zero changes to the developer's workflow.
 
 ```yaml
-name: COMBATPAIR Adversarial Gate
+name: GAUNTLEX Adversarial Gate
 on:
   pull_request:
     branches: [main, develop]
 
 jobs:
-  combatpair:
+  gauntlex:
     name: Adversarial Resilience Check
     runs-on: ubuntu-latest
     permissions:
@@ -687,22 +687,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install COMBATPAIR
-        run: pip install combatpair-ai
+      - name: Install GAUNTLEX
+        run: pip install gauntlex-ai
 
       - name: Verify environment
-        run: combatpair validate
+        run: gauntlex validate
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
-      - name: Run CombatPair
+      - name: Run Gauntlex
         run: |
-          combatpair run \
+          gauntlex run \
             --issue "${{ github.event.pull_request.html_url }}" \
             --mode standard \
             --domain owasp_top10 \
-            --output-sarif combatpair.sarif \
-            --output-junit combatpair.xml
+            --output-sarif gauntlex.sarif \
+            --output-junit gauntlex.xml
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -711,31 +711,31 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
-          sarif_file: combatpair.sarif
+          sarif_file: gauntlex.sarif
 
       - name: Publish JUnit results
         uses: mikepenz/action-junit-report@v4
         if: always()
         with:
-          report_paths: combatpair.xml
-          check_name: COMBATPAIR Attack Results
+          report_paths: gauntlex.xml
+          check_name: GAUNTLEX Attack Results
 ```
 
-COMBATPAIR posts the ARS as a commit status. With `GITHUB_TOKEN` set, it also adds a PR comment with the full attack table. `fail_open: false` in `.combatpair.yml` blocks the merge if ARS falls below the gate.
+GAUNTLEX posts the ARS as a commit status. With `GITHUB_TOKEN` set, it also adds a PR comment with the full attack table. `fail_open: false` in `.gauntlex.yml` blocks the merge if ARS falls below the gate.
 
 ---
 
-## COMBATPAIR in the Security Toolchain — Competitive Positioning
+## GAUNTLEX in the Security Toolchain — Competitive Positioning
 
 > *"We already have Snyk and Veracode. Does our enterprise really need another security tool?"*
 
-A fair question. Before evaluating COMBATPAIR, it's worth understanding what each category of existing tool does — and the structural gap none of them close.
+A fair question. Before evaluating GAUNTLEX, it's worth understanding what each category of existing tool does — and the structural gap none of them close.
 
 ### What existing AppSec tools do — and what they cannot do
 
 **Software Composition Analysis (SCA) — Snyk, Endor Labs, GHAS Dependabot.** Inventories your dependency graph and flags components with known CVEs. What they cannot do: test the code your team (or AI agent) wrote. If the vulnerability is in bespoke application code, not a dependency, SCA has nothing to say about it.
 
-**Static Application Security Testing (SAST) — Veracode, Checkmarx, Semgrep, SonarQube, GitHub CodeQL.** Analyzes source code for patterns matching known vulnerability signatures — the closest existing category to what COMBATPAIR does. The fundamental limitation is structural: **SAST tests implementations.** It requires the code to exist. In the AI coding agent era it has three compounding limitations: (1) volume — AI agents generate features faster than nightly/weekly scan cycles, (2) novel patterns — SAST rules match known signatures, not new patterns AI models introduce, (3) anchoring to implementation — SAST cannot reason about what the code *should have defended against* based on the spec's implicit threat model, because there's no code pattern for an absence.
+**Static Application Security Testing (SAST) — Veracode, Checkmarx, Semgrep, SonarQube, GitHub CodeQL.** Analyzes source code for patterns matching known vulnerability signatures — the closest existing category to what GAUNTLEX does. The fundamental limitation is structural: **SAST tests implementations.** It requires the code to exist. In the AI coding agent era it has three compounding limitations: (1) volume — AI agents generate features faster than nightly/weekly scan cycles, (2) novel patterns — SAST rules match known signatures, not new patterns AI models introduce, (3) anchoring to implementation — SAST cannot reason about what the code *should have defended against* based on the spec's implicit threat model, because there's no code pattern for an absence.
 
 **Dynamic Application Security Testing (DAST) — StackHawk, OWASP ZAP, BurpSuite.** Probes a running application with adversarial HTTP requests. Requires a deployed, running application — operates entirely post-build and post-deployment, far downstream from the generation event.
 
@@ -761,12 +761,12 @@ Traditional AppSec timeline:
 
 The gap is the **generation event itself** — the moment when spec intent becomes code, when trust assumptions are encoded, when the adversarial attack surface is created.
 
-### Where COMBATPAIR fits — and where it doesn't
+### Where GAUNTLEX fits — and where it doesn't
 
 ```
-COMBATPAIR's position in the AppSec stack:
+GAUNTLEX's position in the AppSec stack:
 
- Spec  →  [COMBATPAIR runs here: concurrent generation + adversarial attack]
+ Spec  →  [GAUNTLEX runs here: concurrent generation + adversarial attack]
               ARS score + Resilience Report + Forge Ledger entry
               SARIF output ready for Code Scanning before PR opens
               Hard gate blocks merge below threshold
@@ -776,11 +776,11 @@ COMBATPAIR's position in the AppSec stack:
                      Periodic DAST           Periodic penetration test
 ```
 
-**COMBATPAIR is not a replacement for SAST, SCA, DAST, or penetration testing.** These tools cover different surfaces with different techniques at different time horizons. COMBATPAIR adds the layer none of them provide: adversarial assessment at the generation event.
+**GAUNTLEX is not a replacement for SAST, SCA, DAST, or penetration testing.** These tools cover different surfaces with different techniques at different time horizons. GAUNTLEX adds the layer none of them provide: adversarial assessment at the generation event.
 
 ### Side-by-side comparison
 
-| Capability | Snyk / SCA | Semgrep / SAST | DAST Tools | Pentest | AI Agents | **COMBATPAIR** |
+| Capability | Snyk / SCA | Semgrep / SAST | DAST Tools | Pentest | AI Agents | **GAUNTLEX** |
 |-----------|:---:|:---:|:---:|:---:|:---:|:---:|
 | Tests at generation time (before commit) | ✗ | ✗ | ✗ | ✗ | ✗ | 🚀 |
 | Attacks from specification (not implementation) | ✗ | ✗ | ✗ | ⚠️ | ✗ | 🚀 |
@@ -796,13 +796,13 @@ COMBATPAIR's position in the AppSec stack:
 
 🚀 = strongest in class &nbsp;·&nbsp; ✅ = capable &nbsp;·&nbsp; ⚠️ = partial &nbsp;·&nbsp; ✗ = not applicable
 
-> **Honest scope note:** COMBATPAIR has narrower coverage than a full SAST tool. It tests a specific generation event — one spec, one run — not your entire existing codebase. Organizations need both: SAST for existing codebase coverage, COMBATPAIR for generation-time adversarial resilience in the AI coding agent workflow. The tools are complementary, not competing.
+> **Honest scope note:** GAUNTLEX has narrower coverage than a full SAST tool. It tests a specific generation event — one spec, one run — not your entire existing codebase. Organizations need both: SAST for existing codebase coverage, GAUNTLEX for generation-time adversarial resilience in the AI coding agent workflow. The tools are complementary, not competing.
 
 ---
 
-## How COMBATPAIR Works
+## How GAUNTLEX Works
 
-### The CombatPair
+### The Gauntlex
 
 ```python
 # The entire engine in one conceptual line:
@@ -828,9 +828,9 @@ The Arbiter also runs an entropy check: if all attacks cluster on the same CWE, 
 ### The Full Execution Flow
 
 ```
-combatpair run --issue spec.md --mode standard --domain hipaa
+gauntlex run --issue spec.md --mode standard --domain hipaa
 
- 1. Load config (.combatpair.yml)
+ 1. Load config (.gauntlex.yml)
  2. Fingerprint spec → language: "python", signals: [filesystem, async]
  3. Select language profile → priority CWEs
  4. Load policy domain → HIPAA scenarios
@@ -848,194 +848,194 @@ combatpair run --issue spec.md --mode standard --domain hipaa
 
 ## Complete CLI Reference
 
-### `combatpair setup` — configure model and integrations
+### `gauntlex setup` — configure model and integrations
 
 ```bash
-combatpair setup              # full wizard (first run or complete reconfigure)
-combatpair setup --model      # change AI provider or API key only
-combatpair setup --tokens     # refresh Jira / GitHub / Confluence tokens only
+gauntlex setup              # full wizard (first run or complete reconfigure)
+gauntlex setup --model      # change AI provider or API key only
+gauntlex setup --tokens     # refresh Jira / GitHub / Confluence tokens only
 ```
 
 All credentials are written to `.env` — no file editing needed.
 
-### `combatpair init` — scaffold config
+### `gauntlex init` — scaffold config
 
 ```bash
-combatpair init                     # scaffold .combatpair.yml with defaults
-combatpair init --domain hipaa      # scaffold with a specific domain active
-combatpair init --force             # overwrite existing .combatpair.yml
+gauntlex init                     # scaffold .gauntlex.yml with defaults
+gauntlex init --domain hipaa      # scaffold with a specific domain active
+gauntlex init --force             # overwrite existing .gauntlex.yml
 ```
 
-### `combatpair doctor` — full health check
+### `gauntlex doctor` — full health check
 
 ```bash
-combatpair doctor
-# ✅ Config loaded            (.combatpair.yml)
+gauntlex doctor
+# ✅ Config loaded            (.gauntlex.yml)
 # ✅ Model reachable          (via configured provider)
-# ✅ ChromaDB writable        (.combatpair/forge/)
-# ✅ Vault writable           (.combatpair/vault/)
+# ✅ ChromaDB writable        (.gauntlex/forge/)
+# ✅ Vault writable           (.gauntlex/vault/)
 # ✅ Gate configured          (minimum_ars: 0.80, fail_open: false)
 ```
 
-### `combatpair validate` — dry run (zero cost, zero attacks)
+### `gauntlex validate` — dry run (zero cost, zero attacks)
 
 ```bash
-combatpair validate                   # checks env, config, AVF golden fixtures
-combatpair validate --strict          # also checks model connectivity
+gauntlex validate                   # checks env, config, AVF golden fixtures
+gauntlex validate --strict          # also checks model connectivity
 ```
 
-### `combatpair run` — fire a CombatPair
+### `gauntlex run` — fire a Gauntlex
 
 ```bash
-combatpair run \
+gauntlex run \
   --issue <spec>                    # file path or GitHub issue URL
   --mode quick|standard|thorough    # 5 / 20 / 50 attacks (default: quick)
-  --domain <name>                   # policy domain (default: from .combatpair.yml)
+  --domain <name>                   # policy domain (default: from .gauntlex.yml)
   --output-sarif <file>             # emit SARIF 2.1.0 for GitHub Code Scanning
   --output-junit <file>             # emit JUnit XML for CI dashboards
   --pretty                          # rich terminal output with color
   --config <path>                   # alternate config file
 ```
 
-### `combatpair status` — running and recent runs
+### `gauntlex status` — running and recent runs
 
 ```bash
-combatpair status              # recent 10 runs
-combatpair status --all        # all completed runs
+gauntlex status              # recent 10 runs
+gauntlex status --all        # all completed runs
 ```
 
-### `combatpair findings` — vulnerability findings, fix-first
+### `gauntlex findings` — vulnerability findings, fix-first
 
 ```bash
-combatpair findings                    # last run
-combatpair findings <run_id>           # specific run
-combatpair findings --format md        # markdown output for PRs
+gauntlex findings                    # last run
+gauntlex findings <run_id>           # specific run
+gauntlex findings --format md        # markdown output for PRs
 ```
 
-### `combatpair compare` — diff two runs
+### `gauntlex compare` — diff two runs
 
 ```bash
-combatpair compare <run_id_a> <run_id_b> --pretty
+gauntlex compare <run_id_a> <run_id_b> --pretty
 ```
 
-### `combatpair learn` — feed a run into the Knowledge Forge
+### `gauntlex learn` — feed a run into the Knowledge Forge
 
 ```bash
-combatpair learn <run_id> --pretty
+gauntlex learn <run_id> --pretty
 ```
 
-### `combatpair report` — render a Resilience Report
+### `gauntlex report` — render a Resilience Report
 
 ```bash
-combatpair report <run_id>                        # Markdown to stdout (default)
-combatpair report <run_id> --format html          # full HTML report
-combatpair report <run_id> --format sarif         # SARIF 2.1.0
-combatpair report <run_id> --format junit         # JUnit XML
-combatpair report <run_id> --format json          # raw JSON
+gauntlex report <run_id>                        # Markdown to stdout (default)
+gauntlex report <run_id> --format html          # full HTML report
+gauntlex report <run_id> --format sarif         # SARIF 2.1.0
+gauntlex report <run_id> --format junit         # JUnit XML
+gauntlex report <run_id> --format json          # raw JSON
 ```
 
-### `combatpair verify` — tamper detection
+### `gauntlex verify` — tamper detection
 
 ```bash
-combatpair verify <run_id>
+gauntlex verify <run_id>
 # ✅ Integrity verified: sha256:... matches report
 ```
 
-### `combatpair audit` — compliance audit
+### `gauntlex audit` — compliance audit
 
 ```bash
-combatpair audit                    # last 90 days, all domains
-combatpair audit --days 30          # custom window
-combatpair audit --domain hipaa     # filter by policy domain
+gauntlex audit                    # last 90 days, all domains
+gauntlex audit --days 30          # custom window
+gauntlex audit --domain hipaa     # filter by policy domain
 ```
 
-### `combatpair vault` — browse the Forge Ledger
+### `gauntlex vault` — browse the Forge Ledger
 
 ```bash
-combatpair vault --stats                          # aggregate stats
-combatpair vault --cwe CWE-89                     # filter by CWE
-combatpair vault --format md                      # Markdown table
+gauntlex vault --stats                          # aggregate stats
+gauntlex vault --cwe CWE-89                     # filter by CWE
+gauntlex vault --format md                      # Markdown table
 ```
 
-### `combatpair stats` — ARS trend analysis
+### `gauntlex stats` — ARS trend analysis
 
 ```bash
-combatpair stats --days 30                        # 30-day ARS trend
-combatpair stats --learning-curve                 # Forge recall hit rate over time
-combatpair stats --by-cwe                         # breakdown by CWE category
+gauntlex stats --days 30                        # 30-day ARS trend
+gauntlex stats --learning-curve                 # Forge recall hit rate over time
+gauntlex stats --by-cwe                         # breakdown by CWE category
 ```
 
-### `combatpair policy` — manage policy domains
+### `gauntlex policy` — manage policy domains
 
 ```bash
-combatpair policy list                            # all available domains
-combatpair policy install owasp_api_security      # install from Policy Hub
-combatpair policy hub                             # browse all hub domains
-combatpair policy search fintech                  # search by tag or name
-combatpair policy validate <path-to-yaml>         # validate a custom domain's schema
+gauntlex policy list                            # all available domains
+gauntlex policy install owasp_api_security      # install from Policy Hub
+gauntlex policy hub                             # browse all hub domains
+gauntlex policy search fintech                  # search by tag or name
+gauntlex policy validate <path-to-yaml>         # validate a custom domain's schema
 ```
 
-### `combatpair integrate` — one-command IDE/CI wiring
+### `gauntlex integrate` — one-command IDE/CI wiring
 
 ```bash
-combatpair integrate                        # configure everything
-combatpair integrate --platform claude-code
-combatpair integrate --platform github-actions
-combatpair integrate --dry-run              # preview changes without writing files
+gauntlex integrate                        # configure everything
+gauntlex integrate --platform claude-code
+gauntlex integrate --platform github-actions
+gauntlex integrate --dry-run              # preview changes without writing files
 ```
 
 Platforms: `claude-code`, `cursor`, `windsurf`, `copilot`, `codex`, `github-actions`, `all`.
 
-### `combatpair mcp-server` — MCP server, stdio transport
+### `gauntlex mcp-server` — MCP server, stdio transport
 
 ```bash
-combatpair mcp-server
+gauntlex mcp-server
 ```
 
-Confirmed local IDE support: Claude Code, Cursor, Windsurf, Zed. See [Domain Intelligence](DOMAIN_INTELLIGENCE.md#combatpair-as-an-mcp-server-vs-combatpair-as-an-mcp-consumer).
+Confirmed local IDE support: Claude Code, Cursor, Windsurf, Zed. See [Domain Intelligence](DOMAIN_INTELLIGENCE.md#gauntlex-as-an-mcp-server-vs-gauntlex-as-an-mcp-consumer).
 
-### `combatpair dashboard` — web UI
+### `gauntlex dashboard` — web UI
 
 ```bash
-pip install "combatpair-ai[ui]"
-combatpair dashboard --port 8080
+pip install "gauntlex-ai[ui]"
+gauntlex dashboard --port 8080
 # → http://localhost:8080
 ```
 
-### `combatpair serve` — CPaaS webhook server
+### `gauntlex serve` — CPaaS webhook server
 
 ```bash
-combatpair serve --port 8080 --rbac --host 0.0.0.0
+gauntlex serve --port 8080 --rbac --host 0.0.0.0
 # Required env: GITHUB_APP_ID, GITHUB_PRIVATE_KEY_PATH, GITHUB_WEBHOOK_SECRET
 ```
 
-### `combatpair leaderboard` — ARS agent leaderboard
+### `gauntlex leaderboard` — ARS agent leaderboard
 
 ```bash
-combatpair leaderboard                                   # from default reports dir
-combatpair leaderboard --jsonl scores.jsonl              # from JSONL file
-combatpair leaderboard --output docs/leaderboard.html    # GitHub Pages
+gauntlex leaderboard                                   # from default reports dir
+gauntlex leaderboard --jsonl scores.jsonl              # from JSONL file
+gauntlex leaderboard --output docs/leaderboard.html    # GitHub Pages
 ```
 
-### `combatpair forge-network` — community pattern sharing
+### `gauntlex forge-network` — community pattern sharing
 
 ```bash
-combatpair forge-network status                   # opt-in status + hub stats
-combatpair forge-network pull CWE-89              # pull community SQL injection patterns
+gauntlex forge-network status                   # opt-in status + hub stats
+gauntlex forge-network pull CWE-89              # pull community SQL injection patterns
 ```
 
-### `combatpair prune` — housekeeping
+### `gauntlex prune` — housekeeping
 
 ```bash
-combatpair prune --older-than 90d                 # remove old reports
-combatpair prune --older-than 30d --dry-run       # preview
+gauntlex prune --older-than 90d                 # remove old reports
+gauntlex prune --older-than 30d --dry-run       # preview
 ```
 
 ---
 
 ## Configuration Reference
 
-`combatpair init` scaffolds `.combatpair.yml` with defaults. Every field is documented below.
+`gauntlex init` scaffolds `.gauntlex.yml` with defaults. Every field is documented below.
 
 ```yaml
 version: 1
@@ -1049,8 +1049,8 @@ deployment:
   local_model: llama3.1:8b
   anthropic_model: claude-haiku-4-5-20251001
 
-# ── CombatPair tuning ─────────────────────────────────────────────────────────
-combat_pair:
+# ── Gauntlex tuning ─────────────────────────────────────────────────────────
+gauntlex:
   attack_count: 20            # 5=quick, 20=standard, 50=thorough
   rounds_max: 5               # max Arbiter re-evaluation rounds
   cwe_rotation: true          # rotate CWEs across runs for coverage breadth
@@ -1098,11 +1098,11 @@ kev_enabled: true               # default on
 
 # ── Enterprise RBAC ───────────────────────────────────────────────────────────
 # Set via env vars (not this file — team names are org-specific):
-# COMBATPAIR_RBAC_ENABLED=true
+# GAUNTLEX_RBAC_ENABLED=true
 # GITHUB_ORG=your-org
-# COMBATPAIR_ADMIN_TEAMS=security-leads,platform-admin
-# COMBATPAIR_REVIEWER_TEAMS=backend-leads,security-review
-# COMBATPAIR_DEV_TEAMS=all-engineers    # default: any authenticated user
+# GAUNTLEX_ADMIN_TEAMS=security-leads,platform-admin
+# GAUNTLEX_REVIEWER_TEAMS=backend-leads,security-review
+# GAUNTLEX_DEV_TEAMS=all-engineers    # default: any authenticated user
 ```
 
 ---
@@ -1116,7 +1116,7 @@ kev_enabled: true               # default on
   "$schema": "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0.json",
   "version": "2.1.0",
   "runs": [{
-    "tool": { "driver": { "name": "COMBATPAIR", "version": "0.1.0" } },
+    "tool": { "driver": { "name": "GAUNTLEX", "version": "0.1.0" } },
     "results": [{
       "ruleId": "CWE-79",
       "level": "error",
@@ -1129,10 +1129,10 @@ kev_enabled: true               # default on
 ### JUnit XML
 
 ```xml
-<testsuites name="COMBATPAIR" tests="5" failures="1">
-  <testsuite name="CombatPair">
-    <testcase name="CWE-89: SQL Injection" classname="combatpair.arbiter"/>
-    <testcase name="CWE-79: Reflected XSS" classname="combatpair.arbiter">
+<testsuites name="GAUNTLEX" tests="5" failures="1">
+  <testsuite name="Gauntlex">
+    <testcase name="CWE-89: SQL Injection" classname="gauntlex.arbiter"/>
+    <testcase name="CWE-79: Reflected XSS" classname="gauntlex.arbiter">
       <failure message="No output encoding — attacker controls error message body"/>
     </testcase>
   </testsuite>
@@ -1148,7 +1148,7 @@ attack_id: atk-001
 severity: high
 effectiveness: 0.0
 verdict: missed
-run_id: combatpair-2026-06-28T12-00-00Z-a3f9
+run_id: gauntlex-2026-06-28T12-00-00Z-a3f9
 fingerprint: python-async-filesystem
 recorded_at: 2026-06-28T12:01:43Z
 ---
@@ -1165,7 +1165,7 @@ into the 400 response body, which the browser executes in the victim's session.
 ## Enterprise Features
 
 - **Combat Dashboard** — see [Feature 8](#feature-8--combat-dashboard) above.
-- **CPaaS Mode** — `combatpair serve` runs as a persistent GitHub App webhook server; every PR is adversarially tested automatically with zero developer workflow change. Requires `GITHUB_APP_ID`, `GITHUB_PRIVATE_KEY_PATH`, `GITHUB_WEBHOOK_SECRET`.
+- **CPaaS Mode** — `gauntlex serve` runs as a persistent GitHub App webhook server; every PR is adversarially tested automatically with zero developer workflow change. Requires `GITHUB_APP_ID`, `GITHUB_PRIVATE_KEY_PATH`, `GITHUB_WEBHOOK_SECRET`.
 - **Enterprise RBAC** — see [Feature 10](#feature-10--enterprise-rbac-github-team-based-access-control) above.
 - **Slack + Jira Alerts** — see [Feature 12](#feature-12--slack--jira-alerts-on-low-ars-runs) above.
 - **Air-Gap / On-Premises** — see [Feature 14](#feature-14--air-gap--full-on-premises-operation) above.
@@ -1177,12 +1177,12 @@ into the 400 response body, which the browser executes in the victim's session.
 
 ## Testing
 
-COMBATPAIR ships with 554 tests across all major components (`pytest --collect-only -q` to confirm the current count yourself). Test coverage is a first-class commitment.
+GAUNTLEX ships with 554 tests across all major components (`pytest --collect-only -q` to confirm the current count yourself). Test coverage is a first-class commitment.
 
 ```bash
 pytest tests/ -q                                     # run the full suite
 pytest tests/test_arbiter.py -v                       # specific module
-pytest tests/ --cov=src/combatpair --cov-report=html    # with coverage
+pytest tests/ --cov=src/gauntlex --cov-report=html    # with coverage
 ```
 
 | Test file | What it covers |
@@ -1205,7 +1205,7 @@ pytest tests/ --cov=src/combatpair --cov-report=html    # with coverage
 | `test_language_profiles.py` | Per-language CWE priority lists |
 | `test_leaderboard.py` | ARS aggregation, rank score, JSONL loading |
 | `test_live_progress.py` | Heartbeat/progress output during long model calls |
-| `test_mcp_server.py` | COMBATPAIR-as-MCP-server tool exposure |
+| `test_mcp_server.py` | GAUNTLEX-as-MCP-server tool exposure |
 | `test_nvd_client.py` | NIST NVD query and CWE matching |
 | `test_policy.py` | APE domain loading, user policy override |
 | `test_policy_hub.py` | Hub fetch, install, search |
@@ -1220,37 +1220,37 @@ pytest tests/ --cov=src/combatpair --cov-report=html    # with coverage
 ### Setup
 
 ```bash
-git clone https://github.com/sanjoy1234/combatpair.git
-cd combatpair
+git clone https://github.com/sanjoy1234/gauntlex.git
+cd gauntlex
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 pytest tests/ -q          # verify: 554 passing
-combatpair doctor           # verify environment
+gauntlex doctor           # verify environment
 ```
 
 ### Claude Code Skills
 
-This repository ships with seven Claude Code slash commands in `.claude/skills/combatpair/` — productivity tools for contributors who use Claude Code. They do not affect COMBATPAIR's runtime behavior.
+This repository ships with seven Claude Code slash commands in `.claude/skills/gauntlex/` — productivity tools for contributors who use Claude Code. They do not affect GAUNTLEX's runtime behavior.
 
 | Skill | What it does |
 |-------|-------------|
-| `/combatpair:run` | Run a CombatPair session on a spec |
-| `/combatpair:validate` | Dry-run health check |
-| `/combatpair:doctor` | Full environment diagnostics |
-| `/combatpair:report` | Render a Resilience Report in any format |
-| `/combatpair:learn` | Manually trigger Forge Ledger learning pass |
-| `/combatpair:compare` | Compare two run ARS scores side-by-side |
-| `/combatpair:verify` | Verify report tamper-evidence |
+| `/gauntlex:run` | Run a Gauntlex session on a spec |
+| `/gauntlex:validate` | Dry-run health check |
+| `/gauntlex:doctor` | Full environment diagnostics |
+| `/gauntlex:report` | Render a Resilience Report in any format |
+| `/gauntlex:learn` | Manually trigger Forge Ledger learning pass |
+| `/gauntlex:compare` | Compare two run ARS scores side-by-side |
+| `/gauntlex:verify` | Verify report tamper-evidence |
 
-If you don't use Claude Code, ignore the `.claude/` directory — it has no effect on the COMBATPAIR engine.
+If you don't use Claude Code, ignore the `.claude/` directory — it has no effect on the GAUNTLEX engine.
 
 ---
 
 ## Contributing
 
-**New policy domains** — more regulatory frameworks. Copy `src/combatpair/policy/domains/hipaa.yaml` and follow the schema (see [Domain Intelligence → Bring your own domain](DOMAIN_INTELLIGENCE.md#bring-your-own-domain)).
+**New policy domains** — more regulatory frameworks. Copy `src/gauntlex/policy/domains/hipaa.yaml` and follow the schema (see [Domain Intelligence → Bring your own domain](DOMAIN_INTELLIGENCE.md#bring-your-own-domain)).
 
-**Language profiles** — Rust, C++, Ruby, Swift. Add a profile to `src/combatpair/brain/language_profiles.py` and extend `fingerprint_spec()` with detection signals.
+**Language profiles** — Rust, C++, Ruby, Swift. Add a profile to `src/gauntlex/brain/language_profiles.py` and extend `fingerprint_spec()` with detection signals.
 
 **AVF golden fixtures** — adversarial test cases for known vulnerability classes, added to `tests/fixtures/` following the existing format.
 
@@ -1262,8 +1262,8 @@ If you don't use Claude Code, ignore the `.claude/` directory — it has no effe
 
 ```bash
 # 1. Fork and clone
-git clone https://github.com/your-username/combatpair.git
-cd combatpair
+git clone https://github.com/your-username/gauntlex.git
+cd gauntlex
 
 # 2. Create a branch
 git checkout -b feat/your-feature
@@ -1273,7 +1273,7 @@ git checkout -b feat/your-feature
 
 # 4. Verify
 pytest tests/ -q         # all tests must pass
-combatpair validate        # dry-run must pass
+gauntlex validate        # dry-run must pass
 
 # 5. Open a PR
 # Title: feat(scope): short description
@@ -1294,32 +1294,32 @@ Opening an issue tagged `[discussion]` before starting large features is appreci
 - [ ] **Streaming ARS** — real-time attack-by-attack scoring as Breaker fires; progress bar in CI
 - [ ] **Forge Network public hub** — hosted community pattern sharing at scale
 - [ ] **Multi-repo Forge** — shared adversarial memory across an organization's repositories
-- [ ] **COMBATPAIR VS Code extension** — inline ARS feedback as you write specs in the editor
+- [ ] **GAUNTLEX VS Code extension** — inline ARS feedback as you write specs in the editor
 
 ---
 
 ## FAQ
 
-**Q: Does COMBATPAIR replace static analysis?**
-No — it complements it. Bandit and Semgrep find known bad patterns fast. COMBATPAIR reasons adversarially about *your specific code* in *your specific business context*. Run both.
+**Q: Does GAUNTLEX replace static analysis?**
+No — it complements it. Bandit and Semgrep find known bad patterns fast. GAUNTLEX reasons adversarially about *your specific code* in *your specific business context*. Run both.
 
 **Q: What does "concurrent" mean precisely?**
 `asyncio.gather(builder_coroutine, breaker_coroutine)` — both coroutines start at the same instant against the same specification. The Breaker does not wait for generated code to exist; it attacks from the spec.
 
-**Q: Can I run COMBATPAIR for free?**
+**Q: Can I run GAUNTLEX for free?**
 Yes. The full engine runs on Ollama with no API cost. Attack quality scales with model capability — frontier models produce more sophisticated attacks — but the engine itself is free forever.
 
 **Q: How long does a run take?**
-Attack count is fixed by mode (quick=5, standard=20, thorough=50); wall-clock time is not — it depends almost entirely on which model provider you configure, from single-digit seconds with a fast paid API to several minutes with a free-tier or local model. Run `combatpair doctor` after setup to see what your specific configuration will look like in practice.
+Attack count is fixed by mode (quick=5, standard=20, thorough=50); wall-clock time is not — it depends almost entirely on which model provider you configure, from single-digit seconds with a fast paid API to several minutes with a free-tier or local model. Run `gauntlex doctor` after setup to see what your specific configuration will look like in practice.
 
 **Q: Is the ARS defensible to a security auditor?**
-COMBATPAIR produces NIST SSDF, SOC 2, and ISO 27001 control mapping artifacts with a SHA-256 integrity hash. `combatpair verify` re-derives the hash at any future audit, independent of COMBATPAIR itself.
+GAUNTLEX produces NIST SSDF, SOC 2, and ISO 27001 control mapping artifacts with a SHA-256 integrity hash. `gauntlex verify` re-derives the hash at any future audit, independent of GAUNTLEX itself.
 
 **Q: What if the model goes down mid-run?**
-COMBATPAIR fails the run cleanly — no partial report written. `fail_open: true` allows the pipeline to pass on model errors (useful during planned maintenance windows).
+GAUNTLEX fails the run cleanly — no partial report written. `fail_open: true` allows the pipeline to pass on model errors (useful during planned maintenance windows).
 
 **Q: Can I contribute a new policy domain?**
-Yes. Copy `src/combatpair/policy/domains/hipaa.yaml`, follow the schema, add tests, open a PR. See [Domain Intelligence → Bring your own domain](DOMAIN_INTELLIGENCE.md#bring-your-own-domain).
+Yes. Copy `src/gauntlex/policy/domains/hipaa.yaml`, follow the schema, add tests, open a PR. See [Domain Intelligence → Bring your own domain](DOMAIN_INTELLIGENCE.md#bring-your-own-domain).
 
 **Q: What's the minimum ARS I should set for production?**
 As a starting recommendation: begin at 0.75 (`fail_open: true`, advisory mode) for a couple of weeks to understand your baseline, then move to 0.80 (`fail_open: false`, blocking mode) once the team is calibrated. This is guidance, not a benchmark derived from measured customer deployments.

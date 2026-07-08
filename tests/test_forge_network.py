@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from combatpair.network.forge_network import (
+from gauntlex.network.forge_network import (
     ForgeNetworkConfig,
     SharedPattern,
     NetworkResult,
@@ -25,9 +25,9 @@ def test_network_config_default_disabled():
 
 
 def test_network_config_from_env_enabled(monkeypatch):
-    monkeypatch.setenv("COMBATPAIR_FORGE_NETWORK_ENABLED", "true")
-    monkeypatch.setenv("COMBATPAIR_FORGE_HUB_URL", "http://hub.local")
-    monkeypatch.setenv("COMBATPAIR_FORGE_MIN_ARS", "0.90")
+    monkeypatch.setenv("GAUNTLEX_FORGE_NETWORK_ENABLED", "true")
+    monkeypatch.setenv("GAUNTLEX_FORGE_HUB_URL", "http://hub.local")
+    monkeypatch.setenv("GAUNTLEX_FORGE_MIN_ARS", "0.90")
     cfg = ForgeNetworkConfig.from_env()
     assert cfg.enabled is True
     assert cfg.hub_url == "http://hub.local"

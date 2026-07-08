@@ -1,4 +1,4 @@
-# COMBATPAIR — Enterprise Integration Roadmap
+# GAUNTLEX — Enterprise Integration Roadmap
 
 **Status:** Planned — not yet implemented  
 **Audience:** Engineering leadership, enterprise sales  
@@ -10,7 +10,7 @@
 
 The current dashboard works for a developer or a small team demo.
 To land enterprise contracts (regulated industries: finance, insurance, healthcare),
-COMBATPAIR must speak the systems those teams already live in. This document
+GAUNTLEX must speak the systems those teams already live in. This document
 maps each missing enterprise feature to the exact systems and APIs required.
 
 ---
@@ -59,13 +59,13 @@ Key security KPI: how long from "vulnerability found" to "vulnerability fixed"?
 
 | System | Role | Integration |
 |--------|------|-------------|
-| **Jira** | Dev-team ticket lifecycle (adapter exists — extend it) | Jira Webhooks: notify COMBATPAIR when issue → "Done" |
+| **Jira** | Dev-team ticket lifecycle (adapter exists — extend it) | Jira Webhooks: notify GAUNTLEX when issue → "Done" |
 | **ServiceNow ITSM** | Enterprise security incident management (CRITICAL findings) | ServiceNow Incident API: create, link, resolve |
 | **PagerDuty** | SLA timer: alert fires → resolved | PagerDuty Events API v2 |
 | **GitHub Issues** | Lightweight orgs | GitHub Webhooks on issue close |
 | **Tempo (Jira plugin)** | Engineering hours logged against remediation tickets | Tempo Worklog API |
 
-**Note:** MTTR only means something if COMBATPAIR owns the ticket lifecycle —
+**Note:** MTTR only means something if GAUNTLEX owns the ticket lifecycle —
 creates the ticket, links it to the run, and gets notified on close.
 If ticket creation is manual, the data is garbage.
 
@@ -85,7 +85,7 @@ Required: cost to find vulnerability here vs. cost to find it in production.
 | **HackerOne / Bugcrowd** | Bug bounty market rate → "what would an attacker get paid to find this?" | Bounty program API or static CVSS → payout table |
 | **IBM Cost of Breach** | Industry benchmark: avg $4.88M per breach (2024) | Static data — no live integration, but must be attribution-mapped by CWE severity |
 
-**Practical path:** Let admin configure `blended_engineer_hourly_rate` in `.combatpair.yml`.
+**Practical path:** Let admin configure `blended_engineer_hourly_rate` in `.gauntlex.yml`.
 Pull remediation hours from Jira/Tempo. Multiply. Use HackerOne benchmarks for
 "value of findings" — publicly defensible market data.
 
@@ -94,13 +94,13 @@ Pull remediation hours from Jira/Tempo. Multiply. Use HackerOne benchmarks for
 ## Feature 4 — Week-over-Week Posture Trend
 
 **Problem:** Sparkline shows per-run ARS. CTO needs: "Is posture improving this quarter?"
-Requires connecting each COMBATPAIR run to a deployment event.
+Requires connecting each GAUNTLEX run to a deployment event.
 
 ### Systems Required
 
 | System | Role | Integration |
 |--------|------|-------------|
-| **Jenkins** | Most common enterprise CI — trigger COMBATPAIR on build | Jenkins Post-Build plugin or pipeline step with `BUILD_NUMBER` tag |
+| **Jenkins** | Most common enterprise CI — trigger GAUNTLEX on build | Jenkins Post-Build plugin or pipeline step with `BUILD_NUMBER` tag |
 | **Azure DevOps Pipelines** | Microsoft enterprise shops (large segment) | ADO REST API — create pipeline task extension |
 | **Harness / Tekton** | Cloud-native enterprise CI | Webhook trigger + run metadata pushback |
 | **Datadog / New Relic** | Deployment markers — correlate "ARS dropped" with "version 2.4.1 deployed" | Datadog Deployment Events API |
@@ -127,10 +127,10 @@ Must map CWE findings → compliance control requirements → GRC system evidenc
 | **Vanta** | Mid-market SOC2 automation (Fintech, SaaS) | Vanta API: custom evidence upload |
 | **Drata** | SOC2/ISO 27001 automation | Drata API: evidence records |
 | **OneTrust** | Privacy + compliance (GDPR, CCPA) | REST API for evidence records |
-| **NIST NVD API** | CWE → CVE enrichment → CVSS → compliance impact | Live pull (partially in COMBATPAIR already) |
+| **NIST NVD API** | CWE → CVE enrichment → CVSS → compliance impact | Live pull (partially in GAUNTLEX already) |
 
 **Note:** ServiceNow GRC is the gatekeeper in every regulated enterprise.
-If COMBATPAIR findings don't appear as evidence artifacts in ServiceNow GRC,
+If GAUNTLEX findings don't appear as evidence artifacts in ServiceNow GRC,
 the CISO's team cannot use them for audits. Getting *approved as an evidence source*
 requires vendor security review — typically a 90-day enterprise sales process,
 not just a code integration.
@@ -154,7 +154,7 @@ be notified immediately — not wait for someone to notice a row color change.
 | **OpsGenie** | Alternative to PagerDuty, common in Atlassian shops | REST API |
 
 **Note:** Splunk is the SIEM of record at Fortune 500 security teams.
-If COMBATPAIR events don't appear in Splunk, the SOC team will never see them.
+If GAUNTLEX events don't appear in Splunk, the SOC team will never see them.
 A Splunk TA (Technology Add-on) is a 2-week build + separate Splunkbase certification.
 
 ---
@@ -163,7 +163,7 @@ A Splunk TA (Technology Add-on) is a 2-week build + separate Splunkbase certific
 
 1. **ServiceNow CMDB** — unlocks grouping, GRC evidence, compliance map at once
 2. **Jira auto-ticketing** — MTTR is the budget-justification metric; adapter exists, make it automatic
-3. **Splunk HEC** — gets COMBATPAIR into SOC workflow with zero behavioral change on their part
+3. **Splunk HEC** — gets GAUNTLEX into SOC workflow with zero behavioral change on their part
 4. **Jenkins plugin / ADO task** — covers CI systems beyond GitHub Actions
 5. **PagerDuty** — closes "who gets paged" question
 6. **ServiceNow GRC** — compliance audit evidence path; required for regulated industries
