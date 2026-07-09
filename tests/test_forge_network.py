@@ -152,6 +152,27 @@ def test_pull_network_error_returns_empty(monkeypatch):
     assert result.success is False
 
 
+def test_pull_connection_error_gives_clean_message_not_raw_exception(monkeypatch):
+    """Regression test: a real httpx.RequestError (DNS failure, connection
+    refused, timeout) used to surface as str(e) verbatim — e.g. '[Errno 8]
+    nodename nor servname provided, or not known' — meaningless to a user
+    since the hub is pre-launch and this is the expected/common case, not a
+    bug. Must degrade the same way fetch_hub_stats() already does."""
+    import httpx
+
+    def raise_dns_error(*a, **kw):
+        raise httpx.ConnectError("[Errno 8] nodename nor servname provided, or not known")
+
+    monkeypatch.setattr(httpx, "get", raise_dns_error)
+    cfg = ForgeNetworkConfig(enabled=True, hub_url="https://forge-network.gauntlex.dev")
+    patterns, result = pull_patterns("CWE-89", cfg)
+    assert patterns == []
+    assert result.success is False
+    assert "Errno" not in result.error
+    assert "unreachable" in result.error
+    assert cfg.hub_url in result.error
+
+
 def test_pull_success_parses_patterns(monkeypatch):
     import httpx
 

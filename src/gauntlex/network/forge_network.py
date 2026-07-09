@@ -161,6 +161,16 @@ def pull_patterns(
             for p in data.get("patterns", [])
         ]
         return patterns, NetworkResult(success=True, operation="pull", patterns_count=len(patterns))
+    except httpx.RequestError:
+        # DNS failure, connection refused, timeout, etc. — the hub is pre-launch
+        # today, so this is the expected case, not an error worth a raw OS/socket
+        # message (fetch_hub_stats() already degrades this gracefully; pull_patterns
+        # used to leak str(e) verbatim, e.g. "[Errno 8] nodename nor servname
+        # provided, or not known" — meaningless to anyone who isn't debugging DNS).
+        return [], NetworkResult(
+            success=False, operation="pull",
+            error=f"hub unreachable (offline or not yet launched): {config.hub_url}",
+        )
     except Exception as e:
         return [], NetworkResult(success=False, operation="pull", error=str(e))
 

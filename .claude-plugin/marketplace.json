@@ -1,0 +1,19 @@
+{
+  "name": "gauntlex",
+  "owner": {
+    "name": "Sanjoy Ghosh",
+    "email": "sanjoy.sghosh@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "gauntlex",
+      "source": "./",
+      "description": "Adversarial co-generation engine — Builder+Breaker skills and MCP server for GAUNTLEX (run, verify, doctor, compare, report, learn, validate)",
+      "version": "0.1.0",
+      "author": {
+        "name": "Sanjoy Ghosh"
+      },
+      "keywords": ["security", "adversarial", "code-generation", "ci-gate"]
+    }
+  ]
+}

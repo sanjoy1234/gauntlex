@@ -48,3 +48,27 @@ def test_breaker_cwe_rotation():
 def test_entropy_empty_returns_zero():
     breaker = Breaker(provider="ollama", model="llama3.1:8b")
     assert breaker.entropy() == 0.0
+
+
+def test_select_cwes_respects_attacks_per_round():
+    """Regression: --mode's attack count must actually control how many CWEs
+    (and thus attacks) are requested per round, not a hardcoded 3-5.
+
+    Previously attacks_per_round didn't exist and _select_cwes always picked
+    up to 5 CWEs regardless of mode, so `standard` (target 20) and `thorough`
+    (target 50) silently generated the same handful of attacks as `quick`.
+    """
+    breaker = Breaker(cwe_rotation=True, attacks_per_round=8, provider="ollama", model="llama3.1:8b")
+    cwes = breaker._select_cwes(1)
+    assert len(cwes) == 8
+
+
+def test_select_cwes_default_matches_prior_behavior():
+    breaker = Breaker(provider="ollama", model="llama3.1:8b")
+    assert breaker.attacks_per_round == 5
+    assert len(breaker._select_cwes(1)) == 5
+
+
+def test_attacks_per_round_floors_at_one():
+    breaker = Breaker(attacks_per_round=0, provider="ollama", model="llama3.1:8b")
+    assert breaker.attacks_per_round == 1

@@ -9,6 +9,7 @@ the moment the Builder starts. Multiple rounds until ARS converges or rounds_max
 from __future__ import annotations
 
 import asyncio
+import math
 import time
 from dataclasses import dataclass, field
 
@@ -72,11 +73,17 @@ class Gauntlex:
 
         model_kwargs: dict = self.config.model_kwargs()
 
+        # Spread the mode's target attack_count (quick=5/standard=20/thorough=50)
+        # evenly across rounds_max rounds, so --mode actually controls how many
+        # attacks get generated instead of leaving it to whatever the model emits.
+        attacks_per_round = max(1, math.ceil(cp.attack_count / max(1, cp.rounds_max)))
+
         self.builder = Builder(**model_kwargs)
         self.breaker = Breaker(
             cwe_rotation=cp.cwe_rotation,
             policy_context=policy_context,
             break_context_enabled=cp.break_context_enabled,
+            attacks_per_round=attacks_per_round,
             **model_kwargs,
         )
         self.recalled_attacks = recalled_attacks
@@ -97,22 +104,25 @@ class Gauntlex:
         for round_num in range(1, self._rounds_max + 1):
             start_round = time.monotonic()
 
-            # Key primitive: Builder and Breaker run CONCURRENTLY
-            target = build_result.code if build_result else spec
-            build_result, breaker_result = await asyncio.gather(
-                self.builder.generate(spec, round_number=round_num, feedback=feedback),
-                self.breaker.attack(
-                    target,
-                    round_number=round_num,
-                    recalled_attacks=self.recalled_attacks if round_num == 1 else "",
-                    intent_context=self.intent_context if round_num == 1 else "",
-                ),
-            )
-
-            # After concurrent phase: score round-1 Breaker against the just-built code
-            # For round 2+, Breaker already attacked the previous build; now score vs new build
-            if round_num > 1:
-                # Re-attack the new build synchronously (Breaker already ran on prev build)
+            if round_num == 1:
+                # Key primitive: Builder and Breaker run CONCURRENTLY on the spec —
+                # adversarial testing begins the moment the Builder starts.
+                build_result, breaker_result = await asyncio.gather(
+                    self.builder.generate(spec, round_number=round_num, feedback=feedback),
+                    self.breaker.attack(
+                        spec,
+                        round_number=round_num,
+                        recalled_attacks=self.recalled_attacks,
+                        intent_context=self.intent_context,
+                    ),
+                )
+            else:
+                # Round 2+: Breaker must attack the just-built code, which doesn't
+                # exist until Builder finishes this round — no real concurrency is
+                # possible here, so this is a single sequential Breaker call (not two).
+                build_result = await self.builder.generate(
+                    spec, round_number=round_num, feedback=feedback
+                )
                 breaker_result = await self.breaker.attack(
                     build_result.code,
                     round_number=round_num,

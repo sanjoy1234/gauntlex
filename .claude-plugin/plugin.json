@@ -1,0 +1,18 @@
+{
+  "name": "gauntlex",
+  "description": "Adversarial co-generation engine — generates code and adversarial attacks from the same spec, concurrently. Adds /gauntlex:run and friends, plus the gauntlex MCP server.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Sanjoy Ghosh",
+    "email": "sanjoy.sghosh@gmail.com"
+  },
+  "homepage": "https://github.com/sanjoy1234/gauntlex",
+  "license": "MIT",
+  "skills": ["./.claude/skills/gauntlex"],
+  "mcpServers": {
+    "gauntlex": {
+      "command": "gauntlex",
+      "args": ["mcp-server"]
+    }
+  }
+}

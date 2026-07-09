@@ -23,13 +23,17 @@ async def handle_webhook(body: bytes, headers: dict, config: ServiceConfig) -> d
 
     Args:
         body: Raw request body bytes
-        headers: HTTP headers dict (must include X-Hub-Signature-256)
+        headers: HTTP headers dict (must include X-Hub-Signature-256). Keys are
+            matched case-insensitively — ASGI servers (uvicorn/Starlette) hand
+            back lowercase header names, so a caller doing dict(request.headers)
+            passes lowercase keys even though GitHub sends mixed-case ones.
         config: ServiceConfig loaded from environment
 
     Returns:
         dict with status, run_id, ars, and message
     """
-    signature = headers.get("X-Hub-Signature-256", "")
+    headers_ci = {k.lower(): v for k, v in headers.items()}
+    signature = headers_ci.get("x-hub-signature-256", "")
     if not verify_webhook_signature(body, signature, config.webhook_secret):
         return {"status": "error", "message": "Invalid webhook signature"}
 
@@ -38,7 +42,7 @@ async def handle_webhook(body: bytes, headers: dict, config: ServiceConfig) -> d
     except json.JSONDecodeError:
         return {"status": "error", "message": "Invalid JSON payload"}
 
-    event_type = headers.get("X-GitHub-Event", "")
+    event_type = headers_ci.get("x-github-event", "")
     if event_type != "pull_request":
         return {"status": "ignored", "message": f"Ignoring event: {event_type}"}
 

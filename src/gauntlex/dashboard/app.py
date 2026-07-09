@@ -1,5 +1,5 @@
 """
-Combat Dashboard — FastAPI web UI for GAUNTLEX.
+GAUNTLEX Dashboard — FastAPI web UI.
 
 Optional install: pip install gauntlex-ai[ui]
 Launch:           gauntlex dashboard --port 8080
@@ -35,7 +35,7 @@ from ..output.report import load_report, render_html, render_sarif, render_junit
 def _require_fastapi():
     if not _FASTAPI_AVAILABLE:
         raise RuntimeError(
-            "Combat Dashboard requires FastAPI and Uvicorn. "
+            "GAUNTLEX dashboard requires FastAPI and Uvicorn. "
             "Install with: pip install gauntlex-ai[ui]"
         )
 
@@ -48,7 +48,7 @@ def create_app(config: AppConfig | None = None):  # returns FastAPI when install
     # explicit --config can't be passed through directly.
     cfg = config or AppConfig.load(os.environ.get("GAUNTLEX_CONFIG_PATH"))
     runs_dir = cfg.reports_dir.parent / "runs"
-    app = FastAPI(title="GAUNTLEX Combat Dashboard", version="0.1.0")
+    app = FastAPI(title="GAUNTLEX Dashboard", version="0.1.0")
 
     @app.get("/", response_class=HTMLResponse)
     async def index():
@@ -133,6 +133,26 @@ def create_app(config: AppConfig | None = None):  # returns FastAPI when install
     @app.get("/health")
     async def health():
         return {"status": "ok", "service": "gauntlex-dashboard"}
+
+    @app.post("/webhook")
+    async def webhook(request: Request):
+        # This is the route `gauntlex serve` advertises in its startup banner.
+        # It used to not exist at all: `gauntlex serve` booted this same FastAPI
+        # app but the actual webhook handler lived in an unrelated, never-mounted
+        # Starlette app in service/github_app.py — any real GitHub App delivery
+        # to /webhook 404'd. handle_webhook() already had the real logic; it was
+        # just never wired to a route that `serve` actually starts.
+        from ..service.config import ServiceConfig
+        from ..service.github_app import handle_webhook
+
+        body = await request.body()
+        result = await handle_webhook(
+            body=body,
+            headers=dict(request.headers),
+            config=ServiceConfig.from_env(),
+        )
+        status_code = 200 if result.get("status") != "error" else 400
+        return JSONResponse(result, status_code=status_code)
 
     _provider_labels = {
         "anthropic": "Anthropic", "openrouter": "OpenRouter",
@@ -447,7 +467,7 @@ def _load_all_reports(reports_dir: Path, limit: int = 100) -> list[dict]:
 
 
 def _render_index(reports: list[dict], cfg: AppConfig, active_runs: list[dict] | None = None) -> str:
-    """Executive-ready Combat Dashboard — animated infographics, self-explanatory offline."""
+    """Executive-ready GAUNTLEX dashboard — animated infographics, self-explanatory offline."""
     gate = cfg.gate.minimum_ars
     total = len(reports)
     n_passed = sum(1 for r in reports if r["ars_score"] >= gate)
@@ -867,7 +887,7 @@ footer{margin-top:8px;padding:16px 32px;border-top:1px solid #DBEAFE;font-size:1
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="refresh" content="30">
-<title>GAUNTLEX Combat Dashboard</title>
+<title>GAUNTLEX Dashboard</title>
 <style>{css}</style>
 </head>
 <body>

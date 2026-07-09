@@ -6,7 +6,7 @@ Supports two transports:
            Launch: gauntlex mcp-server
            Add to your IDE's MCP config (see README "MCP Server Integration")
 
-  http   — team/enterprise deployment, served alongside the Combat Dashboard
+  http   — team/enterprise deployment, served alongside the GAUNTLEX dashboard
            Launch: gauntlex serve --mcp  (POST /mcp)
 
 Protocol: JSON-RPC 2.0 / MCP 2024-11-05

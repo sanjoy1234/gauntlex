@@ -26,9 +26,21 @@ from rich.text import Text
 
 # Auto-load .env if present — lets users set OPENROUTER_API_KEY etc. without
 # manually exporting. dotenv is a no-op when the file doesn't exist.
+#
+# find_dotenv(usecwd=True) is required here, not bare load_dotenv(). Without
+# usecwd, dotenv walks up from the *calling frame's file location* to find
+# .env, not from the current directory. For an editable/dev install that
+# happens to work, since cli.py sits inside the project it's testing. For a
+# real `pip install`, cli.py lives under site-packages/ with no .env anywhere
+# nearby, so discovery silently fails, MODEL_PROVIDER never reaches
+# os.environ, and AppConfig falls back to .gauntlex.yml's static template
+# default (Ollama) — overriding the user's actual `gauntlex setup` choice
+# with no warning. usecwd=True anchors discovery to cwd instead, walking
+# upward the same way _find_config() does for .gauntlex.yml, so both files
+# resolve consistently regardless of how the script was invoked.
 try:
-    from dotenv import load_dotenv
-    load_dotenv()
+    from dotenv import find_dotenv, load_dotenv
+    load_dotenv(find_dotenv(usecwd=True))
 except ImportError:
     pass
 
@@ -516,6 +528,17 @@ async def _run_async(
         save_report(report, cfg.reports_dir)
         if not preset_run_id:
             Path(".last_report_id").write_text(run_id)
+
+        # Auto-learn: feed this run straight into the Knowledge Forge / Forge
+        # Ledger so `gauntlex vault` reflects real data without requiring a
+        # separate manual `gauntlex learn` call. Best-effort — a failure here
+        # must not fail an otherwise-successful assessment.
+        try:
+            from .harness.commands.learn import execute as _learn_execute
+            _learn_execute(run_id, config_path)
+        except Exception:
+            pass
+
         _status(status="done", ars=result.final_ars,
                 passed=result.final_ars >= cfg.gate.minimum_ars)
         _plain(f"Done. ARS={result.final_ars:.3f}  run_id={run_id}")
@@ -1826,12 +1849,12 @@ def prune(older_than: str, dry_run: bool):
                    "remembers your last-used project automatically. Only useful for "
                    "pointing at a project you've never run gauntlex in from this machine.")
 def dashboard(port: int, host: str, reload: bool, config_path: str | None):
-    """Launch the Combat Dashboard web UI."""
+    """Launch the GAUNTLEX dashboard web UI."""
     try:
         import uvicorn  # noqa: F401
         import fastapi  # noqa: F401
     except ImportError as exc:
-        console.print(f"[red]Error:[/red] Combat Dashboard requires FastAPI and Uvicorn ({exc}).")
+        console.print(f"[red]Error:[/red] GAUNTLEX dashboard requires FastAPI and Uvicorn ({exc}).")
         console.print("Fix with: [bold]pip install fastapi uvicorn[/bold]")
         sys.exit(1)
 
@@ -1840,7 +1863,7 @@ def dashboard(port: int, host: str, reload: bool, config_path: str | None):
     if cfg.config_source:
         os.environ["GAUNTLEX_CONFIG_PATH"] = str(cfg.config_source)
 
-    console.print(f"\n[bold]GAUNTLEX Combat Dashboard[/bold]")
+    console.print(f"\n[bold]GAUNTLEX Dashboard[/bold]")
     console.print(f"  URL:  [link=http://{host}:{port}]http://{host}:{port}[/link]")
     if cfg.config_source:
         console.print(f"  Project: [dim]{cfg.config_source.parent}[/dim]")
@@ -1914,7 +1937,15 @@ def serve(port: int, host: str, reload: bool, rbac: bool, config_path: str | Non
 
     if rbac:
         org = cfg.github_org
-        console.print(f"[cyan]RBAC enabled[/cyan] — GitHub org: {org or '(not set)'}")
+        console.print(f"[cyan]RBAC configured[/cyan] — GitHub org: {org or '(not set)'}")
+        console.print(
+            "[yellow]⚠  Route-level enforcement is not wired up yet[/yellow] — "
+            "RbacEnforcer.resolve_role() exists and works standalone, but no "
+            "dashboard/webhook route calls it. Every route below is currently "
+            "reachable by anyone who can reach this host, regardless of --rbac. "
+            "Do not expose this port publicly and treat --rbac as configuration "
+            "staging only, not an active access control.\n"
+        )
 
     console.print(f"\n[bold]GAUNTLEX CPaaS[/bold]")
     console.print(f"  Webhook URL: http://{host}:{port}/webhook")
@@ -2033,12 +2064,9 @@ def mcp_server(config_path: str | None):
       gauntlex_verify      — verify SHA-256 report integrity
 
     \b
-    Claude Code (~/.claude/mcp_servers.json):
-      { "gauntlex": { "command": "gauntlex", "args": ["mcp-server"] } }
-
-    \b
-    Cursor (.cursor/mcp.json):
-      { "gauntlex": { "command": "gauntlex", "args": ["mcp-server"] } }
+    Don't hand-edit config files — run `gauntlex integrate` instead, which
+    writes the correct file and schema for each tool (they differ) and
+    merges safely with any MCP servers you already have configured.
     """
     from .mcp.server import MCPServer
     cfg = AppConfig.load(config_path)
@@ -2103,17 +2131,25 @@ def findings(run_id: str | None, fmt: str):
 @main.command()
 @click.option(
     "--platform",
-    type=click.Choice(["claude-code", "cursor", "windsurf", "copilot", "codex", "github-actions", "all"]),
+    type=click.Choice([
+        "claude-code", "cursor", "windsurf", "copilot", "codex",
+        "zed", "antigravity", "github-actions", "all",
+    ]),
     default="all",
     show_default=True,
     help="Target IDE or platform",
 )
 @click.option("--dry-run", is_flag=True, help="Print config without writing files")
-def integrate(platform: str, dry_run: bool):
-    """One-command setup: wire GAUNTLEX into Claude Code, Copilot, Codex, GitHub Actions.
+@click.option("--force", is_flag=True,
+              help="Overwrite an existing file even if it doesn't match GAUNTLEX's template "
+                   "(e.g. a hand-customized .github/workflows/gauntlex.yml). Without this, "
+                   "an existing non-MCP file that differs from the template is left untouched.")
+def integrate(platform: str, dry_run: bool, force: bool):
+    """One-command setup: wire GAUNTLEX into your IDE, coding agent, or CI.
 
-    Writes the MCP server config and GitHub Actions workflow for the chosen platform.
-    Developers need zero manual configuration — just run this command.
+    Writes the MCP server config for the chosen platform, using each tool's
+    real config file and schema (they differ — see below). Existing entries
+    for other MCP servers in that file are preserved, never overwritten.
 
     \b
     Examples:
@@ -2121,16 +2157,34 @@ def integrate(platform: str, dry_run: bool):
       gauntlex integrate --platform claude-code
       gauntlex integrate --platform github-actions
       gauntlex integrate --dry-run              # preview changes
+
+    \b
+    Targets and where each config is written:
+      claude-code   .mcp.json               (project-scoped, git-shareable)
+      cursor        .cursor/mcp.json
+      windsurf      ~/.codeium/windsurf/mcp_config.json
+      copilot       .vscode/mcp.json        (VS Code's "servers" key, not "mcpServers")
+      codex         ~/.codex/config.toml    (TOML, not JSON — Codex ignores JSON here)
+      zed           .zed/settings.json      ("context_servers" key)
+      antigravity   ~/.gemini/config/mcp_config.json  (shared by Antigravity IDE + CLI)
+      github-actions .github/workflows/gauntlex.yml
     """
+    import re
     import shutil
 
-    mcp_config = json.dumps({
-        "gauntlex": {
-            "command": str(shutil.which("gauntlex") or "gauntlex"),
-            "args": ["mcp-server"],
-            "env": {}
-        }
-    }, indent=2)
+    gauntlex_cmd = str(shutil.which("gauntlex") or "gauntlex")
+
+    def _json_mcp_config(wrapper_key: str, *, zed_style: bool = False) -> str:
+        if zed_style:
+            entry = {"source": "custom", "command": gauntlex_cmd, "args": ["mcp-server"], "env": {}}
+        else:
+            entry = {"command": gauntlex_cmd, "args": ["mcp-server"], "env": {}}
+        return json.dumps({wrapper_key: {"gauntlex": entry}}, indent=2)
+
+    mcp_config = _json_mcp_config("mcpServers")
+    copilot_config = _json_mcp_config("servers")
+    zed_config = _json_mcp_config("context_servers", zed_style=True)
+    codex_toml = f'[mcp_servers.gauntlex]\ncommand = "{gauntlex_cmd}"\nargs = ["mcp-server"]\n'
 
     github_action = """\
 name: GAUNTLEX Adversarial Gate
@@ -2165,33 +2219,51 @@ jobs:
 
     configs = {
         "claude-code": {
-            "path": Path.home() / ".claude" / "mcp_servers.json",
+            "path": Path(".mcp.json"),
             "content": mcp_config,
-            "desc": "Claude Code MCP server config (~/.claude/mcp_servers.json)",
+            "merge_key": "mcpServers",
+            "desc": "Claude Code MCP config (.mcp.json, project-scoped)",
         },
         "cursor": {
             "path": Path(".cursor") / "mcp.json",
             "content": mcp_config,
+            "merge_key": "mcpServers",
             "desc": "Cursor MCP config (.cursor/mcp.json)",
         },
         "windsurf": {
             "path": Path.home() / ".codeium" / "windsurf" / "mcp_config.json",
             "content": mcp_config,
-            "desc": "Windsurf MCP config",
+            "merge_key": "mcpServers",
+            "desc": "Windsurf MCP config (~/.codeium/windsurf/mcp_config.json)",
         },
         "copilot": {
             "path": Path(".vscode") / "mcp.json",
-            "content": mcp_config,
+            "content": copilot_config,
+            "merge_key": "servers",
             "desc": "GitHub Copilot / VS Code MCP config (.vscode/mcp.json)",
         },
         "codex": {
-            "path": Path(".codex") / "mcp.json",
+            "path": Path.home() / ".codex" / "config.toml",
+            "content": codex_toml,
+            "merge_key": None,
+            "desc": "Codex MCP config (~/.codex/config.toml)",
+        },
+        "zed": {
+            "path": Path(".zed") / "settings.json",
+            "content": zed_config,
+            "merge_key": "context_servers",
+            "desc": "Zed MCP config (.zed/settings.json)",
+        },
+        "antigravity": {
+            "path": Path.home() / ".gemini" / "config" / "mcp_config.json",
             "content": mcp_config,
-            "desc": "Codex MCP config (.codex/mcp.json)",
+            "merge_key": "mcpServers",
+            "desc": "Google Antigravity MCP config (~/.gemini/config/mcp_config.json)",
         },
         "github-actions": {
             "path": Path(".github") / "workflows" / "gauntlex.yml",
             "content": github_action,
+            "merge_key": None,
             "desc": "GitHub Actions adversarial gate (.github/workflows/gauntlex.yml)",
         },
     }
@@ -2200,12 +2272,26 @@ jobs:
 
     console.print(f"\n[bold cyan]⚔  GAUNTLEX Integrate[/bold cyan]{'  [dim](dry run)[/dim]' if dry_run else ''}\n")
 
+    def _upsert_codex_toml(dest: Path, section: str) -> None:
+        """Insert or replace the [mcp_servers.gauntlex] table, leaving the rest of the TOML untouched."""
+        if not dest.exists():
+            dest.write_text(section)
+            return
+        text = dest.read_text()
+        pattern = re.compile(r"^\[mcp_servers\.gauntlex\]\n(?:(?!^\[).*\n?)*", re.MULTILINE)
+        if pattern.search(text):
+            dest.write_text(pattern.sub(section, text))
+        else:
+            sep = "\n" if text and not text.endswith("\n") else ""
+            dest.write_text(f"{text}{sep}\n{section}" if text.strip() else section)
+
     written = 0
     for target in targets:
         cfg_entry = configs[target]
         dest: Path = cfg_entry["path"]
         content: str = cfg_entry["content"]
         desc: str = cfg_entry["desc"]
+        merge_key: str | None = cfg_entry.get("merge_key")
 
         if dry_run:
             console.print(f"  [dim]Would write:[/dim] {dest}")
@@ -2213,15 +2299,31 @@ jobs:
         else:
             try:
                 dest.parent.mkdir(parents=True, exist_ok=True)
-                # For JSON MCP configs, merge rather than overwrite if file exists
-                if dest.exists() and dest.suffix == ".json":
+                if dest.suffix == ".toml":
+                    _upsert_codex_toml(dest, content)
+                elif dest.exists() and dest.suffix == ".json" and merge_key:
+                    # Merge one level below the wrapper key, so any other MCP
+                    # servers already configured in this file are preserved.
                     try:
                         existing = json.loads(dest.read_text())
-                        new_entry = json.loads(content)
-                        existing.update(new_entry)
+                        new_entry = json.loads(content)[merge_key]
+                        if not isinstance(existing.get(merge_key), dict):
+                            existing[merge_key] = {}
+                        existing[merge_key].update(new_entry)
                         dest.write_text(json.dumps(existing, indent=2))
-                    except Exception:
+                    except (json.JSONDecodeError, KeyError):
                         dest.write_text(content)
+                elif dest.exists() and dest.read_text() != content and not force:
+                    # A plain, non-mergeable file (currently just the GitHub Actions
+                    # workflow) that already exists and doesn't match our template —
+                    # almost certainly hand-customized. Overwriting it unconditionally
+                    # used to silently destroy real customization (PR-comment posting,
+                    # permissions, extra steps) with zero warning. Skip unless --force.
+                    console.print(
+                        f"  [yellow]⚠[/yellow]  {desc} — already exists and differs from "
+                        f"the template, left untouched (use [bold]--force[/bold] to overwrite)"
+                    )
+                    continue
                 else:
                     dest.write_text(content)
                 console.print(f"  [green]✓[/green]  {desc}")

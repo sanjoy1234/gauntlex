@@ -1,4 +1,4 @@
-"""Tests for Combat Dashboard — Sprint 10."""
+"""Tests for the GAUNTLEX dashboard."""
 
 from __future__ import annotations
 
@@ -329,6 +329,83 @@ def test_status_page_warns_when_no_project_found(tmp_path):
 
     resp = client.get("/status")
     assert "No GAUNTLEX project found" in resp.text
+
+
+# ── /webhook — gauntlex serve's CPaaS route ─────────────────────────────────
+#
+# Regression coverage for two real bugs found while testing `gauntlex serve`:
+#   1. /webhook didn't exist on the app that `serve` actually boots (it lived
+#      only in a separate, never-mounted Starlette app in github_app.py) — any
+#      real GitHub delivery 404'd despite `serve`'s own banner advertising it.
+#   2. Once mounted, signature verification always failed: dict(request.headers)
+#      lowercases header names (correct per ASGI), but handle_webhook() looked
+#      up "X-Hub-Signature-256" with its original GitHub casing — a guaranteed
+#      miss regardless of what the caller actually sent.
+
+def test_webhook_route_is_registered(tmp_path):
+    cfg = AppConfig()
+    cfg.reports_dir = tmp_path / "reports"
+    app = create_app(cfg)
+    routes = [r.path for r in app.routes]
+    assert "/webhook" in routes
+
+
+def test_webhook_accepts_valid_signature_with_mixed_case_headers(tmp_path, monkeypatch):
+    import hmac
+    import hashlib
+
+    monkeypatch.setenv("GITHUB_WEBHOOK_SECRET", "test-secret-123")
+    client, _ = _client(tmp_path)
+
+    body = json.dumps({"action": "ping"}).encode()
+    sig = "sha256=" + hmac.new(b"test-secret-123", body, hashlib.sha256).hexdigest()
+
+    # TestClient/httpx sends these with their original casing over the wire;
+    # Starlette normalizes to lowercase before handle_webhook ever sees them —
+    # this is what makes the test meaningful, not just a happy-path check.
+    resp = client.post(
+        "/webhook",
+        content=body,
+        headers={"X-GitHub-Event": "ping", "X-Hub-Signature-256": sig},
+    )
+    assert resp.status_code == 200
+    assert resp.json() == {"status": "ignored", "message": "Ignoring event: ping"}
+
+
+def test_webhook_rejects_invalid_signature(tmp_path, monkeypatch):
+    monkeypatch.setenv("GITHUB_WEBHOOK_SECRET", "test-secret-123")
+    client, _ = _client(tmp_path)
+
+    body = json.dumps({"action": "ping"}).encode()
+    resp = client.post(
+        "/webhook",
+        content=body,
+        headers={"X-GitHub-Event": "ping", "X-Hub-Signature-256": "sha256=not-the-real-signature"},
+    )
+    assert resp.status_code == 400
+    assert resp.json()["status"] == "error"
+
+
+def test_handle_webhook_matches_headers_case_insensitively():
+    """Direct unit test of the underlying fix, independent of the HTTP layer."""
+    import asyncio
+    import hmac
+    import hashlib
+    from gauntlex.service.config import ServiceConfig
+    from gauntlex.service.github_app import handle_webhook
+
+    secret = "test-secret-123"
+    body = json.dumps({"action": "ping"}).encode()
+    sig = "sha256=" + hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
+    cfg = ServiceConfig(webhook_secret=secret)
+
+    # Lowercase keys, exactly as dict(starlette_request.headers) produces.
+    result = asyncio.run(handle_webhook(
+        body=body,
+        headers={"x-hub-signature-256": sig, "x-github-event": "ping"},
+        config=cfg,
+    ))
+    assert result == {"status": "ignored", "message": "Ignoring event: ping"}
 
 
 # ── pyproject.toml [ui] extra ──────────────────────────────────────────────────

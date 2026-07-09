@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GAUNTLEX Resilience Report — gauntlex-2026-07-09T16-27-24Z-ddd0</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:#F0F7FF;color:#111827;min-height:100vh}
+  header{background:linear-gradient(135deg,#1E40AF 0%,#3B82F6 100%);padding:20px 32px;color:#fff}
+  header h1{font-size:20px;font-weight:800;letter-spacing:-.01em}
+  header .meta{font-size:12px;opacity:.8;margin-top:4px;font-family:monospace}
+  .main{max-width:1000px;margin:0 auto;padding:28px 24px}
+  .gate-bar{display:flex;align-items:center;gap:20px;background:#fff;border-radius:10px;padding:20px 24px;margin-bottom:20px;border:1px solid #DBEAFE;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  .gate-verdict{font-size:28px;font-weight:900;color:#DC2626}
+  .gate-badge{background:#FEE2E2;color:#DC2626;border:1.5px solid #DC2626;border-radius:6px;padding:4px 14px;font-size:13px;font-weight:800;letter-spacing:.04em}
+  .ars-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#6B7280}
+  .stat-chips{display:flex;gap:10px;flex-wrap:wrap;margin-left:auto}
+  .chip{background:#EFF6FF;color:#1E40AF;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700}
+  .chip.red{background:#FEE2E2;color:#DC2626}
+  .chip.amber{background:#FFFBEB;color:#D97706}
+  .chip.green{background:#D1FAE5;color:#059669}
+  .section-title{font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#1E40AF;margin:24px 0 12px;display:flex;align-items:center;gap:8px}
+  .finding-card{border-radius:8px;padding:16px 18px;margin-bottom:12px}
+  .finding-header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+  .finding-cwe{font-family:monospace;font-size:11px;font-weight:800;padding:2px 8px;border-radius:4px}
+  .finding-title{font-weight:700;font-size:14px;color:#111827;flex:1}
+  .finding-sev{font-size:11px;font-weight:800;letter-spacing:.05em}
+  .verdict-tag{font-size:11px;font-weight:700;margin-left:auto}
+  .finding-desc{font-size:13px;color:#374151;line-height:1.5;margin-bottom:10px}
+  .finding-fix{font-size:12px;background:rgba(255,255,255,.7);border-radius:4px;padding:8px 12px;color:#374151;border-left:3px solid #3B82F6}
+  table{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border-radius:8px;overflow:hidden;border:1px solid #DBEAFE;margin-bottom:20px}
+  th{background:#EFF6FF;padding:10px 14px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#1E40AF;border-bottom:2px solid #BFDBFE}
+  td{padding:10px 14px;border-bottom:1px solid #EFF6FF}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:#F8FAFF}
+  code{font-family:monospace;font-size:11px}
+  .integrity{font-size:11px;color:#9CA3AF;font-family:monospace;margin-top:20px;padding-top:14px;border-top:1px solid #E5E7EB}
+  footer{text-align:center;padding:20px;font-size:12px;color:#9CA3AF}
+</style>
+</head>
+<body>
+<header>
+  <h1>⚔️ GAUNTLEX Resilience Report</h1>
+  <div class="meta">Run: gauntlex-2026-07-09T16-27-24Z-ddd0 &nbsp;·&nbsp; 2026-07-09 16:39:21 UTC &nbsp;·&nbsp; Playbook: owasp_top10@v2025.1</div>
+</header>
+
+<div class="main">
+
+  <div class="gate-bar">
+    <div>
+      <div class="ars-label">Adversarial Resilience Score</div>
+      <div class="gate-verdict">0.33 <span style="font-size:16px;font-weight:500;color:#6B7280">/ 1.00</span></div>
+    </div>
+    <div><span class="gate-badge">CI/CD GATE: BLOCKED</span></div>
+    <div class="stat-chips">
+      <span class="chip">6 attacks</span>
+      <span class="chip green">2 mitigated</span>
+      <span class="chip amber">0 partial</span>
+      <span class="chip red">4 missed</span>
+      <span class="chip">673.58s</span>
+    </div>
+  </div>
+
+  <div class="section-title">🔍 Vulnerability Findings</div>
+  
+<div class="finding-card" style="border-left:4px solid #FCD34D;background:#FFFBEB">
+  <div class="finding-header">
+    <span class="finding-cwe" style="background:#FCD34D;color:#92400E">CWE-330</span>
+    <span class="finding-title">Predictable JWT Secret Key Fallback</span>
+    <span class="finding-sev" style="color:#92400E">HIGH</span>
+    <span class="verdict-tag" style="color:#92400E">❌ UNMITIGATED</span>
+  </div>
+  <p class="finding-desc">The application uses a hardcoded, predictable fallback JWT secret key ('a-fallback-secret-key-for-demo-only-change-in-production') when the JWT_SECRET_KEY environment variable is not set. An attacker can exploit this by forging valid JWT tokens for any user (e.g., setting user_id to 1 and username to 'admin') using the known secret key, leading to complete authentication bypass and privilege escalation.</p>
+  <div class="finding-fix"><strong>Fix:</strong> Review the CWE definition and apply defense-in-depth controls.</div>
+</div>
+<div class="finding-card" style="border-left:4px solid #93C5FD;background:#EFF6FF">
+  <div class="finding-header">
+    <span class="finding-cwe" style="background:#93C5FD;color:#1E40AF">CWE-20</span>
+    <span class="finding-title">Type confusion in username/password fields leading to server error</span>
+    <span class="finding-sev" style="color:#1E40AF">MEDIUM</span>
+    <span class="verdict-tag" style="color:#1E40AF">❌ UNMITIGATED</span>
+  </div>
+  <p class="finding-desc">The login endpoint does not validate that the 'username' and 'password' fields are strings. If a non-string value (e.g., integer, list) is provided for either field, the application will raise an AttributeError when attempting to call string methods (like `.strip()` or `.lower()`), resulting in a 500 Internal Server Error. An attacker can exploit this to cause denial-of-service by sending malformed requests that trigger server errors.</p>
+  <div class="finding-fix"><strong>Fix:</strong> Review the CWE definition and apply defense-in-depth controls.</div>
+</div>
+<div class="finding-card" style="border-left:4px solid #93C5FD;background:#EFF6FF">
+  <div class="finding-header">
+    <span class="finding-cwe" style="background:#93C5FD;color:#1E40AF">CWE-770</span>
+    <span class="finding-title">Unlimited login attempts for authenticated users due to exemption condition</span>
+    <span class="finding-sev" style="color:#1E40AF">MEDIUM</span>
+    <span class="verdict-tag" style="color:#1E40AF">❌ UNMITIGATED</span>
+  </div>
+  <p class="finding-desc">The `exempt_successful_login` function exempts requests with valid credentials from the rate limit (5/minute). An attacker who has obtained valid credentials can send an unlimited number of login requests without being rate limited. Each request consumes server resources: database connection, CPU for JWT signing and password verification, and log storage. This can lead to denial-of-service via resource exhaustion.</p>
+  <div class="finding-fix"><strong>Fix:</strong> Review the CWE definition and apply defense-in-depth controls.</div>
+</div>
+<div class="finding-card" style="border-left:4px solid #FCD34D;background:#FFFBEB">
+  <div class="finding-header">
+    <span class="finding-cwe" style="background:#FCD34D;color:#92400E">CWE-330</span>
+    <span class="finding-title">Weak/inadequately random JWT secret</span>
+    <span class="finding-sev" style="color:#92400E">HIGH</span>
+    <span class="verdict-tag" style="color:#92400E">❌ UNMITIGATED</span>
+  </div>
+  <p class="finding-desc">The JWT signing key is hardcoded to a weak, predictable string "your-secret-key-here". This lacks sufficient entropy, making it feasible for an attacker to brute-force or guess the secret and forge valid JWT tokens, leading to privilege escalation or unauthorized access.</p>
+  <div class="finding-fix"><strong>Fix:</strong> Review the CWE definition and apply defense-in-depth controls.</div>
+</div>
+
+  <div class="section-title">📋 Full Attack Breakdown</div>
+  <table>
+  <thead><tr><th>ID</th><th>CWE</th><th>Vulnerability</th><th>Severity</th><th>Verdict</th><th>Remediation</th></tr></thead>
+  <tbody><tr><td><code>atk-1</code></td><td><code style="background:#EFF6FF;color:#1E40AF;padding:2px 6px;border-radius:3px">CWE-22</code></td><td style="font-weight:500">Path Traversal via Username in Login Logging</td><td>MEDIUM</td><td style="color:#059669;font-weight:700">&#x2705; MITIGATED</td><td style="font-size:12px;color:#6B7280">Canonicalize paths and validate they remain within the allowed base directory.&#x2026;</td></tr>
+<tr><td><code>atk-1</code></td><td><code style="background:#EFF6FF;color:#1E40AF;padding:2px 6px;border-radius:3px">CWE-330</code></td><td style="font-weight:500">Predictable JWT Secret Key Fallback</td><td>HIGH</td><td style="color:#DC2626;font-weight:700">&#x274C; MISSED</td><td style="font-size:12px;color:#6B7280">Review the CWE definition and apply defense-in-depth controls.&#x2026;</td></tr>
+<tr><td><code>atk-1</code></td><td><code style="background:#EFF6FF;color:#1E40AF;padding:2px 6px;border-radius:3px">CWE-20</code></td><td style="font-weight:500">Type confusion in username/password fields leading to server error</td><td>MEDIUM</td><td style="color:#DC2626;font-weight:700">&#x274C; MISSED</td><td style="font-size:12px;color:#6B7280">Review the CWE definition and apply defense-in-depth controls.&#x2026;</td></tr>
+<tr><td><code>atk-2</code></td><td><code style="background:#EFF6FF;color:#1E40AF;padding:2px 6px;border-radius:3px">CWE-770</code></td><td style="font-weight:500">Unlimited login attempts for authenticated users due to exemption condition</td><td>MEDIUM</td><td style="color:#DC2626;font-weight:700">&#x274C; MISSED</td><td style="font-size:12px;color:#6B7280">Review the CWE definition and apply defense-in-depth controls.&#x2026;</td></tr>
+<tr><td><code>atk-1</code></td><td><code style="background:#EFF6FF;color:#1E40AF;padding:2px 6px;border-radius:3px">CWE-352</code></td><td style="font-weight:500">Missing CSRF protection on login endpoint</td><td>MEDIUM</td><td style="color:#059669;font-weight:700">&#x2705; MITIGATED</td><td style="font-size:12px;color:#6B7280">Require CSRF tokens on all state-changing requests. Use SameSite cookies.&#x2026;</td></tr>
+<tr><td><code>atk-2</code></td><td><code style="background:#EFF6FF;color:#1E40AF;padding:2px 6px;border-radius:3px">CWE-330</code></td><td style="font-weight:500">Weak/inadequately random JWT secret</td><td>HIGH</td><td style="color:#DC2626;font-weight:700">&#x274C; MISSED</td><td style="font-size:12px;color:#6B7280">Review the CWE definition and apply defense-in-depth controls.&#x2026;</td></tr>
+</tbody>
+  </table>
+
+  <div class="section-title">🏛️ Compliance Control Mappings</div>
+  <table>
+  <thead><tr><th>Framework</th><th>Controls</th></tr></thead>
+  <tbody><tr><td><strong style="color:#1E40AF">NIST_SSDF</strong></td><td>RV.2.2, RV.3.1, PW.8.1</td></tr>
+<tr><td><strong style="color:#1E40AF">OWASP_SAMM</strong></td><td>Verification/Security-Testing/2</td></tr>
+<tr><td><strong style="color:#1E40AF">SOC2_CC</strong></td><td>CC7.1, CC8.1</td></tr>
+<tr><td><strong style="color:#1E40AF">ISO_27001</strong></td><td>A.14.2.8, A.14.2.9</td></tr>
+</tbody>
+  </table>
+
+  <div class="integrity">SHA-256 Integrity: sha256:c5cca06ef22bf1e86dc001db5ddae5dad08bab05517f94bdfc8a4f9bb0952665</div>
+</div>
+
+<footer>GAUNTLEX Adversarial Co-Generation Engine &nbsp;·&nbsp; Built by Sanjoy Ghosh</footer>
+</body>
+</html>

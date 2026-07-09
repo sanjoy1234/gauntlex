@@ -66,12 +66,14 @@ class Breaker(BaseAgent):
         cwe_rotation: bool = True,
         policy_context: str = "",
         break_context_enabled: bool = True,
+        attacks_per_round: int = 5,
         **kwargs,
     ):
         super().__init__(system_prompt=BREAKER_SYSTEM, **kwargs)
         self.cwe_rotation = cwe_rotation
         self.policy_context = policy_context
         self.break_context_enabled = break_context_enabled
+        self.attacks_per_round = max(1, attacks_per_round)
         self._cwe_pool = _load_cwe_pool()
         self._used_cwes: list[str] = []
 
@@ -126,7 +128,8 @@ class Breaker(BaseAgent):
             f"\nAssigned CWE categories for this round:\n{c_cwe}"
             f"{policy_section}"
             f"{recalled_section}\n"
-            f"Generate adversarial attacks. Return JSON array only."
+            f"Generate adversarial attacks — exactly one per assigned CWE category above "
+            f"({len(cwes)} total). Return JSON array only."
         )
 
         messages = [AgentMessage(role="user", content=prompt)]
@@ -142,16 +145,16 @@ class Breaker(BaseAgent):
         )
 
     def _select_cwes(self, round_number: int) -> list[str]:
-        """Rotate through CWE pool; pick 3-5 per round without heavy repeats."""
+        """Rotate through CWE pool; pick `attacks_per_round` per round without heavy repeats."""
         if not self.cwe_rotation:
-            return list(self._cwe_pool.keys())[:5]
+            return list(self._cwe_pool.keys())[: self.attacks_per_round]
 
         available = [c for c in self._cwe_pool if c not in self._used_cwes[-10:]]
-        if len(available) < 3:
+        if len(available) < self.attacks_per_round:
             available = list(self._cwe_pool.keys())
             self._used_cwes.clear()
 
-        count = min(5, len(available))
+        count = min(self.attacks_per_round, len(available))
         return random.sample(available, count)
 
     def entropy(self) -> float:

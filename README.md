@@ -71,8 +71,10 @@ Three properties, not features — the reasoning behind each is in the [Deep Div
 ## Quickstart
 
 ```bash
-# 1. Install
+# 1. Install — pick one
 pip install gauntlex-ai
+# or, zero-install (the package is gauntlex-ai, the command is gauntlex):
+uvx --from gauntlex-ai gauntlex setup   # swap `setup` for any command below
 
 # 2. Interactive setup — detects and validates the best model for your environment
 #    (Ollama for free/air-gapped, OpenRouter free tier, or your own API key)
@@ -155,10 +157,10 @@ All 22 commands, grouped by when you'd reach for them:
 
 | Team & CI deployment | |
 |---|---|
-| `gauntlex integrate` | One command: wire GAUNTLEX into Claude Code, Cursor, Windsurf, Copilot, Codex, or GitHub Actions |
+| `gauntlex integrate` | One command: wire GAUNTLEX into Claude Code, Cursor, Windsurf, Copilot, Codex, Zed, Antigravity, or GitHub Actions |
 | `gauntlex mcp-server` | Start GAUNTLEX as an MCP server (stdio transport) for local IDE use |
 | `gauntlex serve` | Start GAUNTLEX as a webhook/CI service, with optional GitHub team-based RBAC |
-| `gauntlex dashboard` | Launch the Combat Dashboard web UI |
+| `gauntlex dashboard` | Launch the GAUNTLEX dashboard web UI |
 | `gauntlex leaderboard` | Build an ARS leaderboard across multiple agents/runs |
 | `gauntlex forge-network` | Opt-in community adversarial pattern sharing |
 | `gauntlex prune` | Remove expired reports |
@@ -200,6 +202,38 @@ policy install`. GDPR, FedRAMP, and DORA are on the [roadmap](docs/DEEP_DIVE.md#
 **For exactly what's live threat data vs. static playbook content, and how to
 bring your own domain, see the full
 [Domain Intelligence page](docs/DOMAIN_INTELLIGENCE.md).**
+
+---
+
+## IDE & agent integrations
+
+Three ways to plug GAUNTLEX into whatever you already have open, in order of
+convenience:
+
+**1. Claude Code users — one-time plugin install:**
+```
+/plugin marketplace add sanjoy1234/gauntlex
+/plugin install gauntlex@gauntlex
+```
+This registers the MCP server and all `/gauntlex:*` skills (`run`, `verify`,
+`doctor`, `compare`, `report`, `learn`, `validate`) in one step, with updates
+via `/plugin update`. Requires `gauntlex` on `PATH` (`pip install gauntlex-ai`).
+
+**2. Everyone else — `gauntlex integrate`:**
+```bash
+gauntlex integrate                        # wires every supported target at once
+gauntlex integrate --platform cursor      # or just one
+```
+Writes the correct MCP config for Cursor, Windsurf, GitHub Copilot / VS Code,
+Codex, Zed, and Google Antigravity — each uses a different file and schema
+under the hood; this command handles that so you don't have to. It merges
+into any config you already have rather than overwriting it. See
+`gauntlex integrate --help` for the exact path per target.
+
+**3. Zero-config — `AGENTS.md`:** this repo ships an [AGENTS.md](AGENTS.md)
+that Codex, Cursor, Cline, Windsurf, and Gemini CLI read automatically with
+no install step. If you're building on top of GAUNTLEX rather than just
+using it, copy the pattern into your own repo.
 
 ---
 

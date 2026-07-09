@@ -123,8 +123,26 @@ class BaseAgent:
             "stream": False,
             "options": {"temperature": self.temperature},
         }
-        async with httpx.AsyncClient(timeout=180.0) as client:
-            resp = await client.post(f"{self.ollama_endpoint}/api/generate", json=payload)
+        # 180s used to be the ceiling here, which is too tight for CPU-only inference
+        # on llama3.1:8b — this project's own default/recommended local model — on
+        # typical consumer hardware without a GPU. A single quick-mode attack request
+        # can legitimately take 2-3+ minutes to generate; 300s matches the "hard
+        # ceiling" already used for hosted providers elsewhere in this file, and local
+        # runs have no per-request cost pressure that would argue for staying tighter.
+        async with httpx.AsyncClient(timeout=300.0) as client:
+            try:
+                resp = await client.post(f"{self.ollama_endpoint}/api/generate", json=payload)
+            except httpx.ReadTimeout:
+                raise RuntimeError(
+                    f"[read timeout] {self._model} did not respond within 300s.\n"
+                    f"  CPU-only inference on larger models can be slow. Try a smaller "
+                    f"model (e.g. llama3.2:3b) or a hosted provider instead."
+                )
+            except httpx.ConnectError as exc:
+                raise RuntimeError(
+                    f"[connection error] Cannot reach Ollama at {self.ollama_endpoint}: {exc}.\n"
+                    f"  Is Ollama running? Start with: ollama serve"
+                )
             resp.raise_for_status()
             data = resp.json()
         return ModelResponse(

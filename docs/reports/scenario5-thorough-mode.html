@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GAUNTLEX Resilience Report — gauntlex-2026-07-09T20-41-45Z-8eed</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:#F0F7FF;color:#111827;min-height:100vh}
+  header{background:linear-gradient(135deg,#1E40AF 0%,#3B82F6 100%);padding:20px 32px;color:#fff}
+  header h1{font-size:20px;font-weight:800;letter-spacing:-.01em}
+  header .meta{font-size:12px;opacity:.8;margin-top:4px;font-family:monospace}
+  .main{max-width:1000px;margin:0 auto;padding:28px 24px}
+  .gate-bar{display:flex;align-items:center;gap:20px;background:#fff;border-radius:10px;padding:20px 24px;margin-bottom:20px;border:1px solid #DBEAFE;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  .gate-verdict{font-size:28px;font-weight:900;color:#DC2626}
+  .gate-badge{background:#FEE2E2;color:#DC2626;border:1.5px solid #DC2626;border-radius:6px;padding:4px 14px;font-size:13px;font-weight:800;letter-spacing:.04em}
+  .ars-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#6B7280}
+  .stat-chips{display:flex;gap:10px;flex-wrap:wrap;margin-left:auto}
+  .chip{background:#EFF6FF;color:#1E40AF;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700}
+  .chip.red{background:#FEE2E2;color:#DC2626}
+  .chip.amber{background:#FFFBEB;color:#D97706}
+  .chip.green{background:#D1FAE5;color:#059669}
+  .section-title{font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#1E40AF;margin:24px 0 12px;display:flex;align-items:center;gap:8px}
+  .finding-card{border-radius:8px;padding:16px 18px;margin-bottom:12px}
+  .finding-header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+  .finding-cwe{font-family:monospace;font-size:11px;font-weight:800;padding:2px 8px;border-radius:4px}
+  .finding-title{font-weight:700;font-size:14px;color:#111827;flex:1}
+  .finding-sev{font-size:11px;font-weight:800;letter-spacing:.05em}
+  .verdict-tag{font-size:11px;font-weight:700;margin-left:auto}
+  .finding-desc{font-size:13px;color:#374151;line-height:1.5;margin-bottom:10px}
+  .finding-fix{font-size:12px;background:rgba(255,255,255,.7);border-radius:4px;padding:8px 12px;color:#374151;border-left:3px solid #3B82F6}
+  table{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border-radius:8px;overflow:hidden;border:1px solid #DBEAFE;margin-bottom:20px}
+  th{background:#EFF6FF;padding:10px 14px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#1E40AF;border-bottom:2px solid #BFDBFE}
+  td{padding:10px 14px;border-bottom:1px solid #EFF6FF}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:#F8FAFF}
+  code{font-family:monospace;font-size:11px}
+  .integrity{font-size:11px;color:#9CA3AF;font-family:monospace;margin-top:20px;padding-top:14px;border-top:1px solid #E5E7EB}
+  footer{text-align:center;padding:20px;font-size:12px;color:#9CA3AF}
+</style>
+</head>
+<body>
+<header>
+  <h1>⚔️ GAUNTLEX Resilience Report</h1>
+  <div class="meta">Run: gauntlex-2026-07-09T20-41-45Z-8eed &nbsp;·&nbsp; 2026-07-09 20:49:45 UTC &nbsp;·&nbsp; Playbook: owasp_top10@v2025.1</div>
+</header>
+
+<div class="main">
+
+  <div class="gate-bar">
+    <div>
+      <div class="ars-label">Adversarial Resilience Score</div>
+      <div class="gate-verdict">0.58 <span style="font-size:16px;font-weight:500;color:#6B7280">/ 1.00</span></div>
+    </div>
+    <div><span class="gate-badge">CI/CD GATE: BLOCKED</span></div>
+    <div class="stat-chips">
+      <span class="chip">26 attacks</span>
+      <span class="chip green">15 mitigated</span>
+      <span class="chip amber">0 partial</span>
+      <span class="chip red">11 missed</span>
+      <span class="chip">390.52s</span>
+    </div>
+  </div>
+
+  <div class="section-title">🔍 Vulnerability Findings</div>
+  
+<div class="finding-card" style="border-left:4px solid #93C5FD;background:#EFF6FF">
+  <div class="finding-header">
+    <span class="finding-cwe" style="background:#93C5FD;color:#1E40AF">CWE-362</span>
+    <span class="finding-title">TOCTOU race condition in failed‑attempt counter</span>
+    <span class="finding-sev" style="color:#1E40AF">MEDIUM</span>
+    <span class="verdict-tag" style="color:#1E40AF">❌ UNMITIGATED</span>
+  </div>
+  <p class="finding-desc">The code first reads the failed‑attempt count for an IP from a cache, checks if it is below the threshold (5), and then increments the count. Between the read and the increment, another request from the same IP can slip through, allowing more than 5 failed attempts per minute and bypassing the rate limit.</p>
+  <div class="finding-fix"><strong>Fix:</strong> Use proper locking (mutexes/semaphores). Identify and protect all shared state.</div>
+</div>
+<div class="finding-card" style="border-left:4px solid #FCD34D;background:#FFFBEB">
+  <div class="finding-header">
+    <span class="finding-cwe" style="background:#FCD34D;color:#92400E">CWE-400</span>
+    <span class="finding-title">Uncontrolled resource consumption via missing success‑login rate limit</span>
+    <span class="finding-sev" style="color:#92400E">HIGH</span>
+    <span class="verdict-tag" style="color:#92400E">❌ UNMITIGATED</span>
+  </div>
+  <p class="finding-desc">While the spec limits failed attempts, successful logins are not rate‑limited. An attacker can flood the endpoint with valid credentials (e.g., from a credential‑stuffing list) causing excessive JWT generation, CPU usage, and database load, leading to denial of service.</p>
+  <div class="finding-fix"><strong>Fix:</strong> Review the CWE definition and apply defense-in-depth controls.</div>
+</div>
+<div class="finding-card" style="border-left:4px solid #FCD34D;background:#FFFBEB">
+  <div class="finding-header">
+    <span class="finding-cwe" style="background:#FCD34D;color:#92400E">CWE-330</span>
+    <span class="finding-title">Insufficient randomness in JWT secret generation</span>
+    <span class="finding-sev" style="color:#92400E">HIGH</span>
+    <span class="verdict-tag" style="color:#92400E">❌ UNMITIGATED</span>
+  </div>
+  <p class="finding-desc">The JWT signing key is derived from `random.choice(string.ascii_letters)` in a loop, producing low‑entropy keys that are predictable. An attacker can brute‑force the key and forge valid tokens, gaining unauthorized access to any account.</p>
+  <div class="finding-fix"><strong>Fix:</strong> Review the CWE definition and apply defense-in-depth controls.</div>
+</div>
+<div class="finding-card" style="border-left:4px solid #93C5FD;background:#EFF6FF">
+  <div class="finding-header">
+    <span class="finding-cwe" style="background:#93C5FD;color:#1E40AF">CWE-918</span>
+    <span class="finding-title">SSRF via user‑controlled avatar URL fetched during login</span>
+    <span class="finding-sev" style="color:#1E40AF">MEDIUM</span>
+    <span class="verdict-tag" style="color:#1E40AF">❌ UNMITIGATED</span>
+  </div>
+  <p class="finding-desc">During login, the server retrieves the user's avatar URL from the `avatar_url` field stored in the user record and performs an HTTP GET request to prefetch the image. Because the URL is not validated, an attacker who can set their avatar URL (e.g., via a profile update) to an internal service (like `http://localhost:8080/admin`) can cause the server to make requests to internal endpoints, leading to SSRF.</p>
+  <div class="finding-fix"><strong>Fix:</strong> Validate and allowlist outbound URLs. Never forward raw user-supplied URLs.</div>
+</div>
+<div class="finding-card" style="border-left:4px solid #6EE7B7;background:#F0FDF4">
+  <div class="finding-header">
+    <span class="finding-cwe" style="background:#6EE7B7;color:#065F46">CWE-330</span>
+    <span class="finding-title">No Insufficient Randomness identified</span>
+    <span class="finding-sev" style="color:#065F46">LOW</span>
+    <span class="verdict-tag" style="color:#065F46">❌ UNMITIGATED</span>
+  </div>
+  <p class="finding-desc">JWT token generation relies on a secret key (JWT_SECRET) and timestamps; while a weak default secret could be guessed, this relates to hardcoded secrets (CWE‑than insufficient randomness of generated tokens.</p>
+  <div class="finding-fix"><strong>Fix:</strong> Review the CWE definition and apply defense-in-depth controls.</div>
+</div>
+<div class="finding-card" style="border-left:4px solid #93C5FD;background:#EFF6FF">
+  <div class="finding-header">
+    <span class="finding-cwe" style="background:#93C5FD;color:#1E40AF">CWE-400</span>
+    <span class="finding-title">Uncontrolled Resource Consumption via Missing Per‑Account Rate Limiting</span>
+    <span class="finding-sev" style="color:#1E40AF">MEDIUM</span>
+    <span class="verdict-tag" style="color:#1E40AF">❌ UNMITIGATED</span>
+  </div>
+  <p class="finding-desc">The login endpoint only rate‑limits based on client IP for failed attempts. An attacker controlling a botnet (many IPs) can bypass this limit and perform unlimited password‑guessing attempts, each triggering an expensive bcrypt verification. Additionally, successful logins are not rate‑limited, allowing an attacker who possesses valid credentials to repeatedly invoke the login endpoint and consume CPU via bcrypt and JWT generation.</p>
+  <div class="finding-fix"><strong>Fix:</strong> Review the CWE definition and apply defense-in-depth controls.</div>
+</div>
+<div class="finding-card" style="border-left:4px solid #6EE7B7;background:#F0FDF4">
+  <div class="finding-header">
+    <span class="finding-cwe" style="background:#6EE7B7;color:#065F46">CWE-269</span>
+    <span class="finding-title">No Improper Privilege Management identified</span>
+    <span class="finding-sev" style="color:#065F46">LOW</span>
+    <span class="verdict-tag" style="color:#065F46">❌ UNMITIGATED</span>
+  </div>
+  <p class="finding-desc">The code does not define roles, permissions, or object references that could be bypassed for privilege escalation. Authorization checks are absent only because no protected resources are shown in the snippet.</p>
+  <div class="finding-fix"><strong>Fix:</strong> Review the CWE definition and apply defense-in-depth controls.</div>
+</div>
+<div class="finding-card" style="border-left:4px solid #93C5FD;background:#EFF6FF">
+  <div class="finding-header">
+    <span class="finding-cwe" style="background:#93C5FD;color:#1E40AF">CWE-352</span>
+    <span class="finding-title">Login CSRF via Missing Anti-CSRF Token</span>
+    <span class="finding-sev" style="color:#1E40AF">MEDIUM</span>
+    <span class="verdict-tag" style="color:#1E40AF">❌ UNMITIGATED</span>
+  </div>
+  <p class="finding-desc">The login endpoint modifies server does not require anti-CSRF tokens for state-changing login operations. An attacker can trick a victim into submitting a login request with the attacker's credentials, causing the victim to authenticate to the attacker's account. Subsequent requests by the victim using the obtained JWT token will grant the attacker access to the victim's data if the victim uses the token to access protected endpoints (though not shown in snippet, implied by token usage).</p>
+  <div class="finding-fix"><strong>Fix:</strong> Require CSRF tokens on all state-changing requests. Use SameSite cookies.</div>
+</div>
+<div class="finding-card" style="border-left:4px solid #93C5FD;background:#EFF6FF">
+  <div class="finding-header">
+    <span class="finding-cwe" style="background:#93C5FD;color:#1E40AF">CWE-20</span>
+    <span class="finding-title">Denial of Service via Unlimited Username or Password Length</span>
+    <span class="finding-sev" style="color:#1E40AF">MEDIUM</span>
+    <span class="verdict-tag" style="color:#1E40AF">❌ UNMITIGATED</span>
+  </div>
+  <p class="finding-desc">No maximum length is enforced on username or password fields. An attacker can send extremely long strings (e.g., 1MB) causing excessive memory consumption during UTF-8 encoding, bcrypt processing (password), or logging (username). This can crash the server or cause resource exhaustion.</p>
+  <div class="finding-fix"><strong>Fix:</strong> Review the CWE definition and apply defense-in-depth controls.</div>
+</div>
+<div class="finding-card" style="border-left:4px solid #FCA5A5;background:#FEF2F2">
+  <div class="finding-header">
+    <span class="finding-cwe" style="background:#FCA5A5;color:#7F1D1D">CWE-327</span>
+    <span class="finding-title">Use of Weak Default JWT Secret Key</span>
+    <span class="finding-sev" style="color:#7F1D1D">CRITICAL</span>
+    <span class="verdict-tag" style="color:#7F1D1D">❌ UNMITIGATED</span>
+  </div>
+  <p class="finding-desc">JWT_SECRET uses a hardcoded weak default ('change-me-in-production') when JWT_SECRET_KEY env var is unset. An attacker can forge valid JWT tokens for any user by knowing this secret, bypassing authentication completely.</p>
+  <div class="finding-fix"><strong>Fix:</strong> Review the CWE definition and apply defense-in-depth controls.</div>
+</div>
+<div class="finding-card" style="border-left:4px solid #93C5FD;background:#EFF6FF">
+  <div class="finding-header">
+    <span class="finding-cwe" style="background:#93C5FD;color:#1E40AF">CWE-532</span>
+    <span class="finding-title">Sensitive Data (Username) Written to Application Logs</span>
+    <span class="finding-sev" style="color:#1E40AF">MEDIUM</span>
+    <span class="verdict-tag" style="color:#1E40AF">❌ UNMITIGATED</span>
+  </div>
+  <p class="finding-desc">The login endpoint logs the username supplied in the request via logger.info and logger.warning. An attacker can cause arbitrary usernames to be written to the log file. If log files are accessible to unauthorized individuals (e.g., via log leakage, insufficient file permissions, or log aggregation UI), this exposes PII and enables username enumeration. Additionally, though not exploited here, lack of sanitization could allow log injection.</p>
+  <div class="finding-fix"><strong>Fix:</strong> Review the CWE definition and apply defense-in-depth controls.</div>
+</div>
+
+  <div class="section-title">📋 Full Attack Breakdown</div>
+  <table>
+  <thead><tr><th>ID</th><th>CWE</th><th>Vulnerability</th><th>Severity</th><th>Verdict</th><th>Remediation</th></tr></thead>
+  <tbody><tr><td><code>atk-1</code></td><td><code style="background:#EFF6FF;color:#1E40AF;padding:2px 6px;border-radius:3px">CWE-674</code></td><td style="font-weight:500">Uncontrolled recursion in username validation</td><td>MEDIUM</td><td style="color:#059669;font-weight:700">&#x2705; MITIGATED</td><td style="font-size:12px;color:#6B7280">Review the CWE definition and apply defense-in-depth controls.&#x2026;</td></tr>
+<tr><td><code>atk-2</code></td><td><code style="background:#EFF6FF;color:#1E40AF;padding:2px 6px;border-radius:3px">CWE-22</code></td><td style="font-weight:500">Path traversal via username in audit log filename</td><td>HIGH</td><td style="color:#059669;font-weight:700">&#x2705; MITIGATED</td><td style="font-size:12px;color:#6B7280">Canonicalize paths and validate they remain within the allowed base directory.&#x2026;</td></tr>
+<tr><td><code>atk-3</code></td><td><code style="background:#EFF6FF;color:#1E40AF;padding:2px 6px;border-radius:3px">CWE-787</code></td><td style="font-weight:500">Out-of-bounds write when copying password into fixed buffer</td><td>HIGH</td><td style="color:#059669;font-weight:700">&#x2705; MITIGATED</td><td style="font-size:12px;color:#6B7280">Validate buffer sizes before writes. Use memory-safe languages or safe abstractions.&#x2026;</td></tr>
+<tr><td><code>atk-4</code></td><td><code style="background:#EFF6FF;color:#1E40AF;padding:2px 6px;border-radius:3px">CWE-269</code></td><td style="font-weight:500">Improper privilege management via tamperable role cookie</td><td>CRITICAL</td><td style="color:#059669;font-weight:700">&#x2705; MITIGATED</td><td style="font-size:12px;color:#6B7280">Review the CWE definition and apply defense-in-depth controls.&#x2026;</td></tr>
+<tr><td><code>atk-5</code></td><td><code style="background:#EFF6FF;color:#1E40AF;padding:2px 6px;border-radius:3px">CWE-601</code></td><td style="font-weight:500">Open redirect via unvalidated 'next' parameter</td><td>MEDIUM</td><td style="color:#059669;font-weight:700">&#x2705; MITIGATED</td><td style="font-size:12px;color:#6B7280">Review the CWE definition and apply defense-in-depth controls.&#x2026;</td></tr>
+<tr><td><code>atk-6</code></td><td><code style="background:#EFF6FF;color:#1E40AF;padding:2px 6px;border-radius:3px">CWE-89</code></td><td style="font-weight:500">SQL injection in username lookup</td><td>CRITICAL</td><td style="color:#059669;font-weight:700">&#x2705; MITIGATED</td><td style="font-size:12px;color:#6B7280">Use parameterized queries or prepared statements. Never concatenate user input into SQL.&#x2026;</td></tr>
+<tr><td><code>atk-7</code></td><td><code style="background:#EFF6FF;color:#1E40AF;padding:2px 6px;border-radius:3px">CWE-362</code></td><td style="font-weight:500">TOCTOU race condition in failed‑attempt counter</td><td>MEDIUM</td><td style="color:#DC2626;font-weight:700">&#x274C; MISSED</td><td style="font-size:12px;color:#6B7280">Use proper locking (mutexes/semaphores). Identify and protect all shared state.&#x2026;</td></tr>
+<tr><td><code>atk-8</code></td><td><code style="background:#EFF6FF;color:#1E40AF;padding:2px 6px;border-radius:3px">CWE-400</code></td><td style="font-weight:500">Uncontrolled resource consumption via missing success‑login rate limit</td><td>HIGH</td><td style="color:#DC2626;font-weight:700">&#x274C; MISSED</td><td style="font-size:12px;color:#6B7280">Review the CWE definition and apply defense-in-depth controls.&#x2026;</td></tr>
+<tr><td><code>atk-9</code></td><td><code style="background:#EFF6FF;color:#1E40AF;padding:2px 6px;border-radius:3px">CWE-330</code></td><td style="font-weight:500">Insufficient randomness in JWT secret generation</td><td>HIGH</td><td style="color:#DC2626;font-weight:700">&#x274C; MISSED</td><td style="font-size:12px;color:#6B7280">Review the CWE definition and apply defense-in-depth controls.&#x2026;</td></tr>
+<tr><td><code>atk-10</code></td><td><code style="background:#EFF6FF;color:#1E40AF;padding:2px 6px;border-radius:3px">CWE-918</code></td><td style="font-weight:500">SSRF via user‑controlled avatar URL fetched during login</td><td>MEDIUM</td><td style="color:#DC2626;font-weight:700">&#x274C; MISSED</td><td style="font-size:12px;color:#6B7280">Validate and allowlist outbound URLs. Never forward raw user-supplied URLs.&#x2026;</td></tr>
+<tr><td><code>atk-1</code></td><td><code style="background:#EFF6FF;color:#1E40AF;padding:2px 6px;border-radius:3px">CWE-362</code></td><td style="font-weight:500">No Race Condition (TOCTOU) identified</td><td>LOW</td><td style="color:#059669;font-weight:700">&#x2705; MITIGATED</td><td style="font-size:12px;color:#6B7280">Use proper locking (mutexes/semaphores). Identify and protect all shared state.&#x2026;</td></tr>
+<tr><td><code>atk-2</code></td><td><code style="background:#EFF6FF;color:#1E40AF;padding:2px 6px;border-radius:3px">CWE-116</code></td><td style="font-weight:500">No Improper Encoding/Escaping identified</td><td>LOW</td><td style="color:#059669;font-weight:700">&#x2705; MITIGATED</td><td style="font-size:12px;color:#6B7280">Review the CWE definition and apply defense-in-depth controls.&#x2026;</td></tr>
+<tr><td><code>atk-3</code></td><td><code style="background:#EFF6FF;color:#1E40AF;padding:2px 6px;border-radius:3px">CWE-601</code></td><td style="font-weight:500">No Open Redirect identified</td><td>LOW</td><td style="color:#059669;font-weight:700">&#x2705; MITIGATED</td><td style="font-size:12px;color:#6B7280">Review the CWE definition and apply defense-in-depth controls.&#x2026;</td></tr>
+<tr><td><code>atk-4</code></td><td><code style="background:#EFF6FF;color:#1E40AF;padding:2px 6px;border-radius:3px">CWE-125</code></td><td style="font-weight:500">No Out-of-bounds Read identified</td><td>LOW</td><td style="color:#059669;font-weight:700">&#x2705; MITIGATED</td><td style="font-size:12px;color:#6B7280">Use safe array bounds checking. Prefer standard library containers with bounds enforcement&#x2026;</td></tr>
+<tr><td><code>atk-5</code></td><td><code style="background:#EFF6FF;color:#1E40AF;padding:2px 6px;border-radius:3px">CWE-330</code></td><td style="font-weight:500">No Insufficient Randomness identified</td><td>LOW</td><td style="color:#DC2626;font-weight:700">&#x274C; MISSED</td><td style="font-size:12px;color:#6B7280">Review the CWE definition and apply defense-in-depth controls.&#x2026;</td></tr>
+<tr><td><code>atk-6</code></td><td><code style="background:#EFF6FF;color:#1E40AF;padding:2px 6px;border-radius:3px">CWE-22</code></td><td style="font-weight:500">No Path Traversal identified</td><td>LOW</td><td style="color:#059669;font-weight:700">&#x2705; MITIGATED</td><td style="font-size:12px;color:#6B7280">Canonicalize paths and validate they remain within the allowed base directory.&#x2026;</td></tr>
+<tr><td><code>atk-7</code></td><td><code style="background:#EFF6FF;color:#1E40AF;padding:2px 6px;border-radius:3px">CWE-787</code></td><td style="font-weight:500">No Out-of-bounds Write identified</td><td>LOW</td><td style="color:#059669;font-weight:700">&#x2705; MITIGATED</td><td style="font-size:12px;color:#6B7280">Validate buffer sizes before writes. Use memory-safe languages or safe abstractions.&#x2026;</td></tr>
+<tr><td><code>atk-8</code></td><td><code style="background:#EFF6FF;color:#1E40AF;padding:2px 6px;border-radius:3px">CWE-190</code></td><td style="font-weight:500">No Integer Overflow / Wraparound identified</td><td>LOW</td><td style="color:#059669;font-weight:700">&#x2705; MITIGATED</td><td style="font-size:12px;color:#6B7280">Use checked arithmetic or big-integer types. Validate ranges before arithmetic operations.&#x2026;</td></tr>
+<tr><td><code>atk-9</code></td><td><code style="background:#EFF6FF;color:#1E40AF;padding:2px 6px;border-radius:3px">CWE-400</code></td><td style="font-weight:500">Uncontrolled Resource Consumption via Missing Per‑Account Rate Limiting</td><td>MEDIUM</td><td style="color:#DC2626;font-weight:700">&#x274C; MISSED</td><td style="font-size:12px;color:#6B7280">Review the CWE definition and apply defense-in-depth controls.&#x2026;</td></tr>
+<tr><td><code>atk-10</code></td><td><code style="background:#EFF6FF;color:#1E40AF;padding:2px 6px;border-radius:3px">CWE-269</code></td><td style="font-weight:500">No Improper Privilege Management identified</td><td>LOW</td><td style="color:#DC2626;font-weight:700">&#x274C; MISSED</td><td style="font-size:12px;color:#6B7280">Review the CWE definition and apply defense-in-depth controls.&#x2026;</td></tr>
+<tr><td><code>atk-1</code></td><td><code style="background:#EFF6FF;color:#1E40AF;padding:2px 6px;border-radius:3px">CWE-352</code></td><td style="font-weight:500">Login CSRF via Missing Anti-CSRF Token</td><td>MEDIUM</td><td style="color:#DC2626;font-weight:700">&#x274C; MISSED</td><td style="font-size:12px;color:#6B7280">Require CSRF tokens on all state-changing requests. Use SameSite cookies.&#x2026;</td></tr>
+<tr><td><code>atk-2</code></td><td><code style="background:#EFF6FF;color:#1E40AF;padding:2px 6px;border-radius:3px">CWE-476</code></td><td style="font-weight:500">NULL Pointer Dereference in _clean_old_attempts Leading to DoS</td><td>HIGH</td><td style="color:#059669;font-weight:700">&#x2705; MITIGATED</td><td style="font-size:12px;color:#6B7280">Add null checks before dereferencing. Use Optional types where appropriate.&#x2026;</td></tr>
+<tr><td><code>atk-3</code></td><td><code style="background:#EFF6FF;color:#1E40AF;padding:2px 6px;border-radius:3px">CWE-20</code></td><td style="font-weight:500">Denial of Service via Unlimited Username or Password Length</td><td>MEDIUM</td><td style="color:#DC2626;font-weight:700">&#x274C; MISSED</td><td style="font-size:12px;color:#6B7280">Review the CWE definition and apply defense-in-depth controls.&#x2026;</td></tr>
+<tr><td><code>atk-4</code></td><td><code style="background:#EFF6FF;color:#1E40AF;padding:2px 6px;border-radius:3px">CWE-327</code></td><td style="font-weight:500">Use of Weak Default JWT Secret Key</td><td>CRITICAL</td><td style="color:#DC2626;font-weight:700">&#x274C; MISSED</td><td style="font-size:12px;color:#6B7280">Review the CWE definition and apply defense-in-depth controls.&#x2026;</td></tr>
+<tr><td><code>atk-1</code></td><td><code style="background:#EFF6FF;color:#1E40AF;padding:2px 6px;border-radius:3px">CWE-532</code></td><td style="font-weight:500">Sensitive Data (Username) Written to Application Logs</td><td>MEDIUM</td><td style="color:#DC2626;font-weight:700">&#x274C; MISSED</td><td style="font-size:12px;color:#6B7280">Review the CWE definition and apply defense-in-depth controls.&#x2026;</td></tr>
+<tr><td><code>atk-2</code></td><td><code style="background:#EFF6FF;color:#1E40AF;padding:2px 6px;border-radius:3px">CWE-362</code></td><td style="font-weight:500">Race Condition in Failed Attempt Tracking Allows Rate Limit Bypass</td><td>MEDIUM</td><td style="color:#059669;font-weight:700">&#x2705; MITIGATED</td><td style="font-size:12px;color:#6B7280">Use proper locking (mutexes/semaphores). Identify and protect all shared state.&#x2026;</td></tr>
+</tbody>
+  </table>
+
+  <div class="section-title">🏛️ Compliance Control Mappings</div>
+  <table>
+  <thead><tr><th>Framework</th><th>Controls</th></tr></thead>
+  <tbody><tr><td><strong style="color:#1E40AF">NIST_SSDF</strong></td><td>RV.2.2, RV.3.1, PW.8.1</td></tr>
+<tr><td><strong style="color:#1E40AF">OWASP_SAMM</strong></td><td>Verification/Security-Testing/2</td></tr>
+<tr><td><strong style="color:#1E40AF">SOC2_CC</strong></td><td>CC7.1, CC8.1</td></tr>
+<tr><td><strong style="color:#1E40AF">ISO_27001</strong></td><td>A.14.2.8, A.14.2.9</td></tr>
+</tbody>
+  </table>
+
+  <div class="integrity">SHA-256 Integrity: sha256:428ba51e339b88f54ec39ce00ac6b2a6e973d9510b57f3841b340c22753fccd5</div>
+</div>
+
+<footer>GAUNTLEX Adversarial Co-Generation Engine &nbsp;·&nbsp; Built by Sanjoy Ghosh</footer>
+</body>
+</html>

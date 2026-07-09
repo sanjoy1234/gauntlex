@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GAUNTLEX Resilience Report — gauntlex-2026-07-09T21-13-07Z-d4b9</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:#F0F7FF;color:#111827;min-height:100vh}
+  header{background:linear-gradient(135deg,#1E40AF 0%,#3B82F6 100%);padding:20px 32px;color:#fff}
+  header h1{font-size:20px;font-weight:800;letter-spacing:-.01em}
+  header .meta{font-size:12px;opacity:.8;margin-top:4px;font-family:monospace}
+  .main{max-width:1000px;margin:0 auto;padding:28px 24px}
+  .gate-bar{display:flex;align-items:center;gap:20px;background:#fff;border-radius:10px;padding:20px 24px;margin-bottom:20px;border:1px solid #DBEAFE;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  .gate-verdict{font-size:28px;font-weight:900;color:#DC2626}
+  .gate-badge{background:#FEE2E2;color:#DC2626;border:1.5px solid #DC2626;border-radius:6px;padding:4px 14px;font-size:13px;font-weight:800;letter-spacing:.04em}
+  .ars-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#6B7280}
+  .stat-chips{display:flex;gap:10px;flex-wrap:wrap;margin-left:auto}
+  .chip{background:#EFF6FF;color:#1E40AF;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700}
+  .chip.red{background:#FEE2E2;color:#DC2626}
+  .chip.amber{background:#FFFBEB;color:#D97706}
+  .chip.green{background:#D1FAE5;color:#059669}
+  .section-title{font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#1E40AF;margin:24px 0 12px;display:flex;align-items:center;gap:8px}
+  .finding-card{border-radius:8px;padding:16px 18px;margin-bottom:12px}
+  .finding-header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+  .finding-cwe{font-family:monospace;font-size:11px;font-weight:800;padding:2px 8px;border-radius:4px}
+  .finding-title{font-weight:700;font-size:14px;color:#111827;flex:1}
+  .finding-sev{font-size:11px;font-weight:800;letter-spacing:.05em}
+  .verdict-tag{font-size:11px;font-weight:700;margin-left:auto}
+  .finding-desc{font-size:13px;color:#374151;line-height:1.5;margin-bottom:10px}
+  .finding-fix{font-size:12px;background:rgba(255,255,255,.7);border-radius:4px;padding:8px 12px;color:#374151;border-left:3px solid #3B82F6}
+  table{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border-radius:8px;overflow:hidden;border:1px solid #DBEAFE;margin-bottom:20px}
+  th{background:#EFF6FF;padding:10px 14px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#1E40AF;border-bottom:2px solid #BFDBFE}
+  td{padding:10px 14px;border-bottom:1px solid #EFF6FF}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:#F8FAFF}
+  code{font-family:monospace;font-size:11px}
+  .integrity{font-size:11px;color:#9CA3AF;font-family:monospace;margin-top:20px;padding-top:14px;border-top:1px solid #E5E7EB}
+  footer{text-align:center;padding:20px;font-size:12px;color:#9CA3AF}
+</style>
+</head>
+<body>
+<header>
+  <h1>⚔️ GAUNTLEX Resilience Report</h1>
+  <div class="meta">Run: gauntlex-2026-07-09T21-13-07Z-d4b9 &nbsp;·&nbsp; 2026-07-09 21:16:16 UTC &nbsp;·&nbsp; Playbook: owasp_top10@v2025.1</div>
+</header>
+
+<div class="main">
+
+  <div class="gate-bar">
+    <div>
+      <div class="ars-label">Adversarial Resilience Score</div>
+      <div class="gate-verdict">0.00 <span style="font-size:16px;font-weight:500;color:#6B7280">/ 1.00</span></div>
+    </div>
+    <div><span class="gate-badge">CI/CD GATE: BLOCKED</span></div>
+    <div class="stat-chips">
+      <span class="chip">2 attacks</span>
+      <span class="chip green">0 mitigated</span>
+      <span class="chip amber">0 partial</span>
+      <span class="chip red">2 missed</span>
+      <span class="chip">182.9s</span>
+    </div>
+  </div>
+
+  <div class="section-title">🔍 Vulnerability Findings</div>
+  
+<div class="finding-card" style="border-left:4px solid #FCD34D;background:#FFFBEB">
+  <div class="finding-header">
+    <span class="finding-cwe" style="background:#FCD34D;color:#92400E">CWE-285</span>
+    <span class="finding-title">Missing authorization claims in JWT leading to privilege escalation</span>
+    <span class="finding-sev" style="color:#92400E">HIGH</span>
+    <span class="verdict-tag" style="color:#92400E">❌ UNMITIGATED</span>
+  </div>
+  <p class="finding-desc">The login endpoint creates a JWT containing only the 'sub' (username) claim, without any role or permission information. If downstream services rely solely on the presence of a valid JWT (signature verification) to grant access to sensitive functions (e.g., admin endpoints) without checking authorization claims, an attacker who obtains a legitimate token for a low‑privilege user can bypass authorization and access privileged resources.</p>
+  <div class="finding-fix"><strong>Fix:</strong> Review the CWE definition and apply defense-in-depth controls.</div>
+</div>
+<div class="finding-card" style="border-left:4px solid #FCD34D;background:#FFFBEB">
+  <div class="finding-header">
+    <span class="finding-cwe" style="background:#FCD34D;color:#92400E">CWE-798</span>
+    <span class="finding-title">Hard-coded JWT secret key</span>
+    <span class="finding-sev" style="color:#92400E">HIGH</span>
+    <span class="verdict-tag" style="color:#92400E">❌ UNMITIGATED</span>
+  </div>
+  <p class="finding-desc">The application uses a default hard-coded JWT secret key 'dev-secret-key-change-in-production' when the JWT_SECRET_KEY environment variable is not set, allowing attackers to forge tokens if they can guess or know the default.</p>
+  <div class="finding-fix"><strong>Fix:</strong> Remove hardcoded credentials. Use environment variables or a secrets manager.</div>
+</div>
+
+  <div class="section-title">📋 Full Attack Breakdown</div>
+  <table>
+  <thead><tr><th>ID</th><th>CWE</th><th>Vulnerability</th><th>Severity</th><th>Verdict</th><th>Remediation</th></tr></thead>
+  <tbody><tr><td><code>atk-1</code></td><td><code style="background:#EFF6FF;color:#1E40AF;padding:2px 6px;border-radius:3px">CWE-285</code></td><td style="font-weight:500">Missing authorization claims in JWT leading to privilege escalation</td><td>HIGH</td><td style="color:#DC2626;font-weight:700">&#x274C; MISSED</td><td style="font-size:12px;color:#6B7280">Review the CWE definition and apply defense-in-depth controls.&#x2026;</td></tr>
+<tr><td><code>atk-1</code></td><td><code style="background:#EFF6FF;color:#1E40AF;padding:2px 6px;border-radius:3px">CWE-798</code></td><td style="font-weight:500">Hard-coded JWT secret key</td><td>HIGH</td><td style="color:#DC2626;font-weight:700">&#x274C; MISSED</td><td style="font-size:12px;color:#6B7280">Remove hardcoded credentials. Use environment variables or a secrets manager.&#x2026;</td></tr>
+</tbody>
+  </table>
+
+  <div class="section-title">🏛️ Compliance Control Mappings</div>
+  <table>
+  <thead><tr><th>Framework</th><th>Controls</th></tr></thead>
+  <tbody><tr><td><strong style="color:#1E40AF">NIST_SSDF</strong></td><td>RV.2.2, RV.3.1, PW.8.1</td></tr>
+<tr><td><strong style="color:#1E40AF">OWASP_SAMM</strong></td><td>Verification/Security-Testing/2</td></tr>
+<tr><td><strong style="color:#1E40AF">SOC2_CC</strong></td><td>CC7.1, CC8.1</td></tr>
+<tr><td><strong style="color:#1E40AF">ISO_27001</strong></td><td>A.14.2.8, A.14.2.9</td></tr>
+</tbody>
+  </table>
+
+  <div class="integrity">SHA-256 Integrity: sha256:2f67de429084cecae18a108f6d96eb220515d1f2681255df8d116afdc2d4d746</div>
+</div>
+
+<footer>GAUNTLEX Adversarial Co-Generation Engine &nbsp;·&nbsp; Built by Sanjoy Ghosh</footer>
+</body>
+</html>

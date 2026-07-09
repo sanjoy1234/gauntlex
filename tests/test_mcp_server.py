@@ -241,7 +241,12 @@ async def test_gauntlex_status_engine_error_surfaced():
 # ── gauntlex_vault_stats ───────────────────────────────────────────────────────
 
 @pytest.mark.asyncio
-async def test_vault_stats_no_vault_returns_zero():
+async def test_vault_stats_no_vault_returns_zero(tmp_path, monkeypatch):
+    # _tool_vault_stats reads .gauntlex/vault relative to cwd (not injectable via
+    # config), so this must run somewhere guaranteed vault-free rather than
+    # relying on the ambient repo having no vault data — that assumption broke
+    # the moment `gauntlex vault` was fixed to actually get populated by real runs.
+    monkeypatch.chdir(tmp_path)
     s = _server()
     resp = await s.handle_message({
         "jsonrpc": "2.0", "id": 30,
