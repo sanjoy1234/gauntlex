@@ -142,7 +142,7 @@ GAUNTLEX:   ARS: 0.83  ✅ PASSED  (gate: ≥ 0.80)
             ✅ CWE-862   Missing object-level authorization  score: 1.0
 ```
 
-`gauntlex_run` fires an `asyncio.Task` and returns the `run_id` immediately, because a full run can take anywhere from under a minute to several minutes depending on mode and model provider — far longer than MCP's interactive-use expectations. `gauntlex_status` polls until it's done. For team deployments, `gauntlex serve --mcp` exposes the same tools over HTTP alongside the Combat Dashboard, so a whole team can share one GAUNTLEX instance.
+`gauntlex_run` fires an `asyncio.Task` and returns the `run_id` immediately, because a full run can take anywhere from under a minute to several minutes depending on mode and model provider — far longer than MCP's interactive-use expectations. `gauntlex_status` polls until it's done. For team deployments, `gauntlex serve --mcp` exposes the same tools over HTTP alongside the GAUNTLEX Dashboard, so a whole team can share one GAUNTLEX instance.
 
 ### 🌐 3. Regulatory Domains and Live Threat Enrichment as First-Class Input
 
@@ -373,7 +373,8 @@ None of these are features you bolt onto a sequential code generator — they re
 ARS = Σ(attack_scores) / N
 
 where:
-  N            = number of attacks fired (5 for quick, 20 for standard, 50 for thorough)
+  N            = number of attacks actually fired, targeting 5/20/50 by mode
+                 (quick/standard/thorough) — see the mode table above
   attack_score = 1.0  if the generated code correctly mitigates the attack
                = 0.5  if a partial defense exists but is bypassable or incomplete
                = 0.0  if no defense exists — an attacker would succeed
@@ -448,11 +449,16 @@ Traditional security testing operates at code review or QA. GAUNTLEX operates at
 
 Sequential security testing is fundamentally reactive — by the time you run a scanner, the code already exists, is often already reviewed, sometimes already merged. The Gauntlex runs Builder and Breaker concurrently against the same spec using `asyncio.gather()`. When both finish, the Arbiter scores every attack and produces the ARS.
 
-| Mode | Attacks | Use case |
+| Mode | Attacks (target) | Use case |
 |------|---------|---------|
 | `quick` | 5 | Every PR, fast feedback loop |
 | `standard` | 20 | Pre-merge gate, standard CI |
 | `thorough` | 50 | Release branches, compliance audits |
+
+The attack count is spread across `rounds_max` adversarial rounds as a
+per-round target, not guaranteed exactly — actual totals typically land
+close to but not always at the target (early-exit and how many attacks the
+model returns per round both affect the final count).
 
 Wall-clock time and API cost scale with attack count and depend entirely on your configured model provider — see [Model Options](../README.md#requirements) in the README.
 
@@ -540,7 +546,7 @@ gauntlex run --issue spec.md --output-sarif gauntlex.sarif --output-junit gauntl
 gauntlex report <run_id> --format html > report.html
 ```
 
-### Feature 8 — Combat Dashboard
+### Feature 8 — GAUNTLEX Dashboard
 
 For a security team managing many repositories and hundreds of runs per week: a centralized ARS trend, gate pass/fail history, and evidence download, in a browser.
 
@@ -637,7 +643,7 @@ docker compose up -d    # ChromaDB + GAUNTLEX + (optionally) Ollama, self-contai
 
 ```bash
 pip install gauntlex-ai                   # core engine (Ollama or API key)
-pip install "gauntlex-ai[ui]"             # + Combat Dashboard (FastAPI web UI)
+pip install "gauntlex-ai[ui]"             # + GAUNTLEX Dashboard (FastAPI web UI)
 ```
 
 ### From source
@@ -660,66 +666,64 @@ docker compose up -d                      # ChromaDB + GAUNTLEX
 docker compose run gauntlex \
   gauntlex run --issue /app/examples/demo_issue.md --mode quick
 
-open http://localhost:8080                # Combat Dashboard
+open http://localhost:8080                # GAUNTLEX Dashboard
 ```
 
 ---
 
 ## GitHub Actions — CI/CD Adversarial Gate
 
-Add this to `.github/workflows/gauntlex.yml`. Every PR is adversarially tested before it can merge — zero changes to the developer's workflow.
+Don't hand-write this file — generate it so it never drifts from what
+GAUNTLEX actually supports:
+
+```bash
+gauntlex integrate --platform github-actions
+```
+
+This writes exactly the following to `.github/workflows/gauntlex.yml`. Every
+PR is adversarially tested before it can merge — zero changes to the
+developer's workflow:
 
 ```yaml
 name: GAUNTLEX Adversarial Gate
 on:
   pull_request:
-    branches: [main, develop]
+    branches: ["main", "master"]
 
 jobs:
   gauntlex:
-    name: Adversarial Resilience Check
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
-      security-events: write
-      statuses: write
-
     steps:
       - uses: actions/checkout@v4
-
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
       - name: Install GAUNTLEX
         run: pip install gauntlex-ai
-
-      - name: Verify environment
-        run: gauntlex validate
+      - name: Run adversarial assessment
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-
-      - name: Run Gauntlex
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: |
           gauntlex run \
-            --issue "${{ github.event.pull_request.html_url }}" \
+            --issue ${{ github.event.pull_request.body || 'examples/demo_issue.md' }} \
             --mode standard \
-            --domain owasp_top10 \
-            --output-sarif gauntlex.sarif \
-            --output-junit gauntlex.xml
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+            --domain owasp_top10
       - name: Upload SARIF to GitHub Code Scanning
+        if: always()
         uses: github/codeql-action/upload-sarif@v3
-        if: always()
         with:
-          sarif_file: gauntlex.sarif
-
-      - name: Publish JUnit results
-        uses: mikepenz/action-junit-report@v4
-        if: always()
-        with:
-          report_paths: gauntlex.xml
-          check_name: GAUNTLEX Attack Results
+          sarif_file: .gauntlex/reports/
 ```
+
+> Set `OPENROUTER_API_KEY` as a repo secret matching whatever provider you
+> configured via `gauntlex setup` — swap the env var name if you're on a
+> different provider (e.g. `ANTHROPIC_API_KEY`). This template intentionally
+> re-runs a fresh assessment in CI rather than reusing a local report, so
+> the gate reflects the PR's actual diff.
+> If `integrate` finds an existing `gauntlex.yml` that differs from this
+> template — e.g. you've hand-added PR-comment posting or custom permissions
+> — it leaves your file untouched and prints a warning rather than
+> overwriting it. Pass `--force` if you genuinely want to reset it.
 
 GAUNTLEX posts the ARS as a commit status. With `GITHUB_TOKEN` set, it also adds a PR comment with the full attack table. `fail_open: false` in `.gauntlex.yml` blocks the merge if ARS falls below the gate.
 
@@ -924,6 +928,12 @@ gauntlex compare <run_id_a> <run_id_b> --pretty
 gauntlex learn <run_id> --pretty
 ```
 
+Every `gauntlex run` now does this automatically on completion (best-effort —
+writes to both the ChromaDB-backed Knowledge Forge and the Forge Ledger, so
+`gauntlex vault` reflects real data with no extra step). Use the manual
+command above to re-process an older run, or to backfill a report saved
+before this became automatic.
+
 ### `gauntlex report` — render a Resilience Report
 
 ```bash
@@ -984,7 +994,7 @@ gauntlex integrate --platform github-actions
 gauntlex integrate --dry-run              # preview changes without writing files
 ```
 
-Platforms: `claude-code`, `cursor`, `windsurf`, `copilot`, `codex`, `github-actions`, `all`.
+Platforms: `claude-code`, `cursor`, `windsurf`, `copilot`, `codex`, `zed`, `antigravity`, `github-actions`, `all`. Full detail on exact file paths and merge-safety guarantees: [Integrations guide](INTEGRATIONS.md).
 
 ### `gauntlex mcp-server` — MCP server, stdio transport
 
@@ -1116,7 +1126,7 @@ kev_enabled: true               # default on
   "$schema": "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0.json",
   "version": "2.1.0",
   "runs": [{
-    "tool": { "driver": { "name": "GAUNTLEX", "version": "0.1.0" } },
+    "tool": { "driver": { "name": "GAUNTLEX", "version": "1.0.0" } },
     "results": [{
       "ruleId": "CWE-79",
       "level": "error",
@@ -1164,7 +1174,7 @@ into the 400 response body, which the browser executes in the victim's session.
 
 ## Enterprise Features
 
-- **Combat Dashboard** — see [Feature 8](#feature-8--combat-dashboard) above.
+- **GAUNTLEX Dashboard** — see [Feature 8](#feature-8--gauntlex-dashboard) above.
 - **CPaaS Mode** — `gauntlex serve` runs as a persistent GitHub App webhook server; every PR is adversarially tested automatically with zero developer workflow change. Requires `GITHUB_APP_ID`, `GITHUB_PRIVATE_KEY_PATH`, `GITHUB_WEBHOOK_SECRET`.
 - **Enterprise RBAC** — see [Feature 10](#feature-10--enterprise-rbac-github-team-based-access-control) above.
 - **Slack + Jira Alerts** — see [Feature 12](#feature-12--slack--jira-alerts-on-low-ars-runs) above.
@@ -1177,7 +1187,7 @@ into the 400 response body, which the browser executes in the victim's session.
 
 ## Testing
 
-GAUNTLEX ships with 554 tests across all major components (`pytest --collect-only -q` to confirm the current count yourself). Test coverage is a first-class commitment.
+GAUNTLEX ships with 588 tests across all major components (`pytest --collect-only -q` to confirm the current count yourself). Test coverage is a first-class commitment.
 
 ```bash
 pytest tests/ -q                                     # run the full suite
@@ -1193,7 +1203,7 @@ pytest tests/ --cov=src/gauntlex --cov-report=html    # with coverage
 | `test_breaker.py` | CWE rotation, attack parsing, model response handling |
 | `test_cli_commands.py` | CLI command wiring and output |
 | `test_config.py` | YAML loading, defaults, field validation |
-| `test_dashboard.py` | Combat Dashboard HTML rendering, report loading |
+| `test_dashboard.py` | GAUNTLEX Dashboard HTML rendering, report loading |
 | `test_dia.py` | MCP consumer: JSON-RPC call, error handling |
 | `test_fingerprint.py` | Language detection, surface signals |
 | `test_forge_bot.py` | Forge recall, deduplication, context construction |
@@ -1224,7 +1234,7 @@ git clone https://github.com/sanjoy1234/gauntlex.git
 cd gauntlex
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
-pytest tests/ -q          # verify: 554 passing
+pytest tests/ -q          # verify: 588 passing
 gauntlex doctor           # verify environment
 ```
 
@@ -1238,7 +1248,7 @@ This repository ships with seven Claude Code slash commands in `.claude/skills/g
 | `/gauntlex:validate` | Dry-run health check |
 | `/gauntlex:doctor` | Full environment diagnostics |
 | `/gauntlex:report` | Render a Resilience Report in any format |
-| `/gauntlex:learn` | Manually trigger Forge Ledger learning pass |
+| `/gauntlex:learn` | Manually trigger Forge Ledger learning pass (automatic after every `gauntlex run`; use this to re-process an older run) |
 | `/gauntlex:compare` | Compare two run ARS scores side-by-side |
 | `/gauntlex:verify` | Verify report tamper-evidence |
 
@@ -1310,7 +1320,7 @@ No — it complements it. Bandit and Semgrep find known bad patterns fast. GAUNT
 Yes. The full engine runs on Ollama with no API cost. Attack quality scales with model capability — frontier models produce more sophisticated attacks — but the engine itself is free forever.
 
 **Q: How long does a run take?**
-Attack count is fixed by mode (quick=5, standard=20, thorough=50); wall-clock time is not — it depends almost entirely on which model provider you configure, from single-digit seconds with a fast paid API to several minutes with a free-tier or local model. Run `gauntlex doctor` after setup to see what your specific configuration will look like in practice.
+Attack count targets 5/20/50 by mode (quick/standard/thorough) but isn't exact — actual totals depend on how many attacks the model returns per round; wall-clock time is not fixed either — it depends almost entirely on which model provider you configure, from single-digit seconds with a fast paid API to several minutes with a free-tier or local model. Run `gauntlex doctor` after setup to see what your specific configuration will look like in practice.
 
 **Q: Is the ARS defensible to a security auditor?**
 GAUNTLEX produces NIST SSDF, SOC 2, and ISO 27001 control mapping artifacts with a SHA-256 integrity hash. `gauntlex verify` re-derives the hash at any future audit, independent of GAUNTLEX itself.

@@ -9,7 +9,7 @@
       "name": "gauntlex",
       "source": "./",
       "description": "Adversarial co-generation engine — Builder+Breaker skills and MCP server for GAUNTLEX (run, verify, doctor, compare, report, learn, validate)",
-      "version": "0.1.0",
+      "version": "1.0.0",
       "author": {
         "name": "Sanjoy Ghosh"
       },

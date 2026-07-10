@@ -35,8 +35,11 @@ scenarios:
 Before opening a PR, validate your playbook:
 
 ```bash
-gauntlex policy:validate --file src/gauntlex/policy/domains/your_domain.yaml
+gauntlex policy validate your_domain_name
 ```
+
+(the domain name, e.g. `hipaa` — not a file path; it's resolved from
+`src/gauntlex/policy/domains/` automatically)
 
 All errors must be resolved. The validator checks:
 - Required fields present (`name`, `version`, `description`, `regulatory_framework`, `scenarios`)
@@ -67,13 +70,18 @@ For a playbook scenario to be accepted:
 
 ## Available Playbooks
 
-| Domain | Status | Scenarios | Ships |
-|--------|--------|-----------|-------|
-| `owasp_top10` | ✅ Shipped | 12 | Monday |
-| `hipaa` | 🔄 Week 2 | ~15 | Week 2 |
-| `finra` | 🔄 Week 2 | ~12 | Week 2 |
-| `pci_dss` | 🔄 Planned | ~10 | Month 2 |
-| `soc2` | 🔄 Planned | ~8 | Month 2 |
+| Domain | Status | Scenarios |
+|--------|--------|-----------|
+| `owasp_top10` | ✅ Shipped | 12 |
+| `finra` | ✅ Shipped | 9 |
+| `hipaa` | ✅ Shipped | 9 |
+| `soc2` | ✅ Shipped | 7 |
+| `pci_dss` | ✅ Shipped | 6 |
+
+Two more (`owasp_api_security`, `nist_ssdf`) are available via
+`gauntlex policy install` rather than bundled by default — see the
+[Domain Intelligence](docs/DOMAIN_INTELLIGENCE.md) page for the full,
+always-current list and exactly what's live vs. static per domain.
 
 ---
 

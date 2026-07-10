@@ -210,10 +210,11 @@ far longer than MCP's interactive-use expectations.
 
 Separately, `gauntlex integrate` can auto-generate MCP config and CI wiring
 for a broader set of platforms — **Claude Code, Cursor, Windsurf, GitHub
-Copilot, Codex, and GitHub Actions** — via `--platform <name>` or `--platform
-all`. That list is intentionally broader than the raw MCP-server IDE list
-above: `integrate` also writes CI workflow files for platforms that don't
-speak MCP directly.
+Copilot, Codex, Zed, Google Antigravity, and GitHub Actions** — via
+`--platform <name>` or `--platform all`. That list is intentionally broader
+than the raw MCP-server IDE list above: `integrate` also writes CI workflow
+files for platforms that don't speak MCP directly. Full detail:
+[Integrations guide](INTEGRATIONS.md).
 
 ### GAUNTLEX as an MCP consumer (DIA)
 

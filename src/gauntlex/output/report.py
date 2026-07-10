@@ -442,7 +442,7 @@ def render_sarif(report: dict) -> str:
                 "tool": {
                     "driver": {
                         "name": "GAUNTLEX",
-                        "version": "0.1.0",
+                        "version": "1.0.0",
                         "informationUri": "https://github.com/sanjoy1234/gauntlex",
                         "rules": list(seen_cwes.values()),
                     }

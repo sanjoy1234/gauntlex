@@ -6,7 +6,7 @@
 
 **Generates code and adversarial attacks from the same specification, at the same time — before a commit exists.**
 
-[![Tests](https://img.shields.io/badge/tests-554%20passing-brightgreen)](https://github.com/sanjoy1234/gauntlex/actions)
+[![Tests](https://img.shields.io/badge/tests-588%20passing-brightgreen)](https://github.com/sanjoy1234/gauntlex/actions)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://pypi.org/project/gauntlex-ai/)
 [![PyPI](https://img.shields.io/pypi/v/gauntlex-ai)](https://pypi.org/project/gauntlex-ai/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -17,6 +17,7 @@
 [**Quickstart**](#quickstart) ·
 [**Commands**](#cli-reference) ·
 [**Domains**](#compliance--domain-coverage) ·
+[**IDE Integrations**](#ide--agent-integrations) ·
 [**Deep Dive**](docs/DEEP_DIVE.md)
 
 </div>
@@ -82,9 +83,12 @@ gauntlex setup
 gauntlex run --issue examples/demo_issue.md --mode quick --pretty
 ```
 
-`gauntlex setup` writes a `.gauntlex.yml` for you — there is no manual
-configuration step, and no fallback to whatever API key happens to be lying
-around the environment. What you configure is what runs.
+`gauntlex setup` writes your model provider and credentials to `.env` for
+you — there is no manual configuration step, and no fallback to whatever API
+key happens to be lying around the environment. What you configure during
+setup is what runs, always (run `gauntlex init` separately if you also want
+a `.gauntlex.yml` with tunable defaults like `rounds_max` or the gate
+threshold).
 
 ```
 ──────────────────────────────────────────────────────────────────────
@@ -105,8 +109,10 @@ around the environment. What you configure is what runs.
 
 Wall-clock time depends on which model you configure — anywhere from single-digit
 seconds with a fast paid API to several minutes with a free-tier or local model.
-Attack count is fixed per mode regardless of provider: `quick` = 5, `standard` = 20,
-`thorough` = 50.
+Attack count *targets* 5/20/50 by mode (`quick`/`standard`/`thorough`), spread
+across the adversarial rounds — actual totals land close to but not always
+exactly at the target (a `thorough` run might fire ~30–50, for example),
+since it depends on how many attacks the model actually returns per round.
 
 ### Run against a GitHub issue directly
 
@@ -139,7 +145,7 @@ All 22 commands, grouped by when you'd reach for them:
 | `gauntlex status` | Show running and recently completed runs |
 | `gauntlex findings` | Vulnerability findings from the last run — fix-first, score last |
 | `gauntlex compare` | Diff two Resilience Reports — ARS delta and attack-level changes |
-| `gauntlex learn` | Feed a completed run into the Knowledge Forge |
+| `gauntlex learn` | Feed a run into the Knowledge Forge + Forge Ledger (runs automatically after every `gauntlex run` — use this to re-process an older run) |
 
 | Evidence & compliance | |
 |---|---|
@@ -205,33 +211,44 @@ bring your own domain, see the full
 
 ## IDE & agent integrations
 
-Three ways to plug GAUNTLEX into whatever you already have open, in order of
-convenience:
+One command wires GAUNTLEX into whatever AI coding tool you already have open:
 
-**1. Claude Code users — one-time plugin install:**
+```bash
+gauntlex integrate --dry-run               # preview every config it would write, writes nothing
+gauntlex integrate                         # wire up every supported target at once
+gauntlex integrate --platform claude-code  # or just one — .mcp.json
+gauntlex integrate --platform cursor       # .cursor/mcp.json
+gauntlex integrate --platform windsurf     # ~/.codeium/windsurf/mcp_config.json
+gauntlex integrate --platform copilot      # .vscode/mcp.json
+gauntlex integrate --platform codex        # ~/.codex/config.toml
+gauntlex integrate --platform zed          # .zed/settings.json
+gauntlex integrate --platform antigravity  # ~/.gemini/config/mcp_config.json
+gauntlex integrate --platform github-actions  # .github/workflows/gauntlex.yml CI gate
+```
+
+Each target gets the right file, format, and schema for that specific tool —
+this command handles the differences so you don't have to — and it **merges**
+into any config you already have rather than overwriting it, so other MCP
+servers you've already configured survive.
+
+**Claude Code users** can also install via the plugin marketplace instead of
+`integrate`:
 ```
 /plugin marketplace add sanjoy1234/gauntlex
 /plugin install gauntlex@gauntlex
 ```
 This registers the MCP server and all `/gauntlex:*` skills (`run`, `verify`,
-`doctor`, `compare`, `report`, `learn`, `validate`) in one step, with updates
-via `/plugin update`. Requires `gauntlex` on `PATH` (`pip install gauntlex-ai`).
+`doctor`, `compare`, `report`, `learn`, `validate`) in one step, updated via
+`/plugin update`. Requires `gauntlex` on `PATH` (`pip install gauntlex-ai`).
 
-**2. Everyone else — `gauntlex integrate`:**
-```bash
-gauntlex integrate                        # wires every supported target at once
-gauntlex integrate --platform cursor      # or just one
-```
-Writes the correct MCP config for Cursor, Windsurf, GitHub Copilot / VS Code,
-Codex, Zed, and Google Antigravity — each uses a different file and schema
-under the hood; this command handles that so you don't have to. It merges
-into any config you already have rather than overwriting it. See
-`gauntlex integrate --help` for the exact path per target.
+**Zero-config:** this repo ships an [AGENTS.md](AGENTS.md) that Codex, Cursor,
+Cline, Windsurf, and Gemini CLI read automatically with no install step at
+all — copy the pattern into your own repo if you're building on top of
+GAUNTLEX rather than just using it.
 
-**3. Zero-config — `AGENTS.md`:** this repo ships an [AGENTS.md](AGENTS.md)
-that Codex, Cursor, Cline, Windsurf, and Gemini CLI read automatically with
-no install step. If you're building on top of GAUNTLEX rather than just
-using it, copy the pattern into your own repo.
+Exact file paths per platform, the merge-safety guarantees, and the MCP
+tools GAUNTLEX exposes (`gauntlex_run`, `gauntlex_status`, `gauntlex_verify`,
+and more): **[Integrations guide](docs/INTEGRATIONS.md)**.
 
 ---
 

@@ -38,7 +38,7 @@ ollama pull llama3.1:8b    # ~4.7 GB, recommended quality
 ### Step 1 — Run your first adversarial session (the core feature)
 
 ```bash
-gauntlex run --issue examples/demo_issue.md --pretty
+gauntlex run --issue examples/demo_issue.md --mode quick --pretty
 ```
 
 **What happens:** Builder generates a Flask login endpoint. Breaker simultaneously attacks it. Arbiter scores each attack. ARS score gates the result.
@@ -46,7 +46,10 @@ gauntlex run --issue examples/demo_issue.md --pretty
 **What to watch for in the output:**
 - Vulnerability findings appear FIRST (CWE, severity, description, fix)
 - ARS score and PASS/BLOCKED verdict appear LAST
-- The whole session completes in ~30–60 seconds locally
+- `--mode quick` targets ~5 attacks and is the fastest option for a first run
+  (~30–60 seconds with a fast model, longer on free-tier/local models);
+  `standard` (~20) and `thorough` (~50) target proportionally more and take
+  longer
 
 ---
 
@@ -100,7 +103,7 @@ Open `http://localhost:8080` in a browser.
 gauntlex integrate --dry-run
 ```
 
-Shows the exact MCP configs that would be written for Claude Code, Cursor, Windsurf, GitHub Copilot, Codex, and GitHub Actions — without writing anything.
+Shows the exact MCP configs that would be written for Claude Code, Cursor, Windsurf, GitHub Copilot, Codex, Zed, Google Antigravity, and GitHub Actions — without writing anything.
 
 To actually wire it up:
 
@@ -152,7 +155,7 @@ gauntlex run --issue /tmp/vscode-samples --pretty
 pytest tests/ -q
 ```
 
-Expected: **476 passed, 0 failed**.
+Expected: all tests passed, 0 failed (run `pytest tests/ -q` to see the current count — it grows over time).
 
 ---
 

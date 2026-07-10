@@ -41,7 +41,7 @@ from ..config import AppConfig
 
 _MCP_PROTOCOL_VERSION = "2024-11-05"
 _SERVER_NAME = "gauntlex"
-_SERVER_VERSION = "0.1.0"
+_SERVER_VERSION = "1.0.0"
 _ATTACK_COUNTS: dict[str, int] = {"quick": 5, "standard": 20, "thorough": 50}
 
 _TOOLS = [
