@@ -50,7 +50,7 @@ scanner to catch up to code that shipped last week.
 
 **[Download the full PDF](docs/media/GAUNTLEX_Overview.pdf)**
 
-**▶ [Watch the demo]
+**[Watch the demo]
 <video src="https://github.com/user-attachments/assets/c6983372-2f8c-4d2f-aad6-bd37184aa705" controls muted></video>
 Setup through the CI gate, real terminal output, real dashboard — concurrent Builder + Breaker, HIPAA domain testing, and every IDE integration in one pass.
 
