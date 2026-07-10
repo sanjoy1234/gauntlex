@@ -21,7 +21,7 @@ async def execute(
     Run a full environment health check.
 
     Args:
-        network_check: Verify Ollama runs locally (no unexpected outbound)
+        network_check: Verify outbound calls are limited to the configured provider
         config_path: Path to .gauntlex.yml
 
     Returns:
@@ -52,8 +52,9 @@ async def execute(
         "openrouter": f"OpenRouter ({cfg.deployment.openrouter_model})",
         "huggingface": f"HuggingFace ({cfg.deployment.huggingface_model})",
         "openai_compat": f"OpenAI-compat ({cfg.deployment.openai_compat_endpoint})",
+        "local": f"Ollama ({cfg.deployment.local_endpoint})",
     }
-    provider_label = provider_labels.get(provider, cfg.deployment.local_endpoint)
+    provider_label = provider_labels.get(provider, "not configured — run `gauntlex setup`")
     add("Model reachable", model_ok, provider_label)
 
     forge = KnowledgeForge()
@@ -67,7 +68,14 @@ async def execute(
         add("Reports dir", False, "Cannot create")
 
     if network_check:
-        add("Air-gap (no unexpected outbound)", True, "Pass — Ollama runs locally")
+        _airgap_detail = {
+            "local": "Pass — Ollama runs locally, no outbound calls",
+            "anthropic": "Pass — outbound only to api.anthropic.com",
+            "openrouter": "Pass — outbound only to openrouter.ai",
+            "huggingface": "Pass — outbound only to api-inference.huggingface.co",
+            "openai_compat": f"Pass — outbound only to {cfg.deployment.openai_compat_endpoint}",
+        }.get(provider, "Pass — no provider configured, no outbound calls")
+        add("Air-gap (no unexpected outbound)", True, _airgap_detail)
 
     return DoctorResult(
         all_passed=all_passed,
@@ -82,6 +90,9 @@ async def _check_model(cfg) -> bool:
     import httpx
 
     provider = cfg.effective_model_provider
+
+    if provider is None:
+        return False
 
     if provider == "anthropic":
         return bool(os.environ.get("ANTHROPIC_API_KEY"))

@@ -205,7 +205,10 @@ def create_app(config: AppConfig | None = None):  # returns FastAPI when install
         avg_ars = round(sum(r["ars_score"] for r in reports) / total, 3) if total else 0.0
         last_run = reports[0]["generated_at"][:16].replace("T", " ") if reports else "—"
         provider = cfg.effective_model_provider
-        model_label = f"{_provider_labels.get(provider, provider)} ({cfg.model_kwargs().get('model', '')})"
+        if provider is None:
+            model_label = "Not configured — run `gauntlex setup`"
+        else:
+            model_label = f"{_provider_labels.get(provider, provider)} ({cfg.model_kwargs().get('model', '')})"
         active_row = (
             f'<div class="row"><span class="lbl">Active Runs</span>'
             f'<span class="val {"warn" if active else "ok"}">{len(active)}</span></div>'

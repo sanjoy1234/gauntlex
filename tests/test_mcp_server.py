@@ -32,9 +32,10 @@ async def _error_engine(run_id, spec, mode, domain, language, config):
     raise RuntimeError("engine exploded")
 
 
-def _server(engine=None):
-    from gauntlex.config import AppConfig
-    return MCPServer(config=AppConfig(), engine_fn=engine or _fake_engine)
+def _server(engine=None, config=None):
+    from gauntlex.config import AppConfig, DeploymentConfig
+    cfg = config if config is not None else AppConfig(deployment=DeploymentConfig(model_provider="local"))
+    return MCPServer(config=cfg, engine_fn=engine or _fake_engine)
 
 
 # ── Protocol / initialize ──────────────────────────────────────────────────────
@@ -122,6 +123,25 @@ async def test_gauntlex_run_empty_spec_returns_error():
     })
     assert "error" in resp
     assert resp["error"]["code"] == -32602
+
+
+@pytest.mark.asyncio
+async def test_gauntlex_run_no_provider_configured_returns_clear_error():
+    """Regression: gauntlex_run must never silently fall back to Ollama when no
+    model provider has been configured (via .env / .gauntlex.yml / `gauntlex
+    setup`) — it should fail immediately with an actionable message, not start
+    a task that only fails later when polled via gauntlex_status."""
+    from gauntlex.config import AppConfig
+    s = _server(config=AppConfig())  # bare config: no provider configured
+    resp = await s.handle_message({
+        "jsonrpc": "2.0", "id": 10.5,
+        "method": "tools/call",
+        "params": {"name": "gauntlex_run", "arguments": {"spec": "Build a login form"}},
+    })
+    assert "error" in resp
+    assert "result" not in resp
+    assert "No model provider is configured" in resp["error"]["message"]
+    assert "gauntlex setup" in resp["error"]["message"]
 
 
 @pytest.mark.asyncio

@@ -37,9 +37,9 @@ def avf_gate(ctx: RunContext) -> None:
         return
 
     cfg = ctx.config
-    model_kwargs: dict = cfg.model_kwargs()
 
     try:
+        model_kwargs: dict = cfg.model_kwargs()
         hit_rate = asyncio.run(_run_avf_async(fixtures, model_kwargs))
     except Exception as exc:
         ctx.metadata["avf_status"] = "skipped_model_error"

@@ -58,8 +58,9 @@ async def execute(
         "openrouter": cfg.deployment.openrouter_model,
         "huggingface": cfg.deployment.huggingface_model,
         "openai_compat": cfg.deployment.openai_compat_endpoint,
+        "local": cfg.deployment.local_model,
     }
-    _model_label = _pl.get(cfg.effective_model_provider, cfg.deployment.local_model)
+    _model_label = _pl.get(cfg.effective_model_provider, "not configured — run `gauntlex setup`")
     checks.append(CheckResult("Model reachable", model_ok, _model_label))
     if not model_ok:
         all_passed = False
@@ -107,6 +108,8 @@ async def _check_model(cfg) -> bool:
     import httpx
 
     provider = cfg.effective_model_provider
+    if provider is None:
+        return False
     if provider == "anthropic":
         return bool(os.environ.get("ANTHROPIC_API_KEY"))
     if provider == "openrouter":

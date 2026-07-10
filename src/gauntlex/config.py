@@ -10,6 +10,22 @@ from typing import Literal
 import yaml
 
 
+class ModelProviderNotConfiguredError(RuntimeError):
+    """Raised by AppConfig.model_kwargs() when no model provider has been
+    explicitly configured — GAUNTLEX never assumes a default provider."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            "No model provider is configured. GAUNTLEX never assumes a default "
+            "model or provider — you have to choose one explicitly.\n\n"
+            "  Fix:  gauntlex setup   (interactive wizard — pick a free OpenRouter "
+            "model, Anthropic, HuggingFace, OpenAI-compatible, or local Ollama)\n\n"
+            "  Or set one of these environment variables yourself:\n"
+            "    OPENROUTER_API_KEY, ANTHROPIC_API_KEY, HF_TOKEN, OPENAI_COMPAT_API_KEY\n"
+            "  Or set MODEL_PROVIDER explicitly (e.g. MODEL_PROVIDER=local for Ollama)."
+        )
+
+
 @dataclass
 class GauntlexConfig:
     attack_count: int = 20
@@ -34,7 +50,11 @@ class GateConfig:
 
 @dataclass
 class DeploymentConfig:
-    model_provider: Literal["local", "anthropic", "openrouter", "huggingface", "openai_compat"] = "local"
+    # None means "not configured yet" — GAUNTLEX never silently assumes a provider.
+    # It only becomes non-None via an explicit `deployment:` section in .gauntlex.yml,
+    # an explicit MODEL_PROVIDER env var (both written by `gauntlex setup`), or a
+    # recognized provider API key being present. See AppConfig.load().
+    model_provider: Literal["local", "anthropic", "openrouter", "huggingface", "openai_compat"] | None = None
     # Ollama (local)
     local_model: str = "llama3.1:8b"
     local_endpoint: str = "http://localhost:11434"
@@ -152,7 +172,7 @@ class AppConfig:
 
             if d := raw.get("deployment"):
                 cfg.deployment = DeploymentConfig(
-                    model_provider=d.get("model_provider", "local"),
+                    model_provider=d.get("model_provider"),
                     local_model=d.get("local_model", "llama3.1:8b"),
                     local_endpoint=d.get("local_endpoint", "http://localhost:11434"),
                     anthropic_model=d.get("anthropic_model", "claude-haiku-4-5-20251001"),
@@ -161,7 +181,11 @@ class AppConfig:
                     openai_compat_endpoint=d.get("openai_compat_endpoint", "http://localhost:8000/v1"),
                     openai_compat_model=d.get("openai_compat_model", "llama3.1:8b"),
                 )
-                deployment_explicit = True
+                # Only "model_provider:" being present in the yaml counts as an explicit
+                # choice. A `deployment:` section can exist purely to set local_model /
+                # local_endpoint / etc. without opting into a provider — that must still
+                # fall through to the env-key auto-detect below, not silently become "local".
+                deployment_explicit = d.get("model_provider") is not None
 
             if r := raw.get("rbac"):
                 cfg.rbac = RbacConfig(
@@ -192,12 +216,22 @@ class AppConfig:
             # recorded yet) — fall back to detecting the provider from whichever key is
             # present. This only exists for zero-config / CI deployments; it never
             # overrides an explicit choice made via .gauntlex.yml or `gauntlex setup`.
+            #
+            # If none of these are set, model_provider stays None (its dataclass
+            # default) — GAUNTLEX must never silently assume Ollama. A developer who
+            # actually wants local Ollama has to say so, either via `gauntlex setup`
+            # (writes MODEL_PROVIDER=local) or an explicit `deployment:` section in
+            # .gauntlex.yml. Every entrypoint (CLI, MCP server, harness API) treats
+            # model_provider is None as "not configured" and reports it instead of
+            # guessing — see model_kwargs() below.
             if os.environ.get("OPENROUTER_API_KEY"):
                 cfg.deployment.model_provider = "openrouter"
             elif os.environ.get("ANTHROPIC_API_KEY"):
                 cfg.deployment.model_provider = "anthropic"
             elif os.environ.get("HF_TOKEN"):
                 cfg.deployment.model_provider = "huggingface"
+            elif os.environ.get("OPENAI_COMPAT_API_KEY"):
+                cfg.deployment.model_provider = "openai_compat"
 
         # Per-provider model overrides
         if m := os.environ.get("OLLAMA_MODEL"):
@@ -214,8 +248,14 @@ class AppConfig:
         return cfg
 
     def model_kwargs(self) -> dict:
-        """Return BaseAgent kwargs for the effective provider."""
+        """Return BaseAgent kwargs for the effective provider.
+
+        Raises ModelProviderNotConfiguredError if no provider was ever explicitly
+        chosen — never silently falls back to Ollama or any other provider.
+        """
         p = self.effective_model_provider
+        if p is None:
+            raise ModelProviderNotConfiguredError()
         if p == "anthropic":
             return {"provider": "anthropic", "model": self.deployment.anthropic_model}
         if p == "openrouter":
@@ -233,6 +273,55 @@ class AppConfig:
             "model": self.deployment.local_model,
             "ollama_endpoint": self.deployment.local_endpoint,
         }
+
+    def config_issues(self) -> list[tuple[str, str]]:
+        """Return (problem, fix) tuples describing why the configured provider
+        isn't ready to use. Empty list means it's ready. Shared by every
+        entrypoint (CLI, MCP server) so the "not configured" message is
+        identical no matter how GAUNTLEX was invoked."""
+        issues: list[tuple[str, str]] = []
+        provider = self.effective_model_provider
+
+        if provider is None:
+            issues.append((
+                "No model provider is configured — GAUNTLEX never assumes a default",
+                "gauntlex setup  (interactive wizard: OpenRouter free tier, Anthropic, "
+                "HuggingFace, OpenAI, or local Ollama)",
+            ))
+            return issues
+
+        if provider == "openrouter":
+            if not os.environ.get("OPENROUTER_API_KEY"):
+                issues.append(
+                    ("OPENROUTER_API_KEY is not set",
+                     "gauntlex setup --model  (choose OpenRouter and enter your API key)")
+                )
+            elif not self.deployment.openrouter_model:
+                issues.append(
+                    ("OPENROUTER_MODEL is empty — no model selected",
+                     "gauntlex setup --model  (pick a model from the list)")
+                )
+        elif provider == "anthropic":
+            if not os.environ.get("ANTHROPIC_API_KEY"):
+                issues.append(
+                    ("ANTHROPIC_API_KEY is not set",
+                     "gauntlex setup --model  (choose Anthropic and enter your API key)")
+                )
+        elif provider == "huggingface":
+            if not os.environ.get("HF_TOKEN"):
+                issues.append(
+                    ("HF_TOKEN is not set",
+                     "gauntlex setup --model  (choose HuggingFace and enter your token)")
+                )
+        elif provider == "openai_compat":
+            if not os.environ.get("OPENAI_COMPAT_API_KEY"):
+                issues.append(
+                    ("OPENAI_COMPAT_API_KEY is not set",
+                     "gauntlex setup --model  (choose OpenAI and enter your API key)")
+                )
+        # ollama: explicitly chosen, no key required — nothing further to check
+
+        return issues
 
     @property
     def effective_model_provider(self) -> str:
@@ -298,18 +387,22 @@ gate:
   fail_open: false
   exempt_labels: [gauntlex-exempt, hotfix]
 
-# ── Model provider (pick one) ────────────────────────────────────────────────
+# ── Model provider (pick one — GAUNTLEX never assumes one for you) ───────────
 #
-#  local       — Ollama, zero cost, air-gapped (default)
+#  local       — Ollama, zero cost, air-gapped. Uncomment below to opt in.
 #  openrouter  — set OPENROUTER_API_KEY; free tier available
 #  anthropic   — set ANTHROPIC_API_KEY
 #  huggingface — set HF_TOKEN
 #  openai_compat — any OpenAI-compatible endpoint (vLLM, Together AI, Groq, etc.)
 #
 # Env vars take precedence: OPENROUTER_API_KEY > ANTHROPIC_API_KEY > HF_TOKEN > config
+# `gauntlex init` leaves model_provider unset below — GAUNTLEX never assumes a
+# provider for you. Uncomment one line to opt in explicitly, or run
+# `gauntlex setup` for the interactive wizard (recommended — it also writes
+# your API key to .env for you).
 # ─────────────────────────────────────────────────────────────────────────────
 deployment:
-  model_provider: local
+  # model_provider: local
 
   # Ollama (local)
   local_model: llama3.1:8b

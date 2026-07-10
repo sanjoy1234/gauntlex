@@ -615,3 +615,72 @@ class TestStatusCommand:
 
         assert result.exit_code == 0, result.output
         assert "—" in result.output
+
+
+# ── No default model provider (regression) ─────────────────────────────────────
+# GAUNTLEX must never assume Ollama. Every entrypoint has to fail with a clear,
+# actionable message when no provider has been configured via `gauntlex setup`,
+# a MODEL_PROVIDER env var, an explicit `deployment:` section in .gauntlex.yml,
+# or a recognized provider API key.
+
+class TestNoDefaultModelProvider:
+    def _clean_env(self, monkeypatch):
+        for var in (
+            "OPENROUTER_API_KEY", "ANTHROPIC_API_KEY", "HF_TOKEN", "MODEL_PROVIDER",
+            "OPENAI_COMPAT_API_KEY", "OLLAMA_MODEL", "OLLAMA_ENDPOINT",
+        ):
+            monkeypatch.delenv(var, raising=False)
+
+    def test_run_fails_clearly_with_no_provider_configured(self, monkeypatch):
+        self._clean_env(monkeypatch)
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            Path("spec.md").write_text("Build a simple login API with email/password auth.\n")
+            result = runner.invoke(main, ["run", "--issue", "spec.md", "--mode", "quick", "--pretty"])
+
+        assert result.exit_code == 1
+        assert "cannot run" in result.output.lower()
+        assert "no model provider is configured" in result.output.lower()
+        assert "gauntlex setup" in result.output.lower()
+        # must NOT have attempted an Ollama connection (mentioning it as one of
+        # the `gauntlex setup` wizard's provider choices is fine and expected)
+        assert "cannot reach ollama" not in result.output.lower()
+        assert "is ollama running" not in result.output.lower()
+        assert "11434" not in result.output
+
+    def test_doctor_reports_not_configured_instead_of_ollama(self, monkeypatch):
+        self._clean_env(monkeypatch)
+        runner = CliRunner()
+        # Real KnowledgeForge spins up a chromadb PersistentClient (and downloads
+        # an onnx embedding model on first use) — irrelevant to this test and
+        # prone to cross-test state leakage in chromadb's process-global client
+        # cache, so it's stubbed out here.
+        with patch("gauntlex.memory.forge.KnowledgeForge.is_available", return_value=True), \
+             runner.isolated_filesystem():
+            result = runner.invoke(main, ["doctor", "--pretty"])
+
+        assert "not configured" in result.output.lower()
+        assert "gauntlex setup" in result.output.lower()
+
+
+# ── --pretty/--no-pretty flag (regression) ──────────────────────────────────────
+# `is_flag=True, default=True` on a single-named flag is ambiguous: passing
+# `--pretty` explicitly toggles it to False on Click 8.2.x but leaves it True on
+# 8.4.x. pyproject.toml only pins `click>=8.1`, so both resolve on a fresh
+# install. Every `--pretty` option must use the explicit `--pretty/--no-pretty`
+# pair, which is unambiguous on every Click version.
+
+class TestPrettyFlagIsUnambiguous:
+    def test_doctor_pretty_flag_produces_table_output(self):
+        runner = CliRunner()
+        with patch("gauntlex.memory.forge.KnowledgeForge.is_available", return_value=True), \
+             runner.isolated_filesystem():
+            result = runner.invoke(main, ["doctor", "--pretty"])
+        assert result.output.lstrip().startswith("┏")
+
+    def test_doctor_no_pretty_flag_produces_json_output(self):
+        runner = CliRunner()
+        with patch("gauntlex.memory.forge.KnowledgeForge.is_available", return_value=True), \
+             runner.isolated_filesystem():
+            result = runner.invoke(main, ["doctor", "--no-pretty"])
+        json.loads(result.output)

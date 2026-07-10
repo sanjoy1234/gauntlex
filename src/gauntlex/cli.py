@@ -701,7 +701,7 @@ def status_cmd(show_all: bool):
 
 @main.command()
 @click.option("--spec", default=None, help="Spec file to validate (optional)")
-@click.option("--pretty", is_flag=True, default=True)
+@click.option("--pretty/--no-pretty", default=True)
 def validate(spec: str | None, pretty: bool):
     """Dry-run: parse spec, check model, run AVF golden fixtures. No attacks fired."""
     checks = []
@@ -726,8 +726,9 @@ def validate(spec: str | None, pretty: bool):
         "openrouter": cfg.deployment.openrouter_model,
         "huggingface": cfg.deployment.huggingface_model,
         "openai_compat": cfg.deployment.openai_compat_endpoint,
+        "local": cfg.deployment.local_model,
     }
-    _vmodel_label = _vl.get(cfg.effective_model_provider, cfg.deployment.local_model)
+    _vmodel_label = _vl.get(cfg.effective_model_provider, "not configured — run `gauntlex setup`")
     checks.append(("Model reachable", model_ok, _vmodel_label))
     if not model_ok:
         all_pass = False
@@ -766,7 +767,7 @@ def validate(spec: str | None, pretty: bool):
 
 @main.command()
 @click.option("--network-check", is_flag=True, help="Verify no unexpected outbound connections")
-@click.option("--pretty", is_flag=True, default=True)
+@click.option("--pretty/--no-pretty", default=True)
 def doctor(network_check: bool, pretty: bool):
     """Full environment health check."""
     cfg = AppConfig.load()
@@ -787,8 +788,11 @@ def doctor(network_check: bool, pretty: bool):
         "openrouter": f"OpenRouter ({cfg.deployment.openrouter_model})",
         "huggingface": f"HuggingFace ({cfg.deployment.huggingface_model})",
         "openai_compat": f"OpenAI-compat ({cfg.deployment.openai_compat_endpoint})",
+        "local": f"Ollama ({cfg.deployment.local_endpoint})",
     }
-    _model_label = _provider_labels.get(cfg.effective_model_provider, cfg.deployment.local_endpoint)
+    _model_label = _provider_labels.get(
+        cfg.effective_model_provider, "not configured — run `gauntlex setup`"
+    )
     checks.append(("Model reachable", model_ok, _model_label))
     if not model_ok:
         all_pass = False
@@ -810,7 +814,14 @@ def doctor(network_check: bool, pretty: bool):
         all_pass = False
 
     if network_check:
-        checks.append(("Air-gap (no unexpected outbound)", True, "Pass — Ollama runs locally"))
+        _airgap_detail = {
+            "local": "Pass — Ollama runs locally, no outbound calls",
+            "anthropic": "Pass — outbound only to api.anthropic.com",
+            "openrouter": "Pass — outbound only to openrouter.ai",
+            "huggingface": "Pass — outbound only to api-inference.huggingface.co",
+            "openai_compat": f"Pass — outbound only to {cfg.deployment.openai_compat_endpoint}",
+        }.get(cfg.effective_model_provider, "Pass — no provider configured, no outbound calls")
+        checks.append(("Air-gap (no unexpected outbound)", True, _airgap_detail))
 
     if pretty:
         _print_checks(checks, all_pass)
@@ -1484,7 +1495,7 @@ def report(run_id: str, fmt: str, out: str | None):
 
 @main.command()
 @click.argument("run_id")
-@click.option("--pretty", is_flag=True, default=True)
+@click.option("--pretty/--no-pretty", default=True)
 def learn(run_id: str, pretty: bool):
     """Feed a completed run into the Knowledge Forge and update effectiveness tracking."""
     from .harness.commands.learn import execute as learn_execute
@@ -1514,7 +1525,7 @@ def learn(run_id: str, pretty: bool):
 @main.command()
 @click.argument("run_id_a")
 @click.argument("run_id_b")
-@click.option("--pretty", is_flag=True, default=True)
+@click.option("--pretty/--no-pretty", default=True)
 def compare(run_id_a: str, run_id_b: str, pretty: bool):
     """Compare two Resilience Reports: show ARS delta and attack-level changes."""
     from .harness.commands.compare import execute as compare_execute
@@ -2594,43 +2605,12 @@ def _load_recalled_attacks(spec: str) -> str:
 
 
 def _check_config_ready(cfg: AppConfig) -> list[tuple[str, str]]:
-    """Return list of (problem, fix) tuples. Empty means config is complete."""
-    import os
-    issues: list[tuple[str, str]] = []
-    provider = cfg.effective_model_provider
+    """Return list of (problem, fix) tuples. Empty means config is complete.
 
-    if provider == "openrouter":
-        if not os.environ.get("OPENROUTER_API_KEY"):
-            issues.append(
-                ("OPENROUTER_API_KEY is not set",
-                 "gauntlex setup --model  (choose OpenRouter and enter your API key)")
-            )
-        elif not cfg.deployment.openrouter_model:
-            issues.append(
-                ("OPENROUTER_MODEL is empty — no model selected",
-                 "gauntlex setup --model  (pick a model from the list)")
-            )
-    elif provider == "anthropic":
-        if not os.environ.get("ANTHROPIC_API_KEY"):
-            issues.append(
-                ("ANTHROPIC_API_KEY is not set",
-                 "gauntlex setup --model  (choose Anthropic and enter your API key)")
-            )
-    elif provider == "huggingface":
-        if not os.environ.get("HF_TOKEN"):
-            issues.append(
-                ("HF_TOKEN is not set",
-                 "gauntlex setup --model  (choose HuggingFace and enter your token)")
-            )
-    elif provider == "openai_compat":
-        if not os.environ.get("OPENAI_COMPAT_API_KEY"):
-            issues.append(
-                ("OPENAI_COMPAT_API_KEY is not set",
-                 "gauntlex setup --model  (choose OpenAI and enter your API key)")
-            )
-    # ollama: no key required — skip credential check
-
-    return issues
+    Thin wrapper around AppConfig.config_issues() so the CLI, MCP server, and
+    harness API all report the exact same "not configured" message.
+    """
+    return cfg.config_issues()
 
 
 async def _check_model(cfg: AppConfig) -> bool:
@@ -2638,6 +2618,9 @@ async def _check_model(cfg: AppConfig) -> bool:
     import httpx
 
     provider = cfg.effective_model_provider
+
+    if provider is None:
+        return False
 
     if provider == "anthropic":
         return bool(os.environ.get("ANTHROPIC_API_KEY"))
@@ -2667,7 +2650,7 @@ async def _check_model(cfg: AppConfig) -> bool:
         except Exception:
             return False
 
-    # local / ollama
+    # local / ollama — only reached when the developer explicitly configured it
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
             resp = await client.get(f"{cfg.deployment.local_endpoint}/api/tags")

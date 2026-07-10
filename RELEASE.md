@@ -31,6 +31,34 @@
   designed backward-compatible fallback, not a residual bug.** Any run
   going forward gets grouped correctly.
 
+- **GAUNTLEX no longer assumes Ollama when no model provider is configured.**
+  Every entrypoint (CLI `run`/`doctor`/`validate`, the MCP server, the
+  dashboard) previously fell back to a hardcoded Ollama default whenever no
+  provider had been explicitly chosen — a `pip install` or `uvx` user who
+  hadn't run `gauntlex setup` saw `Cannot reach Ollama at
+  http://localhost:11434` instead of a clear "not configured" message.
+  `AppConfig.model_provider` now defaults to `None`; `model_kwargs()` raises
+  `ModelProviderNotConfiguredError` pointing at `gauntlex setup`, and every
+  entrypoint surfaces that message instead of attempting a connection.
+  Verified across three separate install paths — editable dev install, a
+  genuinely clean `pip install` of a built wheel, and `uvx --from <wheel>` —
+  on two different Click versions.
+- **`--pretty` flag behavior was ambiguous across Click versions.**
+  `is_flag=True, default=True` without a `--no-pretty` counterpart silently
+  toggles to `False` when the flag is explicitly passed, on Click 8.2.x (but
+  not 8.4.x) — so `gauntlex doctor --pretty` could print raw JSON instead of
+  a table depending on which Click version pip happened to resolve.
+  `pyproject.toml` only pins `click>=8.1`, so both resolve on a fresh
+  install. All four affected commands (`validate`, `doctor`, `learn`,
+  `compare`) now use the unambiguous `--pretty/--no-pretty` pair.
+- **Claude Code plugin skill docs hardcoded Ollama as the model check.**
+  `.claude-plugin`'s `doctor`/`validate` SKILL.md files told Claude to
+  report "Ollama reachable" / `GET http://localhost:11434/` as *the* model
+  check, independent of whichever provider was actually configured — this
+  is what made the Claude Code plugin render "Ollama not running" even
+  after the underlying CLI was already fixed. Both files now instruct
+  Claude to report whichever provider the command's own output names.
+
 ### Added
 
 - **`gauntlex dashboard` now serves a live leaderboard.** New `/leaderboard`
@@ -43,11 +71,23 @@
   not a redesign). The standalone `gauntlex leaderboard` CLI command is
   unchanged and still exists for static-site publishing (e.g. GitHub
   Pages) — the two are complementary, not a replacement.
-- 17 new regression tests (8 leaderboard engine, 9 dashboard integration).
-  Full suite: 605 passed. Live-verified: started the real dashboard server,
-  curled every pre-existing endpoint to confirm zero regression, and
-  confirmed via headless-Chrome screenshot that both pages render correctly
-  and match visually.
+- **`scripts/release.sh` + `DISTRIBUTION.md`** — a repeatable release
+  workflow. `DISTRIBUTION.md` tracks every place GAUNTLEX is published
+  (PyPI, the GitHub repo, the Claude Code plugin marketplace, and a
+  placeholder section for future MCP registries) and exactly how to update
+  each. `release.sh` enforces that `pyproject.toml`, `.claude-plugin/plugin.json`,
+  and `.claude-plugin/marketplace.json` all agree on the version before
+  anything ships, runs the full test suite, builds sdist+wheel, and
+  installs the freshly built wheel into a throwaway venv to catch packaging
+  regressions before they're public. Publish (`--publish`) and git tag/push
+  (`--tag`) are opt-in flags, not defaults — nothing public happens by
+  accident.
+- 17 new regression tests (8 leaderboard engine, 9 dashboard integration),
+  plus additional coverage for the no-default-provider and `--pretty` fixes
+  above. Full suite: 612 passed. Live-verified: started the real dashboard
+  server, curled every pre-existing endpoint to confirm zero regression,
+  and confirmed via headless-Chrome screenshot that both pages render
+  correctly and match visually.
 
 ---
 

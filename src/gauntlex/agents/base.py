@@ -39,7 +39,7 @@ class BaseAgent:
     Unified async LLM interface.
 
     Supported providers:
-      ollama      — local Ollama server, zero cost, air-gapped (default)
+      ollama      — local Ollama server, zero cost, air-gapped
       anthropic   — Anthropic Claude API (set ANTHROPIC_API_KEY)
       openrouter  — OpenRouter.ai API (set OPENROUTER_API_KEY)
                     Any model including free tier: deepseek/deepseek-chat-v3-0324:free
@@ -47,7 +47,11 @@ class BaseAgent:
       openai_compat — generic OpenAI-compatible endpoint (set OPENAI_COMPAT_API_KEY
                       and OPENAI_COMPAT_BASE_URL); covers vLLM, Together AI, etc.
 
-    Provider resolution order (when provider arg is None):
+    Provider resolution order (when provider arg is None) — this is a low-level
+    convenience for direct/manual BaseAgent construction only. The app itself
+    (AppConfig.model_kwargs()) never relies on this: it always passes `provider`
+    explicitly and raises ModelProviderNotConfiguredError instead of reaching
+    this class at all when nothing has been configured. See config.py.
       1. OPENROUTER_API_KEY → openrouter
       2. ANTHROPIC_API_KEY  → anthropic
       3. HF_TOKEN           → huggingface

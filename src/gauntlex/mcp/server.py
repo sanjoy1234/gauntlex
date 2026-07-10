@@ -231,6 +231,11 @@ class MCPServer:
         if not spec:
             raise _McpError(-32602, "spec is required and must not be empty")
 
+        issues = self._config.config_issues()
+        if issues:
+            lines = [f"{problem} — fix: {fix}" for problem, fix in issues]
+            raise _McpError(-32001, "GAUNTLEX cannot run — configuration is incomplete:\n" + "\n".join(lines))
+
         mode = args.get("mode", "quick")
         if mode not in _ATTACK_COUNTS:
             mode = "quick"

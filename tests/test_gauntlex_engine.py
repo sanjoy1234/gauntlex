@@ -8,7 +8,7 @@ import pytest
 
 from gauntlex.agents.breaker import Attack, BreakerResult
 from gauntlex.agents.builder import BuildResult
-from gauntlex.config import AppConfig, GauntlexConfig
+from gauntlex.config import AppConfig, DeploymentConfig, GauntlexConfig
 from gauntlex.core.arbiter import Arbiter
 from gauntlex.core.gauntlex import Gauntlex
 
@@ -42,7 +42,10 @@ def test_attacks_per_round_wired_from_mode_attack_count(attack_count, rounds_max
     silently produced about the same handful of attacks as `quick`. This asserts
     the configured mode target actually reaches the Breaker.
     """
-    config = AppConfig(gauntlex=GauntlexConfig(attack_count=attack_count, rounds_max=rounds_max))
+    config = AppConfig(
+        gauntlex=GauntlexConfig(attack_count=attack_count, rounds_max=rounds_max),
+        deployment=DeploymentConfig(model_provider="local"),
+    )
     engine = Gauntlex(config=config)
     assert engine.breaker.attacks_per_round == expected
 
@@ -56,7 +59,10 @@ async def test_round_2_plus_calls_breaker_exactly_once():
     round after the first with nothing to show for it. Assert exactly one
     Breaker.attack() call happens per round now.
     """
-    config = AppConfig(gauntlex=GauntlexConfig(attack_count=5, rounds_max=3, early_exit_threshold=1.1))
+    config = AppConfig(
+        gauntlex=GauntlexConfig(attack_count=5, rounds_max=3, early_exit_threshold=1.1),
+        deployment=DeploymentConfig(model_provider="local"),
+    )
     engine = Gauntlex(config=config)
 
     engine.builder.generate = AsyncMock(side_effect=lambda spec, round_number, feedback: _build_result(round_number))

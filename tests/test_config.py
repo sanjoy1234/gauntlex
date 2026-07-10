@@ -8,14 +8,14 @@ from pathlib import Path
 import pytest
 import yaml
 
-from gauntlex.config import AppConfig
+from gauntlex.config import DEFAULT_CONFIG_YAML, AppConfig, ModelProviderNotConfiguredError
 
 
 def test_defaults():
     cfg = AppConfig()
     assert cfg.gate.minimum_ars == 0.80
     assert cfg.gate.fail_open is False
-    assert cfg.deployment.model_provider == "local"
+    assert cfg.deployment.model_provider is None
     assert cfg.gauntlex.attack_count == 20
     assert cfg.gauntlex.rounds_max == 5
 
@@ -75,6 +75,36 @@ def test_explicit_deployment_wins_over_stale_api_key(tmp_path, monkeypatch):
 
     cfg = AppConfig.load(config_file)
     assert cfg.effective_model_provider == "local"
+
+
+def test_gauntlex_init_scaffold_does_not_default_to_ollama(tmp_path, monkeypatch):
+    """Regression: `gauntlex init` writes DEFAULT_CONFIG_YAML, which contains a
+    `deployment:` section (for local_model/local_endpoint/etc. placeholders) but
+    must leave `model_provider` unset. Previously the yaml shipped with
+    `model_provider: local` active, so `gauntlex init` followed by `gauntlex run`
+    silently talked to Ollama without the developer ever choosing a provider."""
+    for var in ("MODEL_PROVIDER", "OPENROUTER_API_KEY", "ANTHROPIC_API_KEY", "HF_TOKEN", "OPENAI_COMPAT_API_KEY"):
+        monkeypatch.delenv(var, raising=False)
+    config_file = tmp_path / ".gauntlex.yml"
+    config_file.write_text(DEFAULT_CONFIG_YAML)
+
+    cfg = AppConfig.load(config_file)
+    assert cfg.effective_model_provider is None
+    with pytest.raises(ModelProviderNotConfiguredError):
+        cfg.model_kwargs()
+
+
+def test_gauntlex_init_scaffold_still_allows_env_key_autodetect(tmp_path, monkeypatch):
+    """A `deployment:` section without an explicit model_provider must not block
+    the OPENROUTER_API_KEY/etc. auto-detect fallback — only an explicit
+    model_provider (or MODEL_PROVIDER env var) should suppress it."""
+    monkeypatch.delenv("MODEL_PROVIDER", raising=False)
+    monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or-test")
+    config_file = tmp_path / ".gauntlex.yml"
+    config_file.write_text(DEFAULT_CONFIG_YAML)
+
+    cfg = AppConfig.load(config_file)
+    assert cfg.effective_model_provider == "openrouter"
 
 
 def test_model_provider_env_wins_over_yaml(tmp_path, monkeypatch):
