@@ -91,6 +91,7 @@ async def execute(
         run_id=run_id,
         spec_ref="<programmatic>",
         playbook_version=playbook_ver,
+        mode=mode, model=f"{pair.builder.provider}/{pair.builder.model}",
     )
 
     cfg.reports_dir.mkdir(parents=True, exist_ok=True)

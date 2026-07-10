@@ -55,8 +55,8 @@ class TestRenderLivePanel:
         text = str(panel.renderable)
         assert "Loading" in text or "loading" in text or "1/4" in text
 
-    def test_combat_phase_shows_builder_breaker(self):
-        state = _RunProgress(phase="combat", combat_start=time.monotonic() - 10,
+    def test_round_phase_shows_builder_breaker(self):
+        state = _RunProgress(phase="round", round_start=time.monotonic() - 10,
                               issue_label="pallets/flask", mode="quick", attack_total=5)
         panel = _render_live_panel(state)
         text = str(panel.renderable)
@@ -152,7 +152,7 @@ class TestForegroundRunStatusHasPid:
     def test_load_active_runs_keeps_running_entry_with_live_pid(self, tmp_path):
         runs_dir = tmp_path / "runs"
         _write_run_status("gauntlex-live-run", runs_dir,
-                           status="running", phase="combat", pid=os.getpid())
+                           status="running", phase="round", pid=os.getpid())
         active = _load_active_runs(runs_dir)
         assert [a["run_id"] for a in active] == ["gauntlex-live-run"]
         assert (runs_dir / "gauntlex-live-run.json").exists()  # not deleted as stale

@@ -73,7 +73,7 @@ The difference is that TDD requires a human to write the test cases. GAUNTLEX ge
 
 ## The three differentiators, in full
 
-### ⚔️ 1. The Combat Pair — Builder and Breaker Run at the Same Instant
+### ⚔️ 1. Concurrent Execution — Builder and Breaker Run at the Same Instant
 
 Every AI coding tool today follows the same sequential pattern: generate code, run tests, maybe run a scanner. The security check happens after the code exists — and after the team has committed to shipping it.
 
@@ -557,15 +557,24 @@ gauntlex dashboard --port 8080
 
 Exposes a REST API (`/api/runs`, `/api/runs/{id}`) for integration with existing dashboards (Grafana, Splunk, Datadog) via standard HTTP.
 
+Also serves a live **`/leaderboard`** page and **`/api/leaderboard`** JSON endpoint on the same port — see Feature 9. Both re-read `.gauntlex/reports/` on every request, so there's no separate build step: the leaderboard is always current with whatever runs exist right now.
+
 ### Feature 9 — ARS Leaderboard — Benchmarking AI Coding Agents
 
-SWE-bench measures whether an agent fixed the bug — not whether the fix introduced new vulnerabilities. Score multiple AI agents against the same task set and rank by adversarial resilience:
+SWE-bench measures whether an agent fixed the bug — not whether the fix introduced new vulnerabilities. Score multiple AI agents against the same task set and rank by adversarial resilience. Two ways to get the leaderboard, same underlying data:
 
 ```bash
+# Live — always current, no build step, served alongside the rest of the dashboard
+gauntlex dashboard --port 8080
+# → http://localhost:8080/leaderboard
+
+# Static — a self-contained HTML file, e.g. for publishing to GitHub Pages
 gauntlex leaderboard --reports-dir .gauntlex/reports --output docs/leaderboard.html
 ```
 
-Rank score = `avg_ARS × 0.6 + pass_rate × 0.4`. Output is a self-contained, sortable HTML page — publish to GitHub Pages. A JSONL input format is also supported for importing scores from external tools.
+Rank score = `avg_ARS × 0.6 + pass_rate × 0.4`. A JSONL input format is also supported for importing scores from external tools (`gauntlex leaderboard --jsonl scores.jsonl`).
+
+Agent identity is resolved from each report's own `model` field (e.g. `openrouter/nvidia/nemotron-3-super-120b-a12b:free`) first, so different models/providers you've tested against the same repo rank as separate rows. It falls back to a legacy `<agent>--<task_id>.json` filename convention, and only to `"unknown"` for reports that have neither — which in practice means reports produced before this field existed. Those older reports will keep showing as `"unknown"` until re-run; this is the intended backward-compatible behavior, not a bug.
 
 ### Feature 10 — Enterprise RBAC (GitHub Team-Based Access Control)
 
@@ -1009,7 +1018,9 @@ Confirmed local IDE support: Claude Code, Cursor, Windsurf, Zed. See [Domain Int
 ```bash
 pip install "gauntlex-ai[ui]"
 gauntlex dashboard --port 8080
-# → http://localhost:8080
+# → http://localhost:8080              — run history, ARS trend, evidence downloads
+# → http://localhost:8080/leaderboard  — live ARS leaderboard, always current
+# → http://localhost:8080/api/leaderboard  — same data as JSON
 ```
 
 ### `gauntlex serve` — CPaaS webhook server
@@ -1019,7 +1030,9 @@ gauntlex serve --port 8080 --rbac --host 0.0.0.0
 # Required env: GITHUB_APP_ID, GITHUB_PRIVATE_KEY_PATH, GITHUB_WEBHOOK_SECRET
 ```
 
-### `gauntlex leaderboard` — ARS agent leaderboard
+### `gauntlex leaderboard` — static ARS agent leaderboard
+
+For a live version with no build step, use `gauntlex dashboard` and open `/leaderboard` instead — this command is for producing a standalone file (e.g. to publish to GitHub Pages).
 
 ```bash
 gauntlex leaderboard                                   # from default reports dir
@@ -1126,7 +1139,7 @@ kev_enabled: true               # default on
   "$schema": "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0.json",
   "version": "2.1.0",
   "runs": [{
-    "tool": { "driver": { "name": "GAUNTLEX", "version": "1.0.0" } },
+    "tool": { "driver": { "name": "GAUNTLEX", "version": "1.0.1" } },
     "results": [{
       "ruleId": "CWE-79",
       "level": "error",

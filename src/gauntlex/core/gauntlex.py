@@ -28,7 +28,7 @@ class RoundResult:
 
 
 @dataclass
-class CombatResult:
+class GauntlexResult:
     rounds: list[RoundResult] = field(default_factory=list)
     final_ars: float = 0.0
     all_attacks: list[Attack] = field(default_factory=list)
@@ -92,11 +92,11 @@ class Gauntlex:
         self._early_exit_threshold = cp.early_exit_threshold
         self._early_exit_streak = cp.early_exit_streak
 
-    async def run(self, spec: str, arbiter: "Arbiter") -> CombatResult:  # noqa: F821
+    async def run(self, spec: str, arbiter: "Arbiter") -> GauntlexResult:  # noqa: F821
         from .arbiter import Arbiter  # local import to avoid circular at module level
 
         start_total = time.monotonic()
-        result = CombatResult()
+        result = GauntlexResult()
         high_ars_streak = 0
         feedback = ""
         build_result = None

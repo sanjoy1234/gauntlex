@@ -56,6 +56,41 @@ def create_app(config: AppConfig | None = None):  # returns FastAPI when install
         active = _load_active_runs(runs_dir)
         return HTMLResponse(_render_index(reports, cfg, active))
 
+    @app.get("/leaderboard", response_class=HTMLResponse)
+    async def leaderboard_page():
+        """Live GAUNTLEX Leaderboard — served from this same dashboard process,
+        not a pre-generated static file. Ranks every model/provider that has
+        produced a report in cfg.reports_dir, re-read on every request."""
+        from ..leaderboard.engine import load_agent_scores_from_reports, build_leaderboard
+
+        scores = load_agent_scores_from_reports(cfg.reports_dir, gate=cfg.gate.minimum_ars)
+        entries = build_leaderboard(scores, gate_threshold=cfg.gate.minimum_ars)
+        generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+        return HTMLResponse(_render_leaderboard_page(entries, cfg, generated_at))
+
+    @app.get("/api/leaderboard")
+    async def leaderboard_api():
+        from ..leaderboard.engine import load_agent_scores_from_reports, build_leaderboard
+
+        scores = load_agent_scores_from_reports(cfg.reports_dir, gate=cfg.gate.minimum_ars)
+        entries = build_leaderboard(scores, gate_threshold=cfg.gate.minimum_ars)
+        return JSONResponse([
+            {
+                "rank": i,
+                "agent_name": e.agent_name,
+                "avg_ars": round(e.avg_ars, 3),
+                "median_ars": round(e.median_ars, 3),
+                "min_ars": round(e.min_ars, 3),
+                "max_ars": round(e.max_ars, 3),
+                "task_count": e.task_count,
+                "pass_rate": round(e.pass_rate, 3),
+                "total_attacks": e.total_attacks,
+                "total_misses": e.total_misses,
+                "rank_score": round(e.rank_score, 3),
+            }
+            for i, e in enumerate(entries, 1)
+        ])
+
     @app.get("/api/runs")
     async def list_runs():
         reports = _load_all_reports(cfg.reports_dir)
@@ -466,6 +501,143 @@ def _load_all_reports(reports_dir: Path, limit: int = 100) -> list[dict]:
     return reports
 
 
+_DASHBOARD_CSS = """
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:#EFF6FF;color:#111827;min-height:100vh;overflow-x:hidden}
+
+/* ── Header ── */
+header{background:linear-gradient(135deg,#1E3A8A 0%,#2563EB 60%,#3B82F6 100%);padding:0 32px;height:64px;display:flex;align-items:center;gap:16px;box-shadow:0 4px 16px rgba(30,58,138,.35);position:sticky;top:0;z-index:100}
+.hdr-logo{font-size:24px;animation:pulse-logo 2s ease-in-out infinite}
+@keyframes pulse-logo{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+header h1{font-size:19px;font-weight:900;color:#fff;letter-spacing:-.02em}
+header .sub{font-size:11px;color:rgba(255,255,255,.7);font-weight:400;margin-top:1px}
+.gate-badge{background:rgba(255,255,255,.18);color:#fff;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;border:1px solid rgba(255,255,255,.3);backdrop-filter:blur(4px)}
+.hdr-nav{margin-left:auto;display:flex;gap:8px}
+.hdr-nav a{color:rgba(255,255,255,.85);text-decoration:none;font-size:12px;font-weight:500;padding:5px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.25);transition:all .2s}
+.hdr-nav a:hover{background:rgba(255,255,255,.2);color:#fff}
+.refresh-dot{width:7px;height:7px;border-radius:50%;background:#4ADE80;display:inline-block;animation:blink 1.8s ease-in-out infinite;margin-right:4px}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── Hero explainer ── */
+.hero{background:linear-gradient(135deg,#1E40AF 0%,#0EA5E9 100%);color:#fff;padding:28px 32px;margin-bottom:28px}
+.hero-inner{max-width:1280px;margin:0 auto;display:flex;align-items:center;gap:32px}
+.hero-text h2{font-size:22px;font-weight:900;margin-bottom:8px}
+.hero-text p{font-size:13px;line-height:1.65;color:rgba(255,255,255,.88);max-width:620px}
+.hero-pills{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.pill{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);padding:4px 14px;border-radius:20px;font-size:12px;font-weight:600;color:#fff;backdrop-filter:blur(4px)}
+
+/* ── Main layout ── */
+.main{padding:0 32px 40px;max-width:1280px;margin:0 auto}
+
+/* ── Stat cards ── */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:#fff;border:1px solid #BFDBFE;border-radius:14px;padding:22px 24px;box-shadow:0 2px 8px rgba(37,99,235,.08);position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s;animation:card-in .5s ease both}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(37,99,235,.15)}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;border-radius:14px 14px 0 0}
+.stat-card.blue::before{background:linear-gradient(90deg,#2563EB,#60A5FA)}
+.stat-card.green::before{background:linear-gradient(90deg,#059669,#34D399)}
+.stat-card.red::before{background:linear-gradient(90deg,#DC2626,#F87171)}
+.stat-card.amber::before{background:linear-gradient(90deg,#D97706,#FCD34D)}
+@keyframes card-in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.stat-card:nth-child(2){animation-delay:.08s}
+.stat-card:nth-child(3){animation-delay:.16s}
+.stat-card:nth-child(4){animation-delay:.24s}
+.stat-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#6B7280;margin-bottom:8px;display:flex;align-items:center;gap:5px}
+.stat-val{font-size:36px;font-weight:900;line-height:1;transition:color .3s}
+.stat-sub{font-size:11px;color:#9CA3AF;margin-top:5px}
+.stat-icon{font-size:28px;position:absolute;right:18px;top:18px;opacity:.12}
+
+/* ── Trend + Donut row ── */
+.mid-row{display:grid;grid-template-columns:1fr 340px;gap:16px;margin-bottom:20px}
+.card{background:#fff;border:1px solid #BFDBFE;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(37,99,235,.07)}
+.card-hdr{padding:14px 20px;background:linear-gradient(90deg,#EFF6FF,#fff);border-bottom:1px solid #DBEAFE;font-size:13px;font-weight:700;color:#1E40AF;display:flex;align-items:center;gap:8px}
+.chart-body{padding:16px 20px;height:140px;position:relative}
+svg.spark{width:100%;height:100%}
+
+/* ── Gauge ── */
+.gauge-wrap{padding:20px;display:flex;flex-direction:column;align-items:center}
+svg.gauge{width:200px;height:110px;overflow:visible}
+.gauge-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#6B7280;margin-top:8px}
+.gauge-val{font-size:28px;font-weight:900;text-align:center}
+
+/* ── Pipeline ── */
+.pipeline-card{background:#fff;border:1px solid #BFDBFE;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(37,99,235,.07);margin-bottom:20px}
+.pipeline-body{padding:24px 32px}
+.pipeline-title{font-size:13px;font-weight:700;color:#1E40AF;margin-bottom:18px;display:flex;align-items:center;gap:8px}
+.flow{display:flex;align-items:center;gap:0;justify-content:center;flex-wrap:wrap;gap:0}
+.flow-node{background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border:2px solid #93C5FD;border-radius:12px;padding:12px 18px;text-align:center;min-width:110px;position:relative;transition:all .3s}
+.flow-node:hover{transform:scale(1.05);box-shadow:0 4px 16px rgba(37,99,235,.25)}
+.flow-node .fn-icon{font-size:20px;margin-bottom:4px}
+.flow-node .fn-lbl{font-size:11px;font-weight:700;color:#1E40AF}
+.flow-node .fn-sub{font-size:10px;color:#6B7280;margin-top:2px}
+.flow-node.accent{background:linear-gradient(135deg,#FEF3C7,#FDE68A);border-color:#F59E0B}
+.flow-node.accent .fn-lbl{color:#92400E}
+.flow-node.danger{background:linear-gradient(135deg,#FEE2E2,#FECACA);border-color:#FCA5A5}
+.flow-node.danger .fn-lbl{color:#991B1B}
+.flow-node.success{background:linear-gradient(135deg,#D1FAE5,#A7F3D0);border-color:#6EE7B7}
+.flow-node.success .fn-lbl{color:#065F46}
+.flow-arrow{display:flex;align-items:center;padding:0 4px;color:#93C5FD;font-size:18px;position:relative;overflow:hidden}
+.flow-arrow::after{content:'';position:absolute;top:50%;width:8px;height:8px;background:#3B82F6;border-radius:50%;transform:translateY(-50%);animation:arrow-dot 1.8s linear infinite;opacity:.8}
+@keyframes arrow-dot{0%{left:-8px;opacity:0}20%{opacity:1}80%{opacity:1}100%{left:100%;opacity:0}}
+.concurrent-wrap{display:flex;flex-direction:column;gap:4px;align-items:center}
+.concurrent-badge{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#2563EB;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:4px;padding:1px 6px;margin-bottom:2px}
+
+/* ── Active runs ── */
+.running-badge{display:inline-flex;align-items:center;gap:6px;background:#FEF3C7;color:#92400E;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700}
+.running-dot{width:7px;height:7px;border-radius:50%;background:#D97706;display:inline-block;animation:blink 1.4s ease-in-out infinite}
+
+/* ── Runs table ── */
+.runs-card{background:#fff;border:1px solid #BFDBFE;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(37,99,235,.07);margin-bottom:20px}
+.runs-table{width:100%;border-collapse:collapse;font-size:13px}
+.runs-table thead tr{background:linear-gradient(90deg,#EFF6FF,#F0F9FF)}
+.runs-table th{padding:11px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#1E40AF;border-bottom:2px solid #BFDBFE;white-space:nowrap}
+.runs-table td{padding:11px 14px;border-bottom:1px solid #F0F9FF}
+.run-row{cursor:pointer;transition:background .15s}
+.run-row:hover td{background:#F0F9FF}
+.run-row:last-child td{border-bottom:none}
+.run-code{font-size:10px;font-family:'Menlo','Monaco',monospace;color:#374151;background:#F3F4F6;padding:2px 6px;border-radius:4px}
+.dl-btn{text-decoration:none;padding:3px 8px;border-radius:5px;font-size:10px;font-weight:700;transition:all .15s}
+.dl-html{background:#EFF6FF;color:#1D4ED8}
+.dl-html:hover{background:#DBEAFE}
+.dl-sarif{background:#F0FDF4;color:#065F46}
+.dl-sarif:hover{background:#D1FAE5}
+.dl-junit{background:#FFF7ED;color:#92400E}
+.dl-junit:hover{background:#FED7AA}
+
+/* ── CLI Quick Start ── */
+.cli-card{background:linear-gradient(135deg,#0F172A 0%,#1E293B 100%);border-radius:14px;overflow:hidden;margin-bottom:20px;box-shadow:0 4px 20px rgba(0,0,0,.25)}
+.cli-hdr{padding:14px 24px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:10px}
+.cli-dots{display:flex;gap:5px}
+.cli-dot{width:11px;height:11px;border-radius:50%}
+.cli-title{color:rgba(255,255,255,.5);font-size:12px;font-weight:500;margin-left:8px;font-family:monospace}
+.cli-body{padding:20px 24px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.cli-block{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:14px 16px}
+.cli-block-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#94A3B8;margin-bottom:10px}
+.cli-line{font-family:'Menlo','Monaco','Courier New',monospace;font-size:12px;color:#E2E8F0;margin-bottom:6px;display:flex;align-items:flex-start;gap:8px;line-height:1.5}
+.cli-line:last-child{margin-bottom:0}
+.cli-prompt{color:#4ADE80;flex-shrink:0}
+.cli-cmd{color:#7DD3FC}
+.cli-arg{color:#FCD34D}
+.cli-flag{color:#C084FC}
+.cli-comment{color:#4B5563;font-size:11px;margin-left:6px}
+
+/* ── Empty state ── */
+.empty-state{padding:56px;text-align:center;color:#6B7280}
+.empty-icon{font-size:48px;margin-bottom:16px;animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.empty-title{font-size:17px;font-weight:700;color:#374151;margin-bottom:6px}
+.empty-sub{font-size:13px;margin-bottom:14px}
+.empty-cmd{display:inline-block;background:#1E293B;color:#7DD3FC;padding:8px 16px;border-radius:8px;font-family:monospace;font-size:13px}
+
+/* ── Footer ── */
+footer{margin-top:8px;padding:16px 32px;border-top:1px solid #DBEAFE;font-size:12px;color:#9CA3AF;text-align:center}
+
+/* ── Animations ── */
+@keyframes fade-in{from{opacity:0}to{opacity:1}}
+.fade-in{animation:fade-in .4s ease both}
+"""
+
+
 def _render_index(reports: list[dict], cfg: AppConfig, active_runs: list[dict] | None = None) -> str:
     """Executive-ready GAUNTLEX dashboard — animated infographics, self-explanatory offline."""
     gate = cfg.gate.minimum_ars
@@ -625,141 +797,7 @@ def _render_index(reports: list[dict], cfg: AppConfig, active_runs: list[dict] |
 """
 
     # ── CSS (raw — no f-string escaping needed) ───────────────────────────────
-    css = """
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:#EFF6FF;color:#111827;min-height:100vh;overflow-x:hidden}
-
-/* ── Header ── */
-header{background:linear-gradient(135deg,#1E3A8A 0%,#2563EB 60%,#3B82F6 100%);padding:0 32px;height:64px;display:flex;align-items:center;gap:16px;box-shadow:0 4px 16px rgba(30,58,138,.35);position:sticky;top:0;z-index:100}
-.hdr-logo{font-size:24px;animation:pulse-logo 2s ease-in-out infinite}
-@keyframes pulse-logo{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
-header h1{font-size:19px;font-weight:900;color:#fff;letter-spacing:-.02em}
-header .sub{font-size:11px;color:rgba(255,255,255,.7);font-weight:400;margin-top:1px}
-.gate-badge{background:rgba(255,255,255,.18);color:#fff;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;border:1px solid rgba(255,255,255,.3);backdrop-filter:blur(4px)}
-.hdr-nav{margin-left:auto;display:flex;gap:8px}
-.hdr-nav a{color:rgba(255,255,255,.85);text-decoration:none;font-size:12px;font-weight:500;padding:5px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.25);transition:all .2s}
-.hdr-nav a:hover{background:rgba(255,255,255,.2);color:#fff}
-.refresh-dot{width:7px;height:7px;border-radius:50%;background:#4ADE80;display:inline-block;animation:blink 1.8s ease-in-out infinite;margin-right:4px}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-
-/* ── Hero explainer ── */
-.hero{background:linear-gradient(135deg,#1E40AF 0%,#0EA5E9 100%);color:#fff;padding:28px 32px;margin-bottom:28px}
-.hero-inner{max-width:1280px;margin:0 auto;display:flex;align-items:center;gap:32px}
-.hero-text h2{font-size:22px;font-weight:900;margin-bottom:8px}
-.hero-text p{font-size:13px;line-height:1.65;color:rgba(255,255,255,.88);max-width:620px}
-.hero-pills{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
-.pill{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);padding:4px 14px;border-radius:20px;font-size:12px;font-weight:600;color:#fff;backdrop-filter:blur(4px)}
-
-/* ── Main layout ── */
-.main{padding:0 32px 40px;max-width:1280px;margin:0 auto}
-
-/* ── Stat cards ── */
-.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
-.stat-card{background:#fff;border:1px solid #BFDBFE;border-radius:14px;padding:22px 24px;box-shadow:0 2px 8px rgba(37,99,235,.08);position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s;animation:card-in .5s ease both}
-.stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(37,99,235,.15)}
-.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;border-radius:14px 14px 0 0}
-.stat-card.blue::before{background:linear-gradient(90deg,#2563EB,#60A5FA)}
-.stat-card.green::before{background:linear-gradient(90deg,#059669,#34D399)}
-.stat-card.red::before{background:linear-gradient(90deg,#DC2626,#F87171)}
-.stat-card.amber::before{background:linear-gradient(90deg,#D97706,#FCD34D)}
-@keyframes card-in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-.stat-card:nth-child(2){animation-delay:.08s}
-.stat-card:nth-child(3){animation-delay:.16s}
-.stat-card:nth-child(4){animation-delay:.24s}
-.stat-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#6B7280;margin-bottom:8px;display:flex;align-items:center;gap:5px}
-.stat-val{font-size:36px;font-weight:900;line-height:1;transition:color .3s}
-.stat-sub{font-size:11px;color:#9CA3AF;margin-top:5px}
-.stat-icon{font-size:28px;position:absolute;right:18px;top:18px;opacity:.12}
-
-/* ── Trend + Donut row ── */
-.mid-row{display:grid;grid-template-columns:1fr 340px;gap:16px;margin-bottom:20px}
-.card{background:#fff;border:1px solid #BFDBFE;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(37,99,235,.07)}
-.card-hdr{padding:14px 20px;background:linear-gradient(90deg,#EFF6FF,#fff);border-bottom:1px solid #DBEAFE;font-size:13px;font-weight:700;color:#1E40AF;display:flex;align-items:center;gap:8px}
-.chart-body{padding:16px 20px;height:140px;position:relative}
-svg.spark{width:100%;height:100%}
-
-/* ── Gauge ── */
-.gauge-wrap{padding:20px;display:flex;flex-direction:column;align-items:center}
-svg.gauge{width:200px;height:110px;overflow:visible}
-.gauge-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#6B7280;margin-top:8px}
-.gauge-val{font-size:28px;font-weight:900;text-align:center}
-
-/* ── Pipeline ── */
-.pipeline-card{background:#fff;border:1px solid #BFDBFE;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(37,99,235,.07);margin-bottom:20px}
-.pipeline-body{padding:24px 32px}
-.pipeline-title{font-size:13px;font-weight:700;color:#1E40AF;margin-bottom:18px;display:flex;align-items:center;gap:8px}
-.flow{display:flex;align-items:center;gap:0;justify-content:center;flex-wrap:wrap;gap:0}
-.flow-node{background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border:2px solid #93C5FD;border-radius:12px;padding:12px 18px;text-align:center;min-width:110px;position:relative;transition:all .3s}
-.flow-node:hover{transform:scale(1.05);box-shadow:0 4px 16px rgba(37,99,235,.25)}
-.flow-node .fn-icon{font-size:20px;margin-bottom:4px}
-.flow-node .fn-lbl{font-size:11px;font-weight:700;color:#1E40AF}
-.flow-node .fn-sub{font-size:10px;color:#6B7280;margin-top:2px}
-.flow-node.accent{background:linear-gradient(135deg,#FEF3C7,#FDE68A);border-color:#F59E0B}
-.flow-node.accent .fn-lbl{color:#92400E}
-.flow-node.danger{background:linear-gradient(135deg,#FEE2E2,#FECACA);border-color:#FCA5A5}
-.flow-node.danger .fn-lbl{color:#991B1B}
-.flow-node.success{background:linear-gradient(135deg,#D1FAE5,#A7F3D0);border-color:#6EE7B7}
-.flow-node.success .fn-lbl{color:#065F46}
-.flow-arrow{display:flex;align-items:center;padding:0 4px;color:#93C5FD;font-size:18px;position:relative;overflow:hidden}
-.flow-arrow::after{content:'';position:absolute;top:50%;width:8px;height:8px;background:#3B82F6;border-radius:50%;transform:translateY(-50%);animation:arrow-dot 1.8s linear infinite;opacity:.8}
-@keyframes arrow-dot{0%{left:-8px;opacity:0}20%{opacity:1}80%{opacity:1}100%{left:100%;opacity:0}}
-.concurrent-wrap{display:flex;flex-direction:column;gap:4px;align-items:center}
-.concurrent-badge{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#2563EB;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:4px;padding:1px 6px;margin-bottom:2px}
-
-/* ── Active runs ── */
-.running-badge{display:inline-flex;align-items:center;gap:6px;background:#FEF3C7;color:#92400E;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700}
-.running-dot{width:7px;height:7px;border-radius:50%;background:#D97706;display:inline-block;animation:blink 1.4s ease-in-out infinite}
-
-/* ── Runs table ── */
-.runs-card{background:#fff;border:1px solid #BFDBFE;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(37,99,235,.07);margin-bottom:20px}
-.runs-table{width:100%;border-collapse:collapse;font-size:13px}
-.runs-table thead tr{background:linear-gradient(90deg,#EFF6FF,#F0F9FF)}
-.runs-table th{padding:11px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#1E40AF;border-bottom:2px solid #BFDBFE;white-space:nowrap}
-.runs-table td{padding:11px 14px;border-bottom:1px solid #F0F9FF}
-.run-row{cursor:pointer;transition:background .15s}
-.run-row:hover td{background:#F0F9FF}
-.run-row:last-child td{border-bottom:none}
-.run-code{font-size:10px;font-family:'Menlo','Monaco',monospace;color:#374151;background:#F3F4F6;padding:2px 6px;border-radius:4px}
-.dl-btn{text-decoration:none;padding:3px 8px;border-radius:5px;font-size:10px;font-weight:700;transition:all .15s}
-.dl-html{background:#EFF6FF;color:#1D4ED8}
-.dl-html:hover{background:#DBEAFE}
-.dl-sarif{background:#F0FDF4;color:#065F46}
-.dl-sarif:hover{background:#D1FAE5}
-.dl-junit{background:#FFF7ED;color:#92400E}
-.dl-junit:hover{background:#FED7AA}
-
-/* ── CLI Quick Start ── */
-.cli-card{background:linear-gradient(135deg,#0F172A 0%,#1E293B 100%);border-radius:14px;overflow:hidden;margin-bottom:20px;box-shadow:0 4px 20px rgba(0,0,0,.25)}
-.cli-hdr{padding:14px 24px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:10px}
-.cli-dots{display:flex;gap:5px}
-.cli-dot{width:11px;height:11px;border-radius:50%}
-.cli-title{color:rgba(255,255,255,.5);font-size:12px;font-weight:500;margin-left:8px;font-family:monospace}
-.cli-body{padding:20px 24px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.cli-block{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:14px 16px}
-.cli-block-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#94A3B8;margin-bottom:10px}
-.cli-line{font-family:'Menlo','Monaco','Courier New',monospace;font-size:12px;color:#E2E8F0;margin-bottom:6px;display:flex;align-items:flex-start;gap:8px;line-height:1.5}
-.cli-line:last-child{margin-bottom:0}
-.cli-prompt{color:#4ADE80;flex-shrink:0}
-.cli-cmd{color:#7DD3FC}
-.cli-arg{color:#FCD34D}
-.cli-flag{color:#C084FC}
-.cli-comment{color:#4B5563;font-size:11px;margin-left:6px}
-
-/* ── Empty state ── */
-.empty-state{padding:56px;text-align:center;color:#6B7280}
-.empty-icon{font-size:48px;margin-bottom:16px;animation:float 3s ease-in-out infinite}
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-.empty-title{font-size:17px;font-weight:700;color:#374151;margin-bottom:6px}
-.empty-sub{font-size:13px;margin-bottom:14px}
-.empty-cmd{display:inline-block;background:#1E293B;color:#7DD3FC;padding:8px 16px;border-radius:8px;font-family:monospace;font-size:13px}
-
-/* ── Footer ── */
-footer{margin-top:8px;padding:16px 32px;border-top:1px solid #DBEAFE;font-size:12px;color:#9CA3AF;text-align:center}
-
-/* ── Animations ── */
-@keyframes fade-in{from{opacity:0}to{opacity:1}}
-.fade-in{animation:fade-in .4s ease both}
-"""
+    css = _DASHBOARD_CSS
 
     # ── JS (plain string — Python values injected via .replace()) ────────────
     js_template = r"""
@@ -903,6 +941,7 @@ footer{margin-top:8px;padding:16px 32px;border-top:1px solid #DBEAFE;font-size:1
     <div class="sub">Adversarial Co-Generation Engine &mdash; Builder + Breaker run concurrently</div>
   </div>
   <nav class="hdr-nav" style="margin-left:auto">
+    <a href="/leaderboard">&#x1F3C6; Leaderboard</a>
     <a href="/mcp">MCP Tools</a>
     <a href="/api">JSON API</a>
     <a href="/status"><span class="refresh-dot"></span>Live</a>
@@ -1128,5 +1167,74 @@ footer{margin-top:8px;padding:16px 32px;border-top:1px solid #DBEAFE;font-size:1
 <footer>GAUNTLEX Adversarial Co-Generation Engine &nbsp;&bull;&nbsp; Built by Sanjoy Ghosh &nbsp;&bull;&nbsp; Auto-refreshes every 30s</footer>
 
 <script>{js}</script>
+</body>
+</html>"""
+
+
+def _render_leaderboard_page(entries: list, cfg: AppConfig, generated_at: str = "") -> str:
+    """Live GAUNTLEX Leaderboard page — same header/nav/theme as the main
+    dashboard, served from the same running server (not a separate static
+    HTML file). Row rendering itself is shared with the standalone
+    `gauntlex leaderboard` static-site generator via
+    leaderboard.engine.render_leaderboard_table_html, so the two never drift."""
+    from ..leaderboard.engine import render_leaderboard_table_html, _LEADERBOARD_SORT_SCRIPT
+
+    gate = cfg.gate.minimum_ars
+    table_fragment = render_leaderboard_table_html(entries, gate, generated_at)
+
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GAUNTLEX Leaderboard</title>
+<style>{_DASHBOARD_CSS}
+/* ── Leaderboard-page-only additions ── */
+.lb-main{{padding:28px 32px 40px;max-width:1100px;margin:0 auto}}
+.meta{{display:flex;gap:16px;margin-bottom:20px;font-size:12px;color:#6B7280}}
+.meta strong{{color:#1E40AF}}
+.section{{background:#fff;border:1px solid #BFDBFE;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(37,99,235,.07)}}
+.section table{{width:100%;border-collapse:collapse;font-size:13px}}
+.section th{{background:linear-gradient(90deg,#EFF6FF,#F0F9FF);padding:11px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#1E40AF;border-bottom:2px solid #BFDBFE;cursor:pointer;user-select:none;white-space:nowrap}}
+.section th:hover{{background:#DBEAFE}}
+.section td{{padding:11px 14px;border-bottom:1px solid #F0F9FF}}
+.section tr:last-child td{{border-bottom:none}}
+.section tr:hover td{{background:#F0F9FF}}
+.rank{{font-size:16px;text-align:center;width:50px}}
+.agent-name{{font-weight:700;color:#111827}}
+.num{{text-align:right;font-variant-numeric:tabular-nums}}
+.hi{{color:#059669;font-weight:700}}
+.lo{{color:#DC2626;font-weight:700}}
+.pass-pct{{color:#059669;font-weight:700}}
+.warn-pct{{color:#D97706;font-weight:700}}
+.fail-pct{{color:#DC2626;font-weight:700}}
+.empty{{padding:48px;text-align:center;color:#9CA3AF}}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="hdr-logo">&#x2694;&#xFE0F;</span>
+  <div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <h1>GAUNTLEX Leaderboard</h1>
+      <span class="gate-badge">ARS &ge; {gate:.2f}</span>
+    </div>
+    <div class="sub">Rank score = avg_ARS&times;0.6 + pass_rate&times;0.4 &mdash; ranked by model/provider across every run</div>
+  </div>
+  <nav class="hdr-nav" style="margin-left:auto">
+    <a href="/">&#x1F4CA; Dashboard</a>
+    <a href="/mcp">MCP Tools</a>
+    <a href="/api">JSON API</a>
+    <a href="/status"><span class="refresh-dot"></span>Live</a>
+  </nav>
+</header>
+
+<div class="lb-main">
+  {table_fragment}
+</div>
+
+<footer>GAUNTLEX Adversarial Co-Generation Engine &nbsp;&bull;&nbsp; Built by Sanjoy Ghosh</footer>
+<script>{_LEADERBOARD_SORT_SCRIPT}</script>
 </body>
 </html>"""

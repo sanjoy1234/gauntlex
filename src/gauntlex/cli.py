@@ -57,10 +57,10 @@ class _RunProgress:
     issue_label: str = ""
     mode: str = ""
     attack_total: int = 0
-    # phases: init → loading → combat → scoring → saving → done | error
+    # phases: init → loading → round → scoring → saving → done | error
     phase: str = "init"
     spec_bytes: int = 0
-    combat_start: float = 0.0
+    round_start: float = 0.0
     attacks_scored: int = 0
     current_attack_cwe: str = ""
     current_attack_title: str = ""
@@ -93,7 +93,7 @@ def _render_live_panel(state: _RunProgress) -> Panel:
         return f"  [{col}][{num}/4] {icon}[/{col}]  {label}{det}"
 
     spec_done = state.phase not in ("init", "loading")
-    combat_done = state.phase in ("scoring", "saving", "done")
+    round_done = state.phase in ("scoring", "saving", "done")
     scoring_done = state.phase in ("saving", "done")
     save_done = state.phase == "done"
 
@@ -106,13 +106,13 @@ def _render_live_panel(state: _RunProgress) -> Panel:
     else:
         lines.append(_phase_row(1, "Load spec", state.issue_label))
 
-    # Phase 2 — Combat
-    if state.phase == "combat":
-        elapsed = _fmt_elapsed(time.monotonic() - state.combat_start)
+    # Phase 2 — Round (Builder + Breaker)
+    if state.phase == "round":
+        elapsed = _fmt_elapsed(time.monotonic() - state.round_start)
         lines.append(_phase_row(2, "Builder + Breaker  [dim]running concurrently[/dim]", elapsed, active=True))
         lines.append(f"      [dim]├─[/dim] [blue]Builder:[/blue]  generating secure implementation")
         lines.append(f"      [dim]└─[/dim] [red]Breaker:[/red]  generating adversarial attack vectors")
-    elif combat_done:
+    elif round_done:
         lines.append(_phase_row(2, "Builder + Breaker", "complete", done=True))
     else:
         lines.append(_phase_row(2, "Builder + Breaker", "concurrent LLM calls"))
@@ -402,11 +402,11 @@ async def _run_async(
             recalled = _load_recalled_attacks(spec)
             intent_context, _ = await _resolve_intent(intent_ref, pretty=False)
 
-            # ── Phase 2: Combat ───────────────────────────────────────────────
-            state.phase = "combat"
-            state.combat_start = time.monotonic()
+            # ── Phase 2: Round (Builder + Breaker) ───────────────────────────────────────────────
+            state.phase = "round"
+            state.round_start = time.monotonic()
             live.update(_render_live_panel(state))
-            _status(status="running", phase="combat")
+            _status(status="running", phase="round")
 
             arbiter = Arbiter(**cfg.model_kwargs())
             pair = Gauntlex(config=cfg, recalled_attacks=recalled,
@@ -460,7 +460,8 @@ async def _run_async(
             live.update(_render_live_panel(state))
             report = build_report(result=result, run_id=run_id, spec_ref=issue,
                                   intent_ref=intent_ref or "",
-                                  playbook_version=f"{domains[0]}@v2025.1")
+                                  playbook_version=f"{domains[0]}@v2025.1",
+                                  mode=mode, model=f"{pair.builder.provider}/{pair.builder.model}")
             cfg.reports_dir.mkdir(parents=True, exist_ok=True)
             save_report(report, cfg.reports_dir)
             if not preset_run_id:
@@ -488,7 +489,7 @@ async def _run_async(
         intent_context, _ = await _resolve_intent(intent_ref, pretty=False)
 
         _plain("[2/4] Builder + Breaker running concurrently...")
-        _status(status="running", phase="combat")
+        _status(status="running", phase="round")
         arbiter = Arbiter(**cfg.model_kwargs())
         pair = Gauntlex(config=cfg, recalled_attacks=recalled,
                           policy_context=policy_context, intent_context=intent_context)
@@ -523,7 +524,8 @@ async def _run_async(
         _status(status="running", phase="saving")
         report = build_report(result=result, run_id=run_id, spec_ref=issue,
                                intent_ref=intent_ref or "",
-                               playbook_version=f"{domains[0]}@v2025.1")
+                               playbook_version=f"{domains[0]}@v2025.1",
+                               mode=mode, model=f"{pair.builder.provider}/{pair.builder.model}")
         cfg.reports_dir.mkdir(parents=True, exist_ok=True)
         save_report(report, cfg.reports_dir)
         if not preset_run_id:
@@ -646,7 +648,7 @@ def status_cmd(show_all: bool):
             "run_id": r.get("run_id", ""),
             "status": "PASS" if passed else "BLOCKED",
             "issue": _issue_label(r.get("spec_ref", "")),
-            "mode": "—",
+            "mode": r.get("mode") or "—",
             "ars": f"{ars:.3f}",
             "gate": "✓" if passed else "✗",
             "elapsed": ts,
@@ -2015,7 +2017,10 @@ def forge_network_pull(cwe: str, limit: int):
               help="Page title")
 def leaderboard(jsonl_path: str | None, reports_dir: str | None, output: str,
                 gate: float, title: str):
-    """Build and render the ARS Leaderboard HTML page."""
+    """Build and render a static ARS Leaderboard HTML page (for GitHub Pages
+    or any static host). For a live, always-current leaderboard with no
+    separate build step, use `gauntlex dashboard` and open /leaderboard —
+    it reads the same report data and re-renders on every request."""
     from .leaderboard.engine import (
         load_agent_scores_from_jsonl,
         load_agent_scores_from_reports,

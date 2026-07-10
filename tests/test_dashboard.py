@@ -419,3 +419,149 @@ def test_pyproject_has_ui_optional_dependency():
     ui_deps = data["project"]["optional-dependencies"].get("ui", [])
     assert any("fastapi" in d for d in ui_deps)
     assert any("uvicorn" in d for d in ui_deps)
+
+
+# ── /leaderboard — live, in-process leaderboard (not a static file) ────────────
+
+def _save_report_with_model(reports_dir: Path, run_id: str, model: str, ars: float, mode: str = "quick") -> None:
+    """Write a minimal, valid report JSON directly — mirrors what build_report()
+    produces, without needing a live model call."""
+    reports_dir.mkdir(parents=True, exist_ok=True)
+    report = {
+        "schema_version": "1.0",
+        "run_id": run_id,
+        "generated_at": "2026-07-10T00:00:00+00:00",
+        "spec_ref": "test_spec.md",
+        "intent_ref": "",
+        "commit_sha": "",
+        "mode": mode,
+        "model": model,
+        "ars_score": ars,
+        "attack_count": 5,
+        "mitigated_count": 3,
+        "partial_count": 0,
+        "miss_count": 2,
+        "rounds_completed": 1,
+        "early_exit": False,
+        "elapsed_seconds": 12.3,
+        "playbook_version": "owasp_top10@v2025.1",
+        "attacks": [],
+        "control_mappings": {},
+        "integrity_hash": "sha256:test",
+    }
+    (reports_dir / f"{run_id}.json").write_text(json.dumps(report))
+
+
+def test_dashboard_routes_include_leaderboard():
+    """/leaderboard and /api/leaderboard must be registered alongside every
+    pre-existing route — this is an additive change, nothing should be
+    removed or replaced."""
+    app = create_app()
+    routes = [r.path for r in app.routes]
+    assert "/leaderboard" in routes
+    assert "/api/leaderboard" in routes
+    # Pre-existing routes must still all be present (no regression).
+    for existing in ("/", "/api/runs", "/api/runs/active", "/health",
+                      "/api/runs/{run_id}", "/api/runs/{run_id}/html",
+                      "/api/runs/{run_id}/sarif", "/api/runs/{run_id}/junit",
+                      "/api/vault/stats", "/status", "/api", "/mcp", "/mcp/tools"):
+        assert existing in routes, f"pre-existing route {existing} missing after leaderboard integration"
+
+
+def test_leaderboard_page_renders_live_not_static(tmp_path):
+    """The page must be generated per-request from cfg.reports_dir, not read
+    from a pre-baked docs/leaderboard.html file."""
+    client, cfg = _client(tmp_path)
+    _save_report_with_model(cfg.reports_dir, "run-a", "openrouter/nvidia/nemotron-3-super-120b-a12b:free", 0.85)
+
+    resp = client.get("/leaderboard")
+    assert resp.status_code == 200
+    assert "text/html" in resp.headers["content-type"]
+    assert "openrouter/nvidia/nemotron-3-super-120b-a12b:free" in resp.text
+    assert "0.850" in resp.text
+
+
+def test_leaderboard_page_matches_dashboard_theme_and_has_nav_back():
+    """Regression target for this feature: the leaderboard must be a page
+    within the same dashboard server, sharing its header/nav/CSS — not an
+    isolated static-site look. Confirm the shared CSS and a working
+    Dashboard <-> Leaderboard nav link in both directions."""
+    app = create_app()
+    from fastapi.testclient import TestClient
+    client = TestClient(app)
+
+    lb = client.get("/leaderboard")
+    assert lb.status_code == 200
+    assert 'href="/"' in lb.text  # nav link back to the main dashboard
+    assert "hdr-nav" in lb.text   # shared dashboard header/nav CSS class
+
+    idx = client.get("/")
+    assert idx.status_code == 200
+    assert 'href="/leaderboard"' in idx.text  # dashboard links forward to the leaderboard
+
+
+def test_leaderboard_page_empty_state_no_crash(tmp_path):
+    client, _ = _client(tmp_path)
+    resp = client.get("/leaderboard")
+    assert resp.status_code == 200
+    assert "No leaderboard data yet" in resp.text
+
+
+def test_leaderboard_groups_distinct_models_into_separate_rows(tmp_path):
+    """End-to-end: two different models' reports must appear as two distinct
+    ranked rows on the live page, not collapse into one "unknown" row —
+    the exact bug this feature's underlying fix addressed."""
+    client, cfg = _client(tmp_path)
+    _save_report_with_model(cfg.reports_dir, "run-a", "openrouter/nemotron-super", 0.90)
+    _save_report_with_model(cfg.reports_dir, "run-b", "anthropic/claude-sonnet-4-6", 0.60)
+
+    resp = client.get("/leaderboard")
+    assert resp.status_code == 200
+    assert "2</strong> agents ranked" in resp.text
+    assert "openrouter/nemotron-super" in resp.text
+    assert "anthropic/claude-sonnet-4-6" in resp.text
+    assert "unknown" not in resp.text
+
+
+def test_api_leaderboard_returns_json(tmp_path):
+    client, cfg = _client(tmp_path)
+    _save_report_with_model(cfg.reports_dir, "run-a", "openrouter/nemotron-super", 0.75)
+
+    resp = client.get("/api/leaderboard")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert len(data) == 1
+    assert data[0]["agent_name"] == "openrouter/nemotron-super"
+    assert data[0]["rank"] == 1
+    assert data[0]["avg_ars"] == 0.75
+    assert data[0]["task_count"] == 1
+
+
+def test_api_leaderboard_empty_returns_empty_list(tmp_path):
+    client, _ = _client(tmp_path)
+    resp = client.get("/api/leaderboard")
+    assert resp.status_code == 200
+    assert resp.json() == []
+
+
+# ── Regression: pre-existing dashboard endpoints unaffected by the leaderboard addition ──
+
+def test_index_page_still_renders_normally_after_leaderboard_addition(tmp_path):
+    client, cfg = _client(tmp_path)
+    _save_report_with_model(cfg.reports_dir, "run-a", "openrouter/nemotron-super", 0.90)
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+    assert "GAUNTLEX" in resp.text
+    assert "Security Testing That Matches the Speed of Development" in resp.text
+
+
+def test_api_runs_still_works_after_leaderboard_addition(tmp_path):
+    client, cfg = _client(tmp_path)
+    _save_report_with_model(cfg.reports_dir, "run-a", "openrouter/nemotron-super", 0.90)
+
+    resp = client.get("/api/runs")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert len(data) == 1
+    assert data[0]["run_id"] == "run-a"

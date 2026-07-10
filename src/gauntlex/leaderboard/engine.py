@@ -56,9 +56,14 @@ def load_agent_scores_from_reports(reports_dir: Path, gate: float = 0.80) -> lis
     """
     Load ARS scores from existing GAUNTLEX report JSON files.
 
-    Report filenames are expected to embed agent names as:
-      <agent_name>--<task_id>.json   (double-dash separator)
-    Falls back to treating the whole stem as task_id with agent_name="unknown".
+    "Agent" identity is resolved in priority order:
+      1. The report's own "model" field (e.g. "openrouter/nvidia/nemotron-3-super-120b-a12b:free"),
+         written by every `gauntlex run` since the report schema gained this field.
+      2. Report filenames embedding agent names as <agent_name>--<task_id>.json
+         (double-dash separator) — a legacy/external convention (e.g. hand-labeled
+         SWE-bench replay data).
+      3. "unknown" as a last resort for reports with neither (e.g. produced by an
+         older gauntlex version before the "model" field existed).
     """
     scores: list[AgentScore] = []
     if not reports_dir.exists():
@@ -68,7 +73,10 @@ def load_agent_scores_from_reports(reports_dir: Path, gate: float = 0.80) -> lis
             with open(f) as fh:
                 report = json.load(fh)
             stem = f.stem
-            if "--" in stem:
+            model_field = report.get("model", "")
+            if model_field:
+                agent_name, task_id = model_field, stem
+            elif "--" in stem:
                 agent_name, task_id = stem.split("--", 1)
             else:
                 agent_name, task_id = "unknown", stem
@@ -138,14 +146,13 @@ def build_leaderboard(scores: list[AgentScore], gate_threshold: float = 0.80) ->
     return sorted(entries, key=lambda e: e.rank_score, reverse=True)
 
 
-def render_leaderboard_html(
-    entries: list[LeaderboardEntry],
-    gate_threshold: float = 0.80,
-    title: str = "GAUNTLEX ARS Leaderboard",
-    generated_at: str = "",
+def render_leaderboard_table_html(
+    entries: list[LeaderboardEntry], gate_threshold: float = 0.80, generated_at: str = ""
 ) -> str:
-    """Render a self-contained, sortable HTML leaderboard page (bright/light theme)."""
-
+    """Render just the leaderboard's meta line + sortable <table> fragment (no
+    page shell) — shared by the standalone static site and any embedding page
+    (e.g. the live dashboard's /leaderboard route) so row-rendering logic
+    never has to be duplicated or drift between the two."""
     rows = ""
     for rank, e in enumerate(entries, 1):
         medal = {1: "🥇", 2: "🥈", 3: "🥉"}.get(rank, f"#{rank}")
@@ -165,7 +172,54 @@ def render_leaderboard_html(
         </tr>"""
 
     empty_msg = "" if entries else '<p class="empty">No leaderboard data yet. Run <code>gauntlex leaderboard --jsonl scores.jsonl</code> to generate.</p>'
-    gen_line = f"<p>Generated: {generated_at}</p>" if generated_at else ""
+    gen_line = f"<span>Generated: {generated_at}</span>" if generated_at else ""
+
+    return (
+        f'<div class="meta"><span><strong>{len(entries)}</strong> agents ranked</span>{gen_line}</div>'
+        f'<div class="section">{empty_msg}'
+        + (
+            '<table id="lb"><thead><tr><th>Rank</th><th>Agent</th>'
+            '<th data-col="2">Avg ARS ▼</th><th data-col="3">Median</th>'
+            '<th data-col="4">Min</th><th data-col="5">Max</th><th data-col="6">Tasks</th>'
+            '<th data-col="7">Pass%</th><th data-col="8">Attacks</th><th data-col="9">Misses</th>'
+            f'</tr></thead><tbody>{rows}</tbody></table>'
+            if entries else ""
+        )
+        + "</div>"
+    )
+
+
+_LEADERBOARD_SORT_SCRIPT = """
+(function(){
+  var table = document.getElementById('lb');
+  if (!table) return;
+  var tbody = table.querySelector('tbody');
+  var sortCol = 2, sortAsc = false;
+  table.querySelectorAll('th[data-col]').forEach(function(th) {
+    th.addEventListener('click', function() {
+      var col = parseInt(th.getAttribute('data-col'));
+      if (sortCol === col) { sortAsc = !sortAsc; } else { sortCol = col; sortAsc = false; }
+      var rows = Array.from(tbody.querySelectorAll('tr'));
+      rows.sort(function(a, b) {
+        var av = parseFloat(a.cells[col].textContent) || 0;
+        var bv = parseFloat(b.cells[col].textContent) || 0;
+        return sortAsc ? av - bv : bv - av;
+      });
+      rows.forEach(function(r) { tbody.appendChild(r); });
+    });
+  });
+})();
+"""
+
+
+def render_leaderboard_html(
+    entries: list[LeaderboardEntry],
+    gate_threshold: float = 0.80,
+    title: str = "GAUNTLEX ARS Leaderboard",
+    generated_at: str = "",
+) -> str:
+    """Render a self-contained, sortable HTML leaderboard page (bright/light theme)."""
+    table_fragment = render_leaderboard_table_html(entries, gate_threshold, generated_at)
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -209,37 +263,12 @@ def render_leaderboard_html(
   <p>ARS Gate: {gate_threshold:.2f} · Rank score = avg_ARS×0.6 + pass_rate×0.4</p>
 </header>
 <div class="main">
-  <div class="meta">
-    <span><strong>{len(entries)}</strong> agents ranked</span>
-    {gen_line}
-  </div>
-  <div class="section">
-    {empty_msg}
-    {'<table id="lb"><thead><tr><th>Rank</th><th>Agent</th><th data-col="2">Avg ARS ▼</th><th data-col="3">Median</th><th data-col="4">Min</th><th data-col="5">Max</th><th data-col="6">Tasks</th><th data-col="7">Pass%</th><th data-col="8">Attacks</th><th data-col="9">Misses</th></tr></thead><tbody>' + rows + '</tbody></table>' if entries else ''}
-  </div>
+  {table_fragment}
 </div>
 <footer>GAUNTLEX Adversarial Co-Generation Engine · Built by Sanjoy Ghosh</footer>
 <script>
 // Simple client-side sort for the leaderboard table
-(function(){{
-  var table = document.getElementById('lb');
-  if (!table) return;
-  var tbody = table.querySelector('tbody');
-  var sortCol = 2, sortAsc = false;
-  table.querySelectorAll('th[data-col]').forEach(function(th) {{
-    th.addEventListener('click', function() {{
-      var col = parseInt(th.getAttribute('data-col'));
-      if (sortCol === col) {{ sortAsc = !sortAsc; }} else {{ sortCol = col; sortAsc = false; }}
-      var rows = Array.from(tbody.querySelectorAll('tr'));
-      rows.sort(function(a, b) {{
-        var av = parseFloat(a.cells[col].textContent) || 0;
-        var bv = parseFloat(b.cells[col].textContent) || 0;
-        return sortAsc ? av - bv : bv - av;
-      }});
-      rows.forEach(function(r) {{ tbody.appendChild(r); }});
-    }});
-  }});
-}})();
+{_LEADERBOARD_SORT_SCRIPT}
 </script>
 </body>
 </html>"""

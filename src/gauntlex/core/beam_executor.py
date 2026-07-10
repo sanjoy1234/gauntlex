@@ -40,7 +40,7 @@ async def run_beam(
     Args:
         spec: Target spec to attack
         breakers: List of Breaker instances (one per beam)
-        round_number: Current combat round
+        round_number: Current adversarial round
         recalled_attacks: Recalled attacks from Knowledge Forge
 
     Returns:

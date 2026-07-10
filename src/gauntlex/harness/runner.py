@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable
 
 from ..config import AppConfig
-from ..core.gauntlex import CombatResult
+from ..core.gauntlex import GauntlexResult
 
 
 @dataclass
@@ -22,7 +22,7 @@ class RunContext:
     run_id: str
     spec: str
     config: AppConfig
-    result: CombatResult | None = None
+    result: GauntlexResult | None = None
     ars: float = 0.0
     round_number: int = 0
     round_attacks: list = field(default_factory=list)

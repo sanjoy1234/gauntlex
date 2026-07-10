@@ -5,6 +5,52 @@
 
 ---
 
+## v1.0.1 — Friday 2026-07-10
+
+**Bug fix + a new capability — `gauntlex status` and `gauntlex leaderboard` both silently misreported data due to the same missing schema field, and the leaderboard now runs live inside the dashboard, not just as a static file.**
+
+### Fixed
+
+- **Reports now record `mode` and `model`.** `build_report()` previously had
+  neither field at all. Two visible symptoms, one root cause:
+  - `gauntlex status`'s Mode column always showed `—` regardless of which
+    `--mode` a run actually used.
+  - `gauntlex leaderboard` (and its `--reports-dir` mode) always collapsed
+    every run into a single `agent_name="unknown"` row — it expected report
+    filenames in an `<agent>--<task>.json` convention that `gauntlex run`
+    never actually produces, so every report fell into the same fallback
+    bucket regardless of which model generated it.
+  Both are fixed at the source: every report-producing call site (`cli.py`
+  ×2, `mcp/server.py`, `harness/commands/run.py`) now passes the real
+  `mode` and `f"{provider}/{model}"` into `build_report()`, `gauntlex
+  status` reads the real value instead of the placeholder, and the
+  leaderboard groups by the report's own `model` field first (falling back
+  to the old filename convention, then `"unknown"`, only for reports
+  produced before this fix). **Reports generated before this release have
+  no `model` field and will still show as `"unknown"` — this is the
+  designed backward-compatible fallback, not a residual bug.** Any run
+  going forward gets grouped correctly.
+
+### Added
+
+- **`gauntlex dashboard` now serves a live leaderboard.** New `/leaderboard`
+  HTML page and `/api/leaderboard` JSON endpoint on the same running
+  server — re-reads `.gauntlex/reports/` on every request, no separate
+  build step. The dashboard's header nav gained a 🏆 Leaderboard link, and
+  the leaderboard page links back to the Dashboard, both sharing the exact
+  same theme (extracted into a shared `_DASHBOARD_CSS` constant, verified
+  byte-for-byte identical to the prior inline version — a pure refactor,
+  not a redesign). The standalone `gauntlex leaderboard` CLI command is
+  unchanged and still exists for static-site publishing (e.g. GitHub
+  Pages) — the two are complementary, not a replacement.
+- 17 new regression tests (8 leaderboard engine, 9 dashboard integration).
+  Full suite: 605 passed. Live-verified: started the real dashboard server,
+  curled every pre-existing endpoint to confirm zero regression, and
+  confirmed via headless-Chrome screenshot that both pages render correctly
+  and match visually.
+
+---
+
 ## v1.0.0 — Friday 2026-07-10
 
 **First stable release — two real defects found and fixed via live end-to-end scenario testing, both touching the core engine's correctness guarantees.**
@@ -55,8 +101,6 @@
 
 ### Known issues (not yet fixed)
 
-- Reports don't record which `--mode` was used, so `gauntlex status` always
-  shows `—` in the Mode column.
 - `gauntlex policy hub` / `policy search` / `policy install` for
   non-bundled domains are blocked — the `policy-hub/` content directory
   doesn't exist in this repo yet (this is a missing-content gap, not a code

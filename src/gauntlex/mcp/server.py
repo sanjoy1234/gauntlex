@@ -41,7 +41,7 @@ from ..config import AppConfig
 
 _MCP_PROTOCOL_VERSION = "2024-11-05"
 _SERVER_NAME = "gauntlex"
-_SERVER_VERSION = "1.0.0"
+_SERVER_VERSION = "1.0.1"
 _ATTACK_COUNTS: dict[str, int] = {"quick": 5, "standard": 20, "thorough": 50}
 
 _TOOLS = [
@@ -553,6 +553,7 @@ async def _run_gauntlex_engine(
         run_id=run_id,
         spec_ref="mcp://inline",
         playbook_version=f"{(valid_domains or ['owasp_top10'])[0]}@v2025.1",
+        mode=mode, model=f"{pair.builder.provider}/{pair.builder.model}",
     )
 
     cfg.reports_dir.mkdir(parents=True, exist_ok=True)

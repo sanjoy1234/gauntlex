@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 from gauntlex.agents.breaker import Attack
-from gauntlex.core.gauntlex import CombatResult
+from gauntlex.core.gauntlex import GauntlexResult
 from gauntlex.output.report import (
     build_report,
     generate_run_id,
@@ -23,13 +23,13 @@ from gauntlex.output.report import (
 )
 
 
-def _make_result(scores: list[float]) -> CombatResult:
+def _make_result(scores: list[float]) -> GauntlexResult:
     attacks = [
         Attack(id=f"atk-{i:03d}", cwe="CWE-89", title="SQL Injection test",
                description="Test", score=s)
         for i, s in enumerate(scores)
     ]
-    result = CombatResult()
+    result = GauntlexResult()
     result.all_attacks = attacks
     result.final_ars = sum(scores) / len(scores) if scores else 1.0
     return result
@@ -54,6 +54,28 @@ def test_build_report_structure():
     assert len(report["attacks"]) == 5
     assert "control_mappings" in report
     assert "NIST_SSDF" in report["control_mappings"]
+
+
+def test_build_report_defaults_mode_and_model_to_empty_string():
+    """Regression: build_report() previously had no mode/model params at all —
+    every saved report was missing this metadata, which meant `gauntlex status`
+    always showed "—" in the Mode column and the leaderboard could never tell
+    two different runs' models apart (every run collapsed into one "unknown"
+    agent row). Confirm the fields exist and default safely when not passed."""
+    result = _make_result([1.0])
+    report = build_report(result, generate_run_id())
+    assert report["mode"] == ""
+    assert report["model"] == ""
+
+
+def test_build_report_records_mode_and_model():
+    result = _make_result([1.0, 0.5])
+    report = build_report(
+        result, generate_run_id(), mode="thorough",
+        model="openrouter/nvidia/nemotron-3-super-120b-a12b:free",
+    )
+    assert report["mode"] == "thorough"
+    assert report["model"] == "openrouter/nvidia/nemotron-3-super-120b-a12b:free"
 
 
 def test_integrity_hash_tamper_detection():

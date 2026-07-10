@@ -10,7 +10,7 @@ from click.testing import CliRunner
 
 from gauntlex.cli import main, _parse_github_repo_url, _load_github_repo_spec
 from gauntlex.agents.breaker import Attack
-from gauntlex.core.gauntlex import CombatResult
+from gauntlex.core.gauntlex import GauntlexResult
 from gauntlex.output.report import build_report, generate_run_id, save_report
 
 
@@ -28,7 +28,7 @@ def _make_attack(cwe: str, title: str, score: float, severity: str = "high") -> 
 
 
 def _make_report(attacks: list[Attack], reports_dir: Path, ars: float | None = None) -> str:
-    result = CombatResult()
+    result = GauntlexResult()
     for a in attacks:
         result.all_attacks.append(a)
     result.final_ars = ars if ars is not None else (
@@ -575,3 +575,43 @@ class TestDashboardCommand:
         assert "No GAUNTLEX project found" in result.output
         assert "--config" in result.output
         assert mock_run.called
+
+
+# ── gauntlex status ───────────────────────────────────────────────────────────
+
+class TestStatusCommand:
+    def test_shows_real_mode_when_report_has_it(self):
+        """Regression: completed runs' Mode column was hardcoded to "—" because
+        build_report() never persisted the --mode value. Now that it does,
+        status must surface it instead of the placeholder."""
+        attacks = [_make_attack("CWE-89", "SQL Injection", score=1.0)]
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            reports_dir = Path(".gauntlex/reports")
+            reports_dir.mkdir(parents=True)
+            result_obj = GauntlexResult()
+            result_obj.all_attacks = attacks
+            result_obj.final_ars = 1.0
+            report = build_report(
+                result=result_obj, run_id=generate_run_id(), spec_ref="test_spec.md",
+                mode="thorough", model="openrouter/nvidia/nemotron-3-super-120b-a12b:free",
+            )
+            save_report(report, reports_dir)
+            result = runner.invoke(main, ["status"])
+
+        assert result.exit_code == 0, result.output
+        # Rich truncates the narrow Mode column ("thor…"), so match the prefix
+        assert "thor" in result.output
+
+    def test_shows_placeholder_when_report_lacks_mode(self):
+        """Old reports (pre-mode-field) must still render without crashing."""
+        attacks = [_make_attack("CWE-79", "XSS", score=0.5)]
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            reports_dir = Path(".gauntlex/reports")
+            reports_dir.mkdir(parents=True)
+            _make_report(attacks, reports_dir)  # no mode passed -> defaults to ""
+            result = runner.invoke(main, ["status"])
+
+        assert result.exit_code == 0, result.output
+        assert "—" in result.output

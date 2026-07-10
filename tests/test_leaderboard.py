@@ -109,6 +109,65 @@ def test_load_reports_skips_corrupt_json(tmp_path):
     assert scores == []
 
 
+def test_load_reports_uses_model_field_as_agent_name(tmp_path):
+    """Regression: every gauntlex-generated report now carries a "model" field
+    (the resolved provider/model, e.g. "openrouter/nvidia/nemotron-3-super...").
+    Real run_ids never contain "--", so before this field existed every report
+    fell into the "unknown" bucket and the leaderboard collapsed to one row
+    regardless of how many distinct models actually produced the runs."""
+    report = {
+        "run_id": "gauntlex-2026-07-09T21-13-07Z-d4b9",
+        "model": "openrouter/nvidia/nemotron-3-super-120b-a12b:free",
+        "ars_score": 0.42, "attack_count": 6, "miss_count": 3,
+    }
+    (tmp_path / "gauntlex-2026-07-09T21-13-07Z-d4b9.json").write_text(json.dumps(report))
+    scores = load_agent_scores_from_reports(tmp_path)
+    assert len(scores) == 1
+    assert scores[0].agent_name == "openrouter/nvidia/nemotron-3-super-120b-a12b:free"
+    assert scores[0].task_id == "gauntlex-2026-07-09T21-13-07Z-d4b9"
+
+
+def test_load_reports_model_field_takes_priority_over_filename_convention(tmp_path):
+    report = {"run_id": "r1", "model": "anthropic/claude-sonnet-4-6", "ars_score": 0.9, "attack_count": 5, "miss_count": 0}
+    (tmp_path / "gpt4o--django-001.json").write_text(json.dumps(report))
+    scores = load_agent_scores_from_reports(tmp_path)
+    assert scores[0].agent_name == "anthropic/claude-sonnet-4-6"
+
+
+def test_load_reports_groups_distinct_models_into_separate_leaderboard_rows(tmp_path):
+    """End-to-end: reports from two different models must produce two
+    distinct leaderboard rows, not one aggregated "unknown" row."""
+    reports = [
+        ("run-a", "openrouter/nvidia/nemotron-3-super-120b-a12b:free", 0.577),
+        ("run-b", "openrouter/nvidia/nemotron-3-super-120b-a12b:free", 0.250),
+        ("run-c", "anthropic/claude-sonnet-4-6", 0.900),
+    ]
+    for run_id, model, ars in reports:
+        data = {"run_id": run_id, "model": model, "ars_score": ars, "attack_count": 5, "miss_count": 1}
+        (tmp_path / f"{run_id}.json").write_text(json.dumps(data))
+
+    scores = load_agent_scores_from_reports(tmp_path)
+    entries = build_leaderboard(scores)
+    agent_names = {e.agent_name for e in entries}
+    assert agent_names == {
+        "openrouter/nvidia/nemotron-3-super-120b-a12b:free",
+        "anthropic/claude-sonnet-4-6",
+    }
+    nemotron = next(e for e in entries if e.agent_name.startswith("openrouter"))
+    assert nemotron.task_count == 2
+    claude = next(e for e in entries if e.agent_name.startswith("anthropic"))
+    assert claude.task_count == 1
+
+
+def test_load_reports_missing_model_field_falls_back_to_unknown(tmp_path):
+    """Reports produced before the "model" field existed (or by a foreign
+    tool) must still degrade gracefully to "unknown" rather than erroring."""
+    report = {"run_id": "old-run", "ars_score": 0.5, "attack_count": 4, "miss_count": 2}
+    (tmp_path / "old-run.json").write_text(json.dumps(report))
+    scores = load_agent_scores_from_reports(tmp_path)
+    assert scores[0].agent_name == "unknown"
+
+
 # ── build_leaderboard ─────────────────────────────────────────────────────────
 
 def _make_scores(agent: str, ars_list: list[float]) -> list[AgentScore]:

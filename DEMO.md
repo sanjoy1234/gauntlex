@@ -94,6 +94,10 @@ Open `http://localhost:8080` in a browser.
 - Pipeline diagram showing Builder ↔ Breaker concurrent execution
 - Run history table — click any row to open the full HTML report
 - CLI Quick Start panel at the bottom
+- Click **🏆 Leaderboard** in the header nav — a live ranking across every
+  model/provider that's run against this repo, re-computed on every request
+  (no separate build step; `gauntlex leaderboard` also produces a static
+  version of the same page for GitHub Pages)
 
 ---
 
@@ -227,7 +231,7 @@ gauntlex dashboard
 # open http://localhost:8080
 ```
 
-*"Every run is tracked. The trend line shows whether your codebase is getting more or less resilient over time. The donut shows your attack outcome breakdown. Click any run to open the full executive report."*
+*"Every run is tracked. The trend line shows whether your codebase is getting more or less resilient over time. The donut shows your attack outcome breakdown. Click any run to open the full executive report. And if you're evaluating more than one model or AI agent against the same repo — click Leaderboard. Live ranking, no separate step, always current."*
 
 ---
 

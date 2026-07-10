@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gauntlex-ai"
-version = "1.0.0"
+version = "1.0.1"
 description = "Adversarial Co-Generation Engine — concurrent Builder + Breaker agents for production-grade AI-generated code"
 readme = "README.md"
 license = { text = "MIT" }

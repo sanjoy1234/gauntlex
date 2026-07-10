@@ -14,7 +14,7 @@ import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from pathlib import Path
 
-from ..core.gauntlex import CombatResult
+from ..core.gauntlex import GauntlexResult
 
 CONTROL_MAPPINGS = {
     "NIST_SSDF": ["RV.2.2", "RV.3.1", "PW.8.1"],
@@ -58,12 +58,14 @@ def get_remediation(cwe: str) -> str:
 
 
 def build_report(
-    result: CombatResult,
+    result: GauntlexResult,
     run_id: str,
     spec_ref: str = "",
     commit_sha: str = "",
     playbook_version: str = "owasp_top10@v2025.1",
     intent_ref: str = "",
+    mode: str = "",
+    model: str = "",
 ) -> dict:
     """Build the structured Resilience Report as a Python dict (serializable to JSON)."""
     attacks_serialized = [
@@ -92,6 +94,8 @@ def build_report(
         "spec_ref": spec_ref,
         "intent_ref": intent_ref,
         "commit_sha": commit_sha,
+        "mode": mode,
+        "model": model,
         "ars_score": result.final_ars,
         "attack_count": result.attack_count,
         "mitigated_count": result.mitigated_count,
@@ -442,7 +446,7 @@ def render_sarif(report: dict) -> str:
                 "tool": {
                     "driver": {
                         "name": "GAUNTLEX",
-                        "version": "1.0.0",
+                        "version": "1.0.1",
                         "informationUri": "https://github.com/sanjoy1234/gauntlex",
                         "rules": list(seen_cwes.values()),
                     }

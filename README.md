@@ -164,8 +164,8 @@ All 22 commands, grouped by when you'd reach for them:
 | `gauntlex integrate` | One command: wire GAUNTLEX into Claude Code, Cursor, Windsurf, Copilot, Codex, Zed, Antigravity, or GitHub Actions |
 | `gauntlex mcp-server` | Start GAUNTLEX as an MCP server (stdio transport) for local IDE use |
 | `gauntlex serve` | Start GAUNTLEX as a webhook/CI service, with optional GitHub team-based RBAC |
-| `gauntlex dashboard` | Launch the GAUNTLEX dashboard web UI |
-| `gauntlex leaderboard` | Build an ARS leaderboard across multiple agents/runs |
+| `gauntlex dashboard` | Launch the GAUNTLEX dashboard web UI (also serves a live leaderboard at `/leaderboard`) |
+| `gauntlex leaderboard` | Build a *static* ARS leaderboard HTML page across multiple agents/runs — e.g. for GitHub Pages |
 | `gauntlex forge-network` | Opt-in community adversarial pattern sharing |
 | `gauntlex prune` | Remove expired reports |
 
