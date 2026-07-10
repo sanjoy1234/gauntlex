@@ -54,7 +54,8 @@ scanner to catch up to code that shipped last week.
   <img src="docs/media/GAUNTLEX_Demo_thumbnail.png" alt="GAUNTLEX demo video" width="640">
 </a>
 
-**▶ [Watch the demo](docs/media/GAUNTLEX_Demo.mp4)** — setup through CI gate, real terminal output, real dashboard.
+**▶ [Watch the demo]<video src="https://github.com/user-attachments/assets/c6983372-2f8c-4d2f-aad6-bd37184aa705" controls muted></video>
+Setup through the CI gate, real terminal output, real dashboard — concurrent Builder + Breaker, HIPAA domain testing, and every IDE integration in one pass.
 
 ---
 
