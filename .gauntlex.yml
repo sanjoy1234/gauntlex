@@ -21,7 +21,12 @@ gate:
     - hotfix
 
 deployment:
-  model_provider: local           # local = Ollama (zero cost, air-gapped)
+  # GAUNTLEX never assumes a provider — a fresh clone with no .env and no
+  # MODEL_PROVIDER set fails with a clear "not configured, run gauntlex
+  # setup" message instead of silently requiring Ollama. Uncomment the line
+  # below to opt this repo into local Ollama explicitly, or run
+  # `gauntlex setup` for the interactive wizard.
+  # model_provider: local
   local_model: llama3.1:8b        # override: phi3, mistral:7b, etc.
   local_endpoint: http://localhost:11434
   anthropic_model: claude-haiku-4-5-20251001  # used when ANTHROPIC_API_KEY is set
