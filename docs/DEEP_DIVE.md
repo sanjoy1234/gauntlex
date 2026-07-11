@@ -634,11 +634,16 @@ deployment:
 ```
 
 ```bash
-gauntlex doctor --strict
-# ✅ Model:   llama3.3:70b (local Ollama, no outbound calls)
-# ✅ Forge:   ChromaDB embedded at .gauntlex/forge/ (no external DB)
-# ✅ Telemetry: NONE
+gauntlex doctor --network-check
+# ✅ Model reachable            Ollama (llama3.3:70b)
+# ✅ Knowledge Forge (ChromaDB) .gauntlex/forge/
+# ✅ Air-gap (no unexpected outbound)  Pass — Ollama runs locally, no outbound calls
 ```
+
+`Ollama (llama3.3:70b)` only shows up here because `model_provider: local` was set
+explicitly above — GAUNTLEX never assumes Ollama on its own. Skip the YAML block
+and this same check reports `not configured — run gauntlex setup` instead of
+guessing a provider.
 
 ```bash
 docker compose up -d    # ChromaDB + GAUNTLEX + (optionally) Ollama, self-contained
@@ -883,18 +888,18 @@ gauntlex init --force             # overwrite existing .gauntlex.yml
 
 ```bash
 gauntlex doctor
-# ✅ Config loaded            (.gauntlex.yml)
-# ✅ Model reachable          (via configured provider)
-# ✅ ChromaDB writable        (.gauntlex/forge/)
-# ✅ Vault writable           (.gauntlex/vault/)
-# ✅ Gate configured          (minimum_ars: 0.80, fail_open: false)
+# ✅ Python ≥ 3.11              3.13
+# ✅ Model reachable            via configured provider — "not configured, run
+#                               gauntlex setup" if none was ever chosen
+# ✅ Knowledge Forge (ChromaDB) .gauntlex/forge/
+# ✅ Reports dir                .gauntlex/reports/
 ```
 
 ### `gauntlex validate` — dry run (zero cost, zero attacks)
 
 ```bash
-gauntlex validate                   # checks env, config, AVF golden fixtures
-gauntlex validate --strict          # also checks model connectivity
+gauntlex validate                   # checks env, config, model connectivity, AVF golden fixtures
+gauntlex validate --no-pretty       # same checks, JSON output for CI parsing
 ```
 
 ### `gauntlex run` — fire a Gauntlex
@@ -1247,7 +1252,7 @@ git clone https://github.com/sanjoy1234/gauntlex.git
 cd gauntlex
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
-pytest tests/ -q          # verify: 588 passing
+pytest tests/ -q          # verify: 612 passing
 gauntlex doctor           # verify environment
 ```
 
