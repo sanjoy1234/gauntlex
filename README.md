@@ -271,6 +271,12 @@ Full detail on each: [Deep Dive → Enterprise Features](docs/DEEP_DIVE.md#enter
 
 ---
 
+## Acknowledgments
+
+- [Deven Samant](https://www.linkedin.com/in/devensamant/) — early feedback and validation
+
+---
+
 <div align="center">
 
 MIT License · Built by **[Sanjoy Ghosh](https://github.com/sanjoy1234)**
