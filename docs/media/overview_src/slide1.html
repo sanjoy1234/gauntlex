@@ -1,0 +1,98 @@
+<title>GAUNTLEX Overview — Slide 1</title>
+<style>
+  @page{margin:0}
+  :root{
+    --bg:#0a0f1e; --panel:rgba(255,255,255,.03); --border:rgba(255,255,255,.10);
+    --text:#f3f5fa; --dim:#9aa5c4; --faint:#647099;
+    --accent:#4c86f0; --accent2:#8fb3ff;
+    --mono: ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans: -apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    width:1600px;height:900px;overflow:hidden;position:relative;
+    background:
+      radial-gradient(ellipse 900px 500px at 88% -8%, rgba(76,134,240,.14), transparent 60%),
+      var(--bg);
+    color:var(--text); font-family:var(--sans);
+  }
+  .wrap{padding:40px 64px 0}
+  header{display:flex;align-items:center;gap:14px;margin-bottom:22px}
+  .mark{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#5b8def,#3a63c2);
+    display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#fff;
+    box-shadow:0 4px 14px rgba(59,99,194,.5)}
+  .brand{font-size:19px;font-weight:800;letter-spacing:.01em}
+  .eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;color:var(--accent2);text-transform:uppercase;margin-bottom:14px}
+  h1{font-size:34px;line-height:1.18;font-weight:800;letter-spacing:-.01em;max-width:1250px;text-wrap:balance;margin-bottom:16px}
+  h1 .hl{color:var(--accent2)}
+  .sub{font-size:15px;color:var(--dim);max-width:1180px;line-height:1.6;margin-bottom:26px}
+  .sub b{color:var(--text)}
+
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:22px 26px;margin-bottom:16px}
+  .panel-title{font-size:15px;font-weight:700;color:var(--accent2);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+  .panel p{font-size:13.5px;color:var(--dim);line-height:1.55;margin-bottom:16px;max-width:1350px}
+  .panel p b{color:var(--text)}
+
+  .pipeline{display:flex;align-items:stretch;gap:10px}
+  .node{flex:1;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:14px 12px;text-align:center;position:relative}
+  .node .ic{font-size:20px;margin-bottom:6px}
+  .node .t{font-size:13px;font-weight:700;color:var(--text)}
+  .node .s{font-size:10.5px;color:var(--faint);margin-top:2px}
+  .arrow{display:flex;align-items:center;color:var(--faint);font-size:16px}
+  .concurrent{position:relative}
+  .concurrent::before{content:"CONCURRENT";position:absolute;top:-11px;left:50%;transform:translateX(-50%);
+    background:var(--accent);color:#fff;font-family:var(--mono);font-size:8.5px;font-weight:700;
+    padding:2px 8px;border-radius:20px;letter-spacing:.05em;white-space:nowrap}
+  .node.builder{border-color:#2a5a3f;background:rgba(60,180,120,.06)}
+  .node.breaker{border-color:#5a2a2a;background:rgba(220,90,90,.06)}
+  .node.gate{border-color:#5a2a2a;background:rgba(220,90,90,.08)}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin:0 0 16px}
+  .stat{border-left:2px solid var(--accent);padding-left:14px}
+  .stat .v{font-size:19px;font-weight:800}
+  .stat .l{font-size:11px;color:var(--faint);margin-top:2px}
+
+  .foot{font-size:9.5px;color:var(--faint);text-align:right;padding:0 64px 20px}
+</style>
+<div class="wrap">
+  <header>
+    <div class="mark">&#10005;</div>
+    <div class="brand">GAUNTLEX</div>
+  </header>
+
+  <div class="eyebrow">Adversarial Co-Generation Engine</div>
+  <h1>Generates code and adversarial attacks from the <span class="hl">same specification</span>, at the same time — before a commit exists.</h1>
+  <p class="sub">Builder and Breaker run concurrently on one spec. Arbiter scores every attack individually. A gate blocks the CI pipeline when the score falls below threshold — the same enforcement discipline as a failing test suite, applied to security. No manual test authoring, no separate security review step.</p>
+
+  <div class="panel">
+    <div class="panel-title">&#9889; How GAUNTLEX Works — Live Pipeline</div>
+    <p>Each run executes this pipeline end to end. Builder and Breaker run <b>concurrently</b> — the attack surface is reasoned from the specification alone, before either implementation exists. The whole cycle completes in minutes, gated automatically before code ever reaches a reviewer.</p>
+    <div class="pipeline">
+      <div class="node"><div class="ic">&#128196;</div><div class="t">Spec / Issue</div><div class="s">GitHub · file · folder</div></div>
+      <div class="arrow">&#8594;</div>
+      <div class="node"><div class="ic">&#129504;</div><div class="t">Intent Adapter</div><div class="s">Jira · Confluence · Aha!</div></div>
+      <div class="arrow">&#8594;</div>
+      <div class="node builder concurrent"><div class="ic">&#128295;</div><div class="t">Builder</div><div class="s">writes code</div></div>
+      <div class="node breaker"><div class="ic">&#128481;&#65039;</div><div class="t">Breaker</div><div class="s">attacks code</div></div>
+      <div class="arrow">&#8594;</div>
+      <div class="node"><div class="ic">&#9878;&#65039;</div><div class="t">Arbiter</div><div class="s">scores each attack</div></div>
+      <div class="arrow">&#8594;</div>
+      <div class="node"><div class="ic">&#128202;</div><div class="t">ARS Score</div><div class="s">&Sigma;(scores) / N</div></div>
+      <div class="arrow">&#8594;</div>
+      <div class="node gate"><div class="ic">&#128683;</div><div class="t">Gate</div><div class="s">blocks the PR — fix first</div></div>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="v">~4–5 min</div><div class="l">MEDIAN RUN TIME, QUICK MODE — FASTER THAN A HUMAN SECURITY REVIEW STARTS</div></div>
+    <div class="stat"><div class="v">ARS &lt; 0.80</div><div class="l">DEFAULT HARD GATE THRESHOLD — CONFIGURABLE PER TEAM</div></div>
+    <div class="stat"><div class="v">SHA-256</div><div class="l">TAMPER-EVIDENT REPORT — VERIFIABLE BY ANY AUDITOR, ON DEMAND</div></div>
+    <div class="stat"><div class="v">22 commands</div><div class="l">FULL CLI — SETUP THROUGH COMPLIANCE AUDIT</div></div>
+  </div>
+
+  <div class="panel" style="margin-bottom:0">
+    <div class="panel-title" style="color:var(--faint);font-size:11px;letter-spacing:.08em;text-transform:uppercase">Where this sits relative to existing tooling</div>
+    <p style="margin-bottom:0">SAST, DAST, and penetration testing test code <b>after it exists</b> — after a PR opens, after deployment, after months in production. GAUNTLEX runs at the generation event itself, gating the pipeline before any of those tools have anchored to an implementation. It does not replace them; it closes the window before they start.</p>
+  </div>
+</div>
+<div class="foot">1 / 2</div>

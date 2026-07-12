@@ -1,0 +1,104 @@
+<title>GAUNTLEX Overview — Slide 2</title>
+<style>
+  @page{margin:0}
+  :root{
+    --bg:#0a0f1e; --panel:rgba(255,255,255,.03); --border:rgba(255,255,255,.10);
+    --text:#f3f5fa; --dim:#9aa5c4; --faint:#647099;
+    --accent:#4c86f0; --accent2:#8fb3ff;
+    --mono: ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans: -apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    width:1600px;height:900px;overflow:hidden;position:relative;
+    background:
+      radial-gradient(ellipse 900px 500px at 88% -8%, rgba(76,134,240,.14), transparent 60%),
+      var(--bg);
+    color:var(--text); font-family:var(--sans);
+  }
+  .wrap{padding:40px 64px 0}
+  header{display:flex;align-items:center;gap:14px;margin-bottom:22px}
+  .mark{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#5b8def,#3a63c2);
+    display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#fff;
+    box-shadow:0 4px 14px rgba(59,99,194,.5)}
+  .brand{font-size:19px;font-weight:800;letter-spacing:.01em}
+  h1{font-size:30px;line-height:1.2;font-weight:800;letter-spacing:-.01em;max-width:1300px;text-wrap:balance;margin-bottom:26px}
+
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px 22px;display:flex;flex-direction:column}
+  .card .eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--accent2);text-transform:uppercase;margin-bottom:10px}
+  .card h3{font-size:17px;font-weight:700;margin-bottom:10px;line-height:1.3}
+  .card p{font-size:12.5px;color:var(--dim);line-height:1.55;margin-bottom:10px}
+  .card p:last-of-type{margin-bottom:14px}
+  .card p b{color:var(--text)}
+  .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto}
+  .tag{font-family:var(--mono);font-size:10.5px;background:rgba(76,134,240,.12);border:1px solid rgba(76,134,240,.3);
+    color:var(--accent2);padding:3px 9px;border-radius:20px}
+  .hr{border:none;border-top:1px solid var(--border);margin:10px 0}
+  .foot{font-size:9.5px;color:var(--faint);text-align:right;padding:16px 64px 20px}
+</style>
+<div class="wrap">
+  <header>
+    <div class="mark">&#10005;</div>
+    <div class="brand">GAUNTLEX</div>
+  </header>
+
+  <h1>Coverage across languages, compliance domains, and the enterprise controls a security team actually needs</h1>
+
+  <div class="grid">
+    <div class="card">
+      <div class="eyebrow">Languages — auto-detected</div>
+      <h3>5 languages, each with its own CWE priority list</h3>
+      <p>Detected directly from the spec — no per-project configuration.</p>
+      <hr class="hr">
+      <p>Example: <b>prototype pollution</b> (CWE-1321) prioritized for JavaScript; <b>nil-pointer dereference</b> (CWE-476) for Go — language-appropriate, not generic.</p>
+      <div class="tags"><span class="tag">Python</span><span class="tag">JavaScript</span><span class="tag">TypeScript</span><span class="tag">Java</span><span class="tag">Go</span></div>
+    </div>
+
+    <div class="card">
+      <div class="eyebrow">Compliance domains — built in</div>
+      <h3>5 regulated-industry playbooks, audit-mapped</h3>
+      <p>Every report carries the control-framework references an auditor actually asks for — NIST SSDF, OWASP SAMM, SOC 2, and ISO 27001 — alongside each finding's CWE, not instead of it. Additional domains added via a single YAML file, same schema.</p>
+      <hr class="hr">
+      <p>Each playbook maps to the source regulation directly — e.g. FINRA Rules 4370/3110, HIPAA Security Rule (45 CFR 160/164), PCI DSS v4.0.</p>
+      <div class="tags"><span class="tag">FINRA</span><span class="tag">HIPAA</span><span class="tag">OWASP Top 10</span><span class="tag">PCI DSS</span><span class="tag">SOC 2</span></div>
+    </div>
+
+    <div class="card">
+      <div class="eyebrow">MCP server — native</div>
+      <h3>Connects directly inside the coding tool your team already uses</h3>
+      <p>One command wires it in — <code style="font-family:var(--mono);color:var(--accent2)">gauntlex integrate</code>. No separate workflow to context-switch into.</p>
+      <hr class="hr">
+      <p>Exposes five tools over the Model Context Protocol: run, status, vault stats, policy list, and integrity verify.</p>
+      <div class="tags"><span class="tag">Claude Code</span><span class="tag">Cursor</span><span class="tag">Windsurf</span><span class="tag">GitHub Copilot</span><span class="tag">Codex</span></div>
+    </div>
+
+    <div class="card">
+      <div class="eyebrow">CI/CD — pipeline-native</div>
+      <h3>Gates the merge, not just the conversation</h3>
+      <p>SARIF for code scanning, JUnit XML for test reporting — every attack becomes a test case your CI already knows how to fail on.</p>
+      <hr class="hr">
+      <p>SARIF output uploads directly to GitHub Code Scanning; JUnit XML is read by any CI dashboard already parsing test results.</p>
+      <div class="tags"><span class="tag">GitHub Actions</span><span class="tag">Jenkins</span><span class="tag">GitLab CI</span><span class="tag">CircleCI</span></div>
+    </div>
+
+    <div class="card">
+      <div class="eyebrow">Enterprise controls — team-ready</div>
+      <h3>RBAC, audit trail, and air-gapped deployment out of the box</h3>
+      <p><b>gauntlex serve --rbac</b> — GitHub team-based access control (admin / reviewer / developer) across a shared instance.</p>
+      <hr class="hr">
+      <p><b>gauntlex audit</b> — every run listed with full compliance control mapping for a configurable window. Runs fully air-gapped with zero outbound calls when required.</p>
+      <div class="tags"><span class="tag">RBAC</span><span class="tag">Audit trail</span><span class="tag">Air-gapped</span></div>
+    </div>
+
+    <div class="card">
+      <div class="eyebrow">Dashboard + leaderboard — centralized</div>
+      <h3>Every run tracked, every repo ranked, in real time</h3>
+      <p>Foreground and background sessions, side by side, auto-refreshing — no polling required, one URL for the whole team.</p>
+      <hr class="hr">
+      <p>Live leaderboard ranks resilience across every connected repo or model — the same view used to compare which AI coding tool actually ships secure code by default.</p>
+      <div class="tags"><span class="tag">HTML export</span><span class="tag">SARIF export</span><span class="tag">JUnit export</span></div>
+    </div>
+  </div>
+</div>
+<div class="foot">2 / 2</div>
