@@ -70,16 +70,16 @@ Three properties, not features — the reasoning behind each is in the [Deep Div
 ## Quickstart
 
 ```bash
-# 1. Install — pick one
-pip install gauntlex-ai
-# or, zero-install (the package is gauntlex-ai, the command is gauntlex):
-uvx --from gauntlex-ai gauntlex setup   # swap `setup` for any command below
+# 1. Setup — start here. Detects and validates the best model for your
+#    environment (Ollama for free/air-gapped, OpenRouter free tier, or your
+#    own API key), zero install required:
+uvx --from gauntlex-ai gauntlex setup
 
-# 2. Interactive setup — detects and validates the best model for your environment
-#    (Ollama for free/air-gapped, OpenRouter free tier, or your own API key)
+# or install it persistently first, then run the same setup command:
+pip install gauntlex-ai
 gauntlex setup
 
-# 3. Run on the included demo spec
+# 2. Run on the included demo spec
 gauntlex run --issue examples/demo_issue.md --mode quick --pretty
 ```
 
