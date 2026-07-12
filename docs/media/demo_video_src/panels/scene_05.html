@@ -1,0 +1,33 @@
+<title>panel</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{width:403px;height:900px;overflow:hidden;background:#0a0f1e;
+    border-left:4px solid #3b6fd8;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;
+    color:#eef1f8;position:relative}
+  .inner{padding:44px 40px 0 40px}
+  .eyebrow{display:inline-block;font-family:ui-monospace,"SF Mono","JetBrains Mono",Menlo,monospace;
+    font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#8fb3ff;
+    background:rgba(91,141,239,.14);border:1px solid rgba(91,141,239,.35);
+    padding:5px 14px;border-radius:20px;margin-bottom:22px}
+  h1{font-size:40px;line-height:1.14;font-weight:800;letter-spacing:-.01em;margin-bottom:22px}
+  hr{border:none;border-top:1px solid rgba(255,255,255,.14);margin-bottom:26px}
+  ul{list-style:none}
+  li{display:flex;gap:12px;margin-bottom:24px;font-size:17.5px;line-height:1.42}
+  li::before{content:"";width:6px;height:6px;border-radius:50%;background:#5b8def;flex:none;margin-top:9px}
+  li b{color:#fff;font-weight:600;display:block}
+  li span{color:#93a1c4;display:block;margin-top:1px}
+  .footer{position:absolute;bottom:34px;left:40px;right:40px;display:flex;justify-content:space-between;
+    font-family:ui-monospace,"SF Mono","JetBrains Mono",Menlo,monospace;font-size:13px;color:#57628a}
+</style>
+<div class="inner">
+  <div class="eyebrow">THE GATE</div>
+  <h1>One number:<br>Adversarial Resilience Score</h1>
+  <hr>
+  <ul>
+    <li><div><b>One score gates the merge</b><span>— no manual sign-off, no judgment call</span></div></li>
+    <li><div><b>Below threshold, the PR is blocked automatically</b><span>— the same enforcement as a failing CI check</span></div></li>
+    <li><div><b>Configurable per team</b><span>— security posture is a policy decision, not a suggestion</span></div></li>
+  </ul>
+</div>
+<div class="footer"><span>GAUNTLEX</span><span>05 / 13</span></div>
