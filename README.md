@@ -116,6 +116,16 @@ since it depends on how many attacks the model actually returns per round.
 gauntlex run --issue https://github.com/your-org/your-repo/issues/42 --mode standard --domain hipaa --pretty
 ```
 
+### Add business intent — attack surface = spec + why it's needed
+
+`--issue` is the spec — precise enough for the Builder and Breaker to implement and attack. It answers *what* to build. `--intent` adds a second, separate input answering *why* it's needed, pulled from wherever your team actually tracks that: a Jira key, a Confluence page, or an Aha! roadmap item. GAUNTLEX reasons from both together, not just the spec alone.
+
+```bash
+gauntlex run --issue SPEC.md --intent PROJ-123 --domain hipaa --pretty
+```
+
+`gauntlex setup` connects Jira/Confluence/Aha! automatically if it detects credentials in your environment — see the interactive wizard's business intent step.
+
 ### Requirements
 
 - Python 3.11+
