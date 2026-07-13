@@ -60,3 +60,6 @@ gauntlex-app.private-key.pem
 
 # Claude Code workspace config — not for public repo
 CLAUDE.md
+
+# Private marketing/strategy doc -- never commit, lives outside the repo
+MARKETING.md
