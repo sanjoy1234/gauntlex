@@ -1,0 +1,24 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.sanjoy1234/gauntlex",
+  "title": "GAUNTLEX",
+  "description": "Concurrent Builder + Breaker agents generate code and adversarial tests at once, gated in CI.",
+  "repository": {
+    "url": "https://github.com/sanjoy1234/gauntlex",
+    "source": "github"
+  },
+  "version": "1.0.2",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "registryBaseUrl": "https://pypi.org",
+      "identifier": "gauntlex-ai",
+      "version": "1.0.2",
+      "runtimeHint": "uvx",
+      "transport": { "type": "stdio" },
+      "packageArguments": [
+        { "type": "positional", "value": "mcp-server" }
+      ]
+    }
+  ]
+}
