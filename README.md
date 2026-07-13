@@ -279,6 +279,22 @@ Full detail on each: [Deep Dive → Enterprise Features](docs/DEEP_DIVE.md#enter
 
 ---
 
+## Where to find GAUNTLEX
+
+**Package & registries**
+- [PyPI](https://pypi.org/project/gauntlex-ai/) — `pip install gauntlex-ai`
+- [Official MCP Registry](https://registry.modelcontextprotocol.io) — listed as `io.github.sanjoy1234/gauntlex`
+- Community MCP directories — submitted, pending maintainer review: [awesome-mcp-servers (punkpeye)](https://github.com/punkpeye/awesome-mcp-servers/pull/10013), [awesome-devops-mcp-servers](https://github.com/rohitg00/awesome-devops-mcp-servers/pull/281), [Awesome-AI-For-Security](https://github.com/AmanPriyanshu/Awesome-AI-For-Security/pull/21)
+
+**Writing**
+- [dev.to — "Why I Built an Adversarial Co-Generation Engine"](https://dev.to/sanjoy1234/why-i-built-an-adversarial-co-generation-engine-2038)
+- [LinkedIn Article — "The Math That Breaks When AI Writes a Million Lines of Code"](https://www.linkedin.com/feed/update/urn:li:activity:7482279870576611328/)
+
+**Community**
+- [GitHub Discussions](https://github.com/sanjoy1234/gauntlex/discussions) — questions, feedback, and "I built X with this" show-and-tell
+
+---
+
 ## Acknowledgments
 
 - [Deven Samant](https://www.linkedin.com/in/devensamant/) — early feedback and validation
