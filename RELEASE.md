@@ -5,6 +5,17 @@
 
 ---
 
+## v1.0.2 — Monday 2026-07-13
+
+**Metadata-only release — adds the ownership-verification marker required to publish GAUNTLEX's MCP server on the official Model Context Protocol Registry. No functional changes.**
+
+### Changed
+
+- Added `<!-- mcp-name: io.github.sanjoy1234/gauntlex -->` to `README.md`, which becomes the PyPI package description — this is how the MCP Registry verifies the PyPI package (`gauntlex-ai`) belongs to this GitHub-authenticated publisher.
+- Version bumped in lockstep across `pyproject.toml`, `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, the MCP server's `_SERVER_VERSION`, and the SARIF report driver version, per the sync workflow in `DISTRIBUTION.md`.
+
+---
+
 ## v1.0.1 — Friday 2026-07-10
 
 **Bug fix + a new capability — `gauntlex status` and `gauntlex leaderboard` both silently misreported data due to the same missing schema field, and the leaderboard now runs live inside the dashboard, not just as a static file.**

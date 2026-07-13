@@ -6,6 +6,8 @@
 
 **Generates code and adversarial attacks from the same specification, at the same time — before a commit exists.**
 
+<!-- mcp-name: io.github.sanjoy1234/gauntlex -->
+
 [![Tests](https://img.shields.io/badge/tests-612%20passing-brightgreen)](https://github.com/sanjoy1234/gauntlex/actions)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://pypi.org/project/gauntlex-ai/)
 [![PyPI](https://img.shields.io/pypi/v/gauntlex-ai)](https://pypi.org/project/gauntlex-ai/)
