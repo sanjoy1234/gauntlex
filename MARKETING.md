@@ -69,7 +69,7 @@ v1's entire content calendar is product-news-shaped: launch posts, feature posts
 
 | Track | Content | Cadence | What it builds |
 |---|---|---|---|
-| **Product** (v1's existing plan) | Launch posts, feature announcements, the Resilience Index | Tied to ship events | GAUNTLEX awareness |
+| **Product** (v1's existing plan) | Launch posts, feature announcements, the self-report + concurrent-vs-sequential demo | Tied to ship events | GAUNTLEX awareness |
 | **Field Notes** (new) | Short, opinionated, single-observation posts on AI-generated code security — patterns you're actually seeing, not framed as a GAUNTLEX ad. The tool shows up as evidence for a claim, not the headline. | ~Weekly, decoupled from any release | *Your* authority — independent of whether someone has heard of GAUNTLEX yet |
 
 Field Notes is the more durable of the two. A launch post's relevance has a half-life of days; a genuinely sharp observation about a real pattern in AI-generated code gets referenced any time the topic comes up, for as long as the pattern stays true. This is also the lower-effort track once it's running — it doesn't require a ship event to justify a post, so it fills the gaps between v1's launch-driven content calendar.
@@ -109,7 +109,7 @@ You already have a 2:43 demo video built from real screenshots. A 30–45 second
 | TDD for security | Engineering managers, LinkedIn | "You wouldn't ship code without tests. Why ship AI-generated code without adversarial tests? GAUNTLEX is red-teaming as a CI gate." |
 | Compliance-as-code | FinTech/HealthTech, LinkedIn, enterprise | "HIPAA and FINRA audits shouldn't be a fire drill every quarter. GAUNTLEX gates every PR against your compliance domain, automatically." |
 | Novel architecture | HN, r/MachineLearning, academic/research | "Builder and Breaker run concurrently via `asyncio.gather()` — the attack surface is reasoned from the spec alone, before the implementation exists." |
-| **The Resilience Index** *(new)* | Everywhere — this is the one with a hard number attached | "We ran the same spec through N AI models and scored what came back. Here's which ones actually write secure code by default." |
+| **Proof, not claim** *(new)* | Everywhere — this is the one backed by a verifiable artifact | "We ran GAUNTLEX against its own spec and published the signed report. Here's exactly what a concurrent Builder+Breaker catches that a sequential pipeline would have shipped." |
 
 **Your personal story still matters more than the product spec** — this is unchanged and still the single most important missing input (see §9).
 
@@ -141,7 +141,7 @@ You already have a 2:43 demo video built from real screenshots. A 30–45 second
 | Product Hunt listing copy | 🤖 To draft | Tagline (≤60 chars), gallery images, maker comment |
 | Twitter/X thread(s) | 🤖 To draft | Handle confirmed: **@sanjoysaint** (x.com/sanjoysaint) — dormant, needs warm-up posts before launch framing. Split: Product track + Field Notes track (§4) |
 | LinkedIn post(s) | 🤖 To draft | Active account, posts regularly — the lead channel. Compliance angle for Product track; Field Notes runs here too |
-| Blog posts (dev.to) | 🤖 To draft | 2–3 posts, see §11.5 — blocked on account creation, below |
+| Blog posts (dev.to) | 🤖 To draft | 2–3 posts, see §11.5 — account confirmed (dev.to/sanjoy1234), unblocked |
 | Short-form video cuts | 🤖 To produce | New — see §6 |
 | Podcast pitch emails | 🤖 To draft (Gmail drafts) | See §11.7 |
 | Newsletter submission emails | 🤖 To draft (Gmail drafts) | See §11.6 |
@@ -149,7 +149,7 @@ You already have a 2:43 demo video built from real screenshots. A 30–45 second
 | Rallying line | ✅ Locked 2026-07-12 | "Adversarial by default." — see §4 |
 | Your one-sentence origin story | 👤 Need final pick | Substance confirmed (legacy-modernization / spec-not-code thesis), three phrasings drafted — still need the exact line locked. **The one real content blocker left.** |
 | Twitter/X, LinkedIn, YouTube, Instagram accounts | ✅ Confirmed | LinkedIn (active), X @sanjoysaint (read-only), YouTube + Instagram (exist, watch-only) — no setup needed |
-| dev.to account | 👤 To create | dev.to → Sign up → "Continue with GitHub" |
+| dev.to account | ✅ Created 2026-07-12 | dev.to/sanjoy1234 — publishing via a personal DEV API key is optional and still open, otherwise markdown gets handed over to paste in manually |
 | Product Hunt account | 👤 To create | producthunt.com → Sign up, real photo/bio, create now (not launch week) so it has some age by launch |
 
 ---
@@ -200,13 +200,13 @@ Curated by Clint Gibler (Head of Cyber at OpenAI). GAUNTLEX is exactly on-topic.
 
 Rules that still apply: title format `Show HN: GAUNTLEX – Generates code and adversarial security tests at the same instant`; no superlatives; post Tuesday–Thursday, 9 AM–12 PM ET; never ask for upvotes (fraud detection penalizes it); **HN bans AI-generated/AI-edited comments** — I draft the initial post, every comment reply must be written by you, live; respond to comments in the first 60 minutes, this drives ranking.
 
-🤖 **Claude does:** Draft post title + body (link to repo, one paragraph on what/why, link to the Resilience Index and the demo video). Draft anticipated objections and responses as prep notes. 👤 **You do:** Post from your own account with real karma history, write every comment reply yourself for at least the first 2 hours.
+🤖 **Claude does:** Draft post title + body (link to repo, one paragraph on what/why, link to the self-report + concurrent-vs-sequential demo and the demo video). Draft anticipated objections and responses as prep notes. 👤 **You do:** Post from your own account with real karma history, write every comment reply yourself for at least the first 2 hours.
 
 **10.6 Product Hunt** — *Cost: Free (boost is optional, not recommended for a first launch) · Reach: High, permanent searchable page · Effort: Medium-high, ~1-2 weeks prep*
 
 Free to submit and be featured. Submit 12:00–1:00 AM PST, Tuesday or Wednesday. Self-hunting is fine. Tagline ≤60 characters, no emojis in the name field.
 
-🤖 **Claude does:** Draft tagline, full description, maker's first comment, design 3–5 gallery images/GIFs (screenshot the live dashboard, leaderboard, and Resilience Index). 👤 **You do:** Confirm your maker profile isn't brand-new, submit at the right time, be present to reply all day.
+🤖 **Claude does:** Draft tagline, full description, maker's first comment, design 3–5 gallery images/GIFs (screenshot the live dashboard, leaderboard, and the self-report/concurrent-vs-sequential demo). 👤 **You do:** Confirm your maker profile isn't brand-new, submit at the right time, be present to reply all day.
 
 **Sequencing note:** keep Show HN and Product Hunt 1–2 weeks apart so each gets its own wave and you have bandwidth for both.
 
@@ -236,7 +236,7 @@ Free to submit and be featured. Submit 12:00–1:00 AM PST, Tuesday or Wednesday
 
 **10.10 dev.to / Hashnode** — *Cost: Free, huge built-in distribution · Effort: Medium, compounds via SEO forever*
 
-Suggested series: (1) "Why I built an adversarial co-generation engine" — origin story + architecture, (2) "The Adversarial Resilience Score: a new metric for AI-generated code," (3) "How GAUNTLEX gates HIPAA/FINRA compliance in CI," (4) *new* — "We benchmarked N AI models on adversarial resilience — here's what we found" (the Resilience Index writeup).
+Suggested series: (1) "Why I built an adversarial co-generation engine" — origin story + architecture, (2) "The Adversarial Resilience Score: a new metric for AI-generated code," (3) "How GAUNTLEX gates HIPAA/FINRA compliance in CI," (4) *new* — "What a concurrent Builder+Breaker catches that a sequential pipeline ships" (the self-report + concurrent-vs-sequential writeup, §2).
 
 🤖 **Claude does:** Write full draft posts, cross-post-ready for dev.to and Hashnode. 👤 **You do:** Review, add your voice/story, publish under your own account.
 
@@ -255,7 +255,7 @@ Suggested series: (1) "Why I built an adversarial co-generation engine" — orig
 | The Changelog | General dev, open-source-friendly |
 | Software Engineering Daily | Technical deep-dive format |
 
-🤖 **Claude does:** Draft a pitch email per show as a Gmail draft, tailored with a 2-sentence hook + 3 discussion angles (the Resilience Index is a strong new angle here — it's a data-backed hook, not just a product pitch). 👤 **You do:** Review, send, do the interview.
+🤖 **Claude does:** Draft a pitch email per show as a Gmail draft, tailored with a 2-sentence hook + 3 discussion angles (the self-report + concurrent-vs-sequential demo is a strong new angle here — it's a verifiable-proof hook, not just a product pitch). 👤 **You do:** Review, send, do the interview.
 
 **10.13 Conference / Meetup CFPs** — *Cost: Free to submit · Effort: Medium (abstract) + high (talk)*
 
@@ -274,7 +274,7 @@ See §3 — reframed here from v1 as a collaboration mechanic, not just growth.
 - Draft every piece of written copy in this plan
 - Create actual Gmail drafts in your inbox, ready to review and send
 - Design social graphics and OG cards (HTML → headless-Chrome screenshot)
-- Run the AI Model Resilience Index end-to-end — spec design, multi-model generation, scoring, publishing (§2.1)
+- Run the flagship asset end-to-end — the self-report and the concurrent-vs-sequential demonstration (§2)
 - Open GitHub PRs to awesome-lists and registries via `gh` CLI, with your approval on each
 - Research current submission processes for any channel so we're never guessing at a stale process
 - Track this document and its Log as things ship
@@ -288,8 +288,8 @@ See §3 — reframed here from v1 as a collaboration mechanic, not just growth.
 **Weeks 1–2 — Foundation, no public launch risk yet**
 - MCP registries + awesome-list PRs (§10.1, §10.2)
 - GitHub Topics + enable Discussions (§10.11, §3)
-- **Build v1 of the AI Model Resilience Index** *(new — this needs to exist before HN/PH so the launch links to it)*
-- Finalize your origin story and rallying line with me (§7, §4)
+- **Build the flagship asset — self-report + concurrent-vs-sequential demo** *(needs to exist before HN/PH so the launch links to it)*
+- Finalize your origin story with me (§7) — rallying line already locked
 - Draft all Tier 1 copy so it's ready to go
 
 **Weeks 3–4 — Content warm-up, both tracks running**
@@ -299,18 +299,18 @@ See §3 — reframed here from v1 as a collaboration mechanic, not just growth.
 - Cut and post the first short-form video clip (§6)
 
 **Week 5 — Show HN**
-- Tuesday or Wednesday morning ET, link directly to the live Resilience Index
+- Tuesday or Wednesday morning ET, link directly to the self-report + concurrent-vs-sequential demo
 - Full-day availability
 
 **Weeks 6–7 — Product Hunt** *(separate week from HN)*
-- Coordinate with a LinkedIn/Twitter push same day, gallery includes Resilience Index screenshots
+- Coordinate with a LinkedIn/Twitter push same day, gallery includes screenshots from the self-report/demo
 - Full-day availability
 
 **Weeks 8–12 — Sustained**
 - Reddit posts, spaced out, tailored per subreddit
 - Podcast pitches sent, interviews as they land
-- Second/third dev.to posts (compliance angle, Resilience Index deep-dive)
-- **Refresh the Resilience Index** for the first time — this is the moment that tests whether the recurring-asset thesis actually works
+- Second/third dev.to posts (compliance angle, concurrent-vs-sequential deep-dive)
+- Re-run the concurrent-vs-sequential demo against a new spec — tests whether the "proof, refreshed periodically" thesis actually works as a recurring asset
 - Start tracking which channel drove stars/installs (§13) and double down on what's working
 
 ---
@@ -322,7 +322,7 @@ See §3 — reframed here from v1 as a collaboration mechanic, not just growth.
 - Referrer traffic on the repo (GitHub Insights → Traffic tab, free)
 - HN/PH position and comment engagement on launch days
 - Newsletter/podcast placements landed (binary — did it run or not)
-- *(new)* Resilience Index citations/backlinks — the specific signal that tells you whether the flagship-asset thesis in §2 is working
+- *(new)* Citations/backlinks to the self-report and the concurrent-vs-sequential demo — the specific signal that tells you whether the flagship-asset thesis in §2 is working
 
 ---
 
