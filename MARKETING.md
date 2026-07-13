@@ -1,6 +1,6 @@
 # GAUNTLEX — Marketing & Launch Plan
 
-**Owner:** Sanjoy Ghosh · **Last updated:** 2026-07-11 · **Status:** v2 — revalidated and enhanced against one explicit lens: *durable memorability, zero cost, collaboration/feedback velocity, and personal brand compounding.*
+**Owner:** Sanjoy Ghosh · **Last updated:** 2026-07-12 · **Status:** v2.1 — decisions locked (rallying line, Discussions, Field Notes go-ahead) and flagship asset repointed away from a model-comparison index toward proving the architecture itself. See §2 and the Log for the full rationale.
 
 **Purpose:** Living reference doc. Paste this whole file (or point Claude at this path) at the start of any future session to resume marketing work with full context. This supersedes the 2026-07-10 v1 plan — v1's channel tables and tactical rules were reviewed and are still accurate; what's new is in §1–§6 below, and small corrections are folded into the existing sections.
 
@@ -22,29 +22,28 @@ v1 was a solid, correctly-scoped channel checklist: accurate HN/PH mechanics, a 
 
 ## 2. The flagship asset — give people something to share, not just read
 
-### 2.1 The AI Model Resilience Index (primary recommendation)
+**Revised 2026-07-12 — the model-comparison version of this section (below, kept for the record) was rejected on reflection and replaced.** Rationale: the model finding itself is unsurprising (a stronger model writing more secure code isn't news), it puts the *model* in the headline instead of the *architecture*, and it drops GAUNTLEX into an already-crowded "which LLM codes best" category (LMSYS, SWE-bench, etc.) that isn't the thing GAUNTLEX actually owns. The positioning goal is the concurrent Builder+Breaker architecture — that's the unique, ownable claim, and the flagship asset needs to prove *that*, not adjudicate which LLM is smartest. A model-comparison harness stays on the table as a possible Phase 2 project, deliberately deferred, not abandoned.
+
+### 2.1 "GAUNTLEX red-teams itself" (primary, replaces the Resilience Index)
+
+Run GAUNTLEX against its own specification and publish the resulting Resilience Report — SHA-256 integrity hash and all — linked directly from the README and every launch post, with "verify it yourself: `gauntlex verify`." Security tools that market themselves without receipts read as marketing; one that hands you a tamper-evident report on itself reads as credible. This is proof, not a claim — the same "buzz-through-verifiability" value the Index was supposed to deliver, but the subject being proven is the architecture, not a model leaderboard.
+
+### 2.2 Concurrent vs. sequential — a direct demonstration of the actual thesis
+
+The stronger, more central version of 2.1: run the same spec two ways — GAUNTLEX's concurrent Builder+Breaker, and a simulated "write code, test later" sequential pipeline (the industry-standard order) — and show concretely what the concurrent run catches that the sequential one would have shipped. This makes the *speed gap* thesis (the actual core positioning) the literal subject of the flagship asset, not a side effect of a model ranking. Zero controversy, zero "grading someone else's product," 100% about GAUNTLEX.
+
+**🤖 Claude does:** Run GAUNTLEX against its own spec and publish the verifiable report (2.1). Design and run the concurrent-vs-sequential demonstration (2.2), write the accompanying analysis. **👤 You do:** Sanity-check both results before they're public — nothing else required.
+
+**Where it slots into the plan:** Build in Weeks 1–2, before Show HN and Product Hunt, so launch posts link to something concrete instead of just the README.
+
+<details>
+<summary>Superseded — original Resilience Index proposal, kept for the record</summary>
 
 **The idea:** GAUNTLEX already scores how well generated code survives adversarial testing. Point that at the question every developer in this space is quietly wondering right now: *which AI model writes the most secure code by default?* Run the same handful of intentionally risk-prone specs (an auth endpoint, a file-upload handler, a raw SQL query builder — the classic OWASP-magnet patterns) through several current models as the Builder, score each resulting implementation with GAUNTLEX's own Arbiter, and publish the ranked result as a public leaderboard with a short written analysis.
 
-**Why this is the right flagship, specifically for you, specifically now:**
-- **It's original research, not a product pitch.** "We built a tool" is forgettable. "GPT-5-class models missed 3x more injection attacks than Claude in our test" is a stat people screenshot and argue about. That argument *is* the buzz.
-- **It's comparison, and comparison is the most reliably shareable content format there is** — rankings, benchmarks, and "X vs Y" posts outperform feature announcements on every channel in this plan (HN, Twitter, Reddit, LinkedIn) by a wide margin, consistently.
-- **It's recurring, not one-off.** Re-run it monthly as models update ("AI Model Resilience Index — August 2026 edition") and you have a standing reason to post again, get cited again, and pull people back — the single highest-leverage fix for "remembered for a long time" in this entire plan.
-- **It costs nothing.** OpenRouter's free tier alone covers several current open models; comparing what's reachable for free is itself a defensible, honest framing (no claim about paid frontier models you haven't actually run).
-- **It directly demonstrates the product.** Every visitor who reads the leaderboard is looking at real GAUNTLEX output — no separate "trust us" gap between the marketing claim and the tool.
-- **It's ethically clean.** You're scoring *models*, which are products from well-resourced companies fully expecting to be benchmarked — not some stranger's weekend GitHub project, which would read as punching down and could plausibly generate the wrong kind of buzz.
+Rejected 2026-07-12 — see the note at the top of this section for why.
 
-**🤖 Claude does:** Design 2–3 shared adversarial specs (I'll draft these to be realistic and genuinely risk-prone, not rigged). Run each through a defensible list of free/accessible OpenRouter models as the Builder. Score every resulting implementation with the existing Arbiter — this is exactly what the engine already does, just pointed at multiple models instead of one. Generate the static leaderboard via the `gauntlex leaderboard` command that already exists. Write the accompanying analysis post (the "state of AI code security" writeup). Design the page to match the existing dashboard theme.
-
-**👤 You do:** Approve the exact model list before it's public — a claim that compares named commercial models by name should get your eyes on it before it ships, even though I can build the whole thing. Decide the cadence (I'd suggest monthly). Post the launch of it, same as any other content.
-
-**Where it slots into the plan:** Build it in Weeks 1–2, *before* Show HN and Product Hunt — so those launch posts link to a live, populated leaderboard instead of just a README. This is the single highest-leverage sequencing change in this revision.
-
-### 2.2 "GAUNTLEX red-teams itself" (secondary, low-effort, high trust)
-
-A one-line but disproportionately effective trust signal: run GAUNTLEX against its own specification, and link the resulting Resilience Report — SHA-256 integrity hash and all — directly in the README and every launch post. Security tools that market themselves without showing their own receipts read as marketing; one that hands you a tamper-evident report on itself reads as credible. Near-zero effort — this is one `gauntlex run` command and a link.
-
-**🤖 Claude does:** Run it, publish the report link, add a "we tested ourselves — verify it yourself with `gauntlex verify`" line to the README and launch copy. **👤 You do:** Nothing beyond a sanity check on the result before it's public.
+</details>
 
 ---
 
@@ -78,7 +77,7 @@ Field Notes is the more durable of the two. A launch post's relevance has a half
 **A rallying line:** worth having one short, ownable phrase that people can repeat independent of the tool name — the way "move fast and break things" or "shift left" outlived their origin. Three directions, your call on tone (I can't invent this authentically for you, same as the origin story):
 - *"Code ships in seconds. Attacks should too."*
 - *"If the AI wrote it in 30 seconds, the attack surface should be tested in 30 seconds."*
-- *"Adversarial by default."*
+- **"Adversarial by default." — LOCKED 2026-07-12, primary rallying line.** The other two stay in rotation as longer-form variants for blog intros and longer posts; this is the short/hashtag/gut-check version used everywhere else.
 
 **🤖 Claude does:** Draft the Field Notes post series (I can mine real patterns from the AVF golden fixtures, the CWE taxonomy, and general AI-code-security research), propose 2–3 rallying-line options as above. **👤 You do:** Pick or rewrite the rallying line in your own words, add your actual voice/opinion to each Field Notes draft before it posts (this track specifically fails if it reads as AI-generated — it's supposed to be *you*), post everything yourself.
 
@@ -132,24 +131,26 @@ You already have a 2:43 demo video built from real screenshots. A 30–45 second
 |---|---|---|
 | Public GitHub repo, MIT license | ✅ Have | github.com/sanjoy1234/gauntlex |
 | PyPI package (`gauntlex-ai`) | ✅ Have | **Live at v1.0.1** — published 2026-07-10, verified installable |
-| Demo video (2:43) | ✅ Have | Source for the new short-form cuts in §6 |
-| Overview one-pager / slides | ✅ Have | `docs/media/GAUNTLEX_Overview.pdf` |
-| README with badges, quickstart, architecture | ✅ Have | Strong landing page for HN/PH traffic; test-count badge now current (612 passing) |
-| Live dashboard + leaderboard | ✅ Have | Already built — this is the exact engine the Resilience Index (§2.1) reuses |
-| **AI Model Resilience Index** | 🤖 To build | New — see §2.1, this is the launch centerpiece |
-| **GitHub Discussions** | 👤 To enable | Not currently on — see §3, needs your approval to flip on |
+| Demo video (2:53, v3) | ✅ Have | Rebuilt 2026-07-12 — enterprise/outcome language throughout, new Enterprise Features scene. Source for the short-form cuts in §6 |
+| Overview one-pager / slides | ✅ Have | `docs/media/GAUNTLEX_Overview.pdf` — refreshed in sync with the video v3 |
+| README with badges, quickstart, architecture | ✅ Have | Strong landing page for HN/PH traffic; test-count badge current (612 passing); Quickstart now leads with `gauntlex setup` |
+| Live dashboard + leaderboard | ✅ Have | Already built — proved out live in the video's new Enterprise Features scene |
+| **Flagship asset — GAUNTLEX self-report + concurrent-vs-sequential demo** | 🤖 To build | See §2 — replaces the shelved Resilience Index |
+| **GitHub Discussions** | ✅ Approved 2026-07-12 | Enabling via `gh` CLI |
 | Show HN post copy | 🤖 To draft | See §11.1 (was §5.1) |
 | Product Hunt listing copy | 🤖 To draft | Tagline (≤60 chars), gallery images, maker comment |
-| Twitter/X thread(s) | 🤖 To draft | Now split: Product track + Field Notes track (§4) |
-| LinkedIn post(s) | 🤖 To draft | Compliance angle for Product track; Field Notes runs here too |
-| Blog posts (dev.to) | 🤖 To draft | 2–3 posts, see §11.5 |
+| Twitter/X thread(s) | 🤖 To draft | Handle confirmed: **@sanjoysaint** (x.com/sanjoysaint) — dormant, needs warm-up posts before launch framing. Split: Product track + Field Notes track (§4) |
+| LinkedIn post(s) | 🤖 To draft | Active account, posts regularly — the lead channel. Compliance angle for Product track; Field Notes runs here too |
+| Blog posts (dev.to) | 🤖 To draft | 2–3 posts, see §11.5 — blocked on account creation, below |
 | Short-form video cuts | 🤖 To produce | New — see §6 |
 | Podcast pitch emails | 🤖 To draft (Gmail drafts) | See §11.7 |
 | Newsletter submission emails | 🤖 To draft (Gmail drafts) | See §11.6 |
 | Social graphics / OG cards | 🤖 To design | HTML → headless-Chrome screenshot, same technique as the demo video |
-| Rallying line | 👤 Need your pick | See §4 — three options drafted, needs your voice |
-| Your one-sentence origin story | 👤 Need from you | Still the single most important missing input |
-| Twitter/X, LinkedIn, dev.to, Product Hunt, Reddit, YouTube/TikTok accounts | 👤 Confirm you have these | Tell me which exist already vs. need creating |
+| Rallying line | ✅ Locked 2026-07-12 | "Adversarial by default." — see §4 |
+| Your one-sentence origin story | 👤 Need final pick | Substance confirmed (legacy-modernization / spec-not-code thesis), three phrasings drafted — still need the exact line locked. **The one real content blocker left.** |
+| Twitter/X, LinkedIn, YouTube, Instagram accounts | ✅ Confirmed | LinkedIn (active), X @sanjoysaint (read-only), YouTube + Instagram (exist, watch-only) — no setup needed |
+| dev.to account | 👤 To create | dev.to → Sign up → "Continue with GitHub" |
+| Product Hunt account | 👤 To create | producthunt.com → Sign up, real photo/bio, create now (not launch week) so it has some age by launch |
 
 ---
 
@@ -329,14 +330,15 @@ See §3 — reframed here from v1 as a collaboration mechanic, not just growth.
 
 Everything else in this plan I can execute or draft without waiting on you. These six are the actual blockers:
 
-1. **Your one-sentence origin story** — what made you build this. Still the single most important input; I can't invent it authentically.
-2. **Which accounts you already have** — Twitter/X, LinkedIn, dev.to, Product Hunt maker profile, Reddit, YouTube/TikTok.
-3. **Sign-off on the Resilience Index model list** — I'll propose a default set of free/accessible models; a public claim comparing named commercial products should get your eyes on it before it ships.
-4. **Approval to enable GitHub Discussions** — one repo setting, I'll do it via `gh` CLI once you say go.
-5. **Your pick (or rewrite) of a rallying line** — three options drafted in §4, or tell me it's not you and we skip it.
-6. **Your voice on the Field Notes drafts** — I'll write the first-pass observations, but this track specifically fails if it doesn't sound like you.
+**Updated 2026-07-12 — five of six original items are resolved.** What's actually left:
 
-Tell me these and I start building — the Resilience Index and the Tier 1 registry/awesome-list submissions can begin immediately, before any of the others are resolved.
+1. **Your one-sentence origin story — final line.** Substance is locked (legacy-modernization / spec-not-code thesis), three phrasings drafted in §7 waiting on a pick, edit, or rejection. This is the one item every other piece of content quotes, so it's the real blocker.
+2. **Create a dev.to account** — dev.to → Sign up → "Continue with GitHub."
+3. **Create a Product Hunt account** — producthunt.com → Sign up, real photo/bio, do it now rather than at launch time, and lightly engage (upvote a couple of things) before launch.
+
+Resolved and no longer blocking: accounts confirmed (LinkedIn active, X @sanjoysaint, YouTube/Instagram exist), GitHub Discussions approved, rallying line locked ("Adversarial by default."), Field Notes approved to start drafting, flagship asset repointed from the Resilience Index to the self-report + concurrent-vs-sequential demonstration (§2).
+
+The Tier 1 registry/awesome-list submissions and the flagship asset build can both start immediately — neither waits on the origin story or the two account creations.
 
 ---
 
@@ -346,6 +348,7 @@ Tell me these and I start building — the Resilience Index and the Tier 1 regis
 
 - **2026-07-10** — v1 plan created.
 - **2026-07-11** — v2: revalidated against memorability/collaboration/personal-brand lens. Added the AI Model Resilience Index as flagship asset (§2), a Community & Collaboration Loop section (§3), a parallel Personal Brand / Field Notes track (§4), reactive-coverage practice (§5), and short-form video as a new channel (§6). Corrected asset inventory to current shipped state (PyPI v1.0.1 live, 612 tests, GitHub Discussions not yet enabled). Tightened the "what I need from you" list to six concrete blockers.
+- **2026-07-12** — Demo video rebuilt to v3 and overview deck refreshed in sync (see repo commit history — both now use enterprise/outcome-driven language throughout, video gained a new Enterprise Features scene). Marketing decisions locked: GitHub Discussions approved; rallying line locked to "Adversarial by default."; Field Notes approved to start drafting; X handle confirmed (@sanjoysaint, dormant — needs warm-up before launch framing). **Flagship asset changed:** the AI Model Resilience Index (§2, original) was reconsidered and rejected — owner's objection was that a model-comparison leaderboard puts the LLM in the headline instead of GAUNTLEX's actual differentiator (the concurrent Builder+Breaker architecture), the finding is unsurprising (bigger model = better code isn't news), and it drops GAUNTLEX into an already-crowded "which LLM codes best" category that isn't its own. Replaced with: GAUNTLEX red-teaming itself (publish a verifiable self-report) plus a concurrent-vs-sequential demonstration proving the actual speed-gap thesis. Model-comparison harness kept as a documented, deliberately-deferred Phase 2 idea, not discarded. Remaining blockers: origin-story final line, and creating dev.to + Product Hunt accounts.
 
 ---
 
