@@ -57,6 +57,8 @@ htmlcov/
 secrets.json
 gauntlex-app.private-key.pem
 .pypirc
+.devto_api_key
+.linkedin_oauth_credentials
 
 # Claude Code workspace config — not for public repo
 CLAUDE.md
