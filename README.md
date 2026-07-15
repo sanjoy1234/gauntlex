@@ -69,6 +69,21 @@ Three properties, not features — the reasoning behind each is in the [Deep Div
 
 ---
 
+## Where GAUNTLEX fits vs. other security testing
+
+Not a replacement for any of these — a different point in the lifecycle. Static analysis and pentests are still worth doing; GAUNTLEX exists because neither of them runs *while the code is being generated*.
+
+| | Traditional SAST (Semgrep, Snyk, etc.) | Manual pentest | No dedicated testing | GAUNTLEX |
+|---|---|---|---|---|
+| **When it runs** | After code is written | After code is written, periodically | Never, until an incident | Same instant as generation |
+| **What it tests** | Known vulnerability patterns in existing code | The live, deployed system | Nothing dedicated | The spec-to-code pipeline itself |
+| **Speed** | Minutes per scan | Days to weeks per engagement | — | ~45s–12min per run (mode-dependent) |
+| **Cost** | Free–moderate | High (specialist time) | "Free" until it isn't | Free, open source |
+| **Compliance mapping** | Varies by tool | Manual, engagement-specific | None | Built-in — OWASP/HIPAA/FINRA/PCI-DSS/SOC2 + CWE + NIST SSDF/SAMM/ISO 27001 |
+| **Output you can verify later** | Scan report | Pentest report | — | SHA-256 tamper-evident report (`gauntlex verify`) |
+
+---
+
 ## Quickstart
 
 ```bash
@@ -268,6 +283,38 @@ and more): **[Integrations guide](docs/INTEGRATIONS.md)**.
 - **Air-gapped operation** — the full engine runs on local Ollama with zero outbound calls, for environments that can't reach the internet.
 
 Full detail on each: [Deep Dive → Enterprise Features](docs/DEEP_DIVE.md#enterprise-features).
+
+---
+
+## Key terms
+
+- **Adversarial Resilience Score (ARS)** — the mean of per-attack scores (mitigated=1.0, partial=0.5, missed=0.0) across every attack fired at a run. Range [0.0, 1.0]. The core metric GAUNTLEX produces.
+- **Builder** — the agent that generates code from the specification.
+- **Breaker** — the agent that generates adversarial attacks from the same specification, at the same instant, without seeing the Builder's output.
+- **Concurrent co-generation** — Builder and Breaker running via `asyncio.gather()` against the same spec at the same time, instead of testing after code is written.
+- **Resilience Report** — the tamper-evident output of a GAUNTLEX run, including a SHA-256 hash over the ordered attack results, independently verifiable via `gauntlex verify`.
+- **Gate** — the CI check that blocks a merge when a run's ARS falls below the configured threshold (default 0.80).
+
+---
+
+## FAQ
+
+**How do I test AI-generated code for security vulnerabilities?**
+Point GAUNTLEX at the same specification your AI coding tool used: `gauntlex run --spec your_spec.md --mode quick`. It fires adversarial attacks derived from that spec and returns an Adversarial Resilience Score in under a minute.
+
+**What is an Adversarial Resilience Score (ARS)?**
+The mean of per-attack scores (mitigated = 1.0, partial = 0.5, missed = 0.0) across every attack fired at a run — a continuous [0.0, 1.0] measure of how well the generated code holds up, not a simple pass/fail count. Full formula and reasoning: the [ARS explainer](https://dev.to/sanjoy1234/the-adversarial-resilience-score-a-new-metric-for-ai-generated-code-4gej).
+
+**Does GAUNTLEX test code before or after it's generated?**
+At the same instant. The Breaker agent reasons from the specification directly, concurrently with the Builder — it never waits for code to exist first, which is what "concurrent, not sequential" means in practice.
+
+**Which compliance frameworks does GAUNTLEX support?**
+OWASP Top 10, HIPAA, FINRA, PCI DSS, and SOC 2 out of the box, with NIST SSDF and OWASP API Security available as installable extensions. See [Domain Intelligence](docs/DOMAIN_INTELLIGENCE.md) for exactly what's covered per domain.
+
+**Can GAUNTLEX run without sending code to an external API?**
+Yes — the full engine runs on local Ollama with zero outbound calls, for air-gapped or compliance-restricted environments.
+
+More questions, including gating thresholds and contributing a new policy domain: [full FAQ in the Deep Dive](docs/DEEP_DIVE.md#faq).
 
 ---
 

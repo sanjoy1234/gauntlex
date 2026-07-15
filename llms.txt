@@ -1,0 +1,28 @@
+# GAUNTLEX
+
+> Adversarial Co-Generation Engine. Concurrent Builder and Breaker AI agents generate code and adversarial security tests from the same specification at the same instant, producing an Adversarial Resilience Score (ARS) that gates CI. Open source, MIT license, Python, distributed on PyPI as `gauntlex-ai`.
+
+GAUNTLEX addresses a specific gap: AI coding tools generate code faster than humans can security-review it, and most security testing (SAST, pentesting) only runs after code already exists. GAUNTLEX runs a Breaker agent concurrently with the Builder agent, both reasoning from the same specification — the Breaker never sees the generated implementation, only the spec, the same surface a real attacker has before implementation choices are made.
+
+## Core concepts
+
+- **Adversarial Resilience Score (ARS)**: mean of per-attack scores (mitigated=1.0, partial=0.5, missed=0.0) across N attacks (5/20/50 depending on quick/standard/thorough mode). Range [0.0, 1.0]. Default CI gate threshold: 0.80.
+- **Concurrent, not sequential**: Builder and Breaker fire via `asyncio.gather()` at the same instant against the same spec.
+- **Tamper-evident reports**: every report includes a SHA-256 hash over the ordered attack results, independently re-verifiable via `gauntlex verify <run_id>`.
+- **Regulatory domain playbooks**: OWASP Top 10, HIPAA, FINRA, PCI DSS, SOC 2 built in; NIST SSDF and OWASP API Security available as extensions. Each finding carries a CWE tag and control mapping to NIST SSDF / OWASP SAMM / SOC 2 / ISO 27001.
+- **MCP server**: GAUNTLEX exposes itself as a Model Context Protocol server (stdio and HTTP transports) so Claude Code, Cursor, Windsurf, and Zed can trigger and poll runs directly. Listed on the official MCP Registry as `io.github.sanjoy1234/gauntlex`.
+
+## Docs
+
+- [README](https://github.com/sanjoy1234/gauntlex/blob/main/README.md): quickstart, CLI reference, install
+- [Deep Dive](https://github.com/sanjoy1234/gauntlex/blob/main/docs/DEEP_DIVE.md): architecture, ARS formal definition, full FAQ, roadmap
+- [Domain Intelligence](https://github.com/sanjoy1234/gauntlex/blob/main/docs/DOMAIN_INTELLIGENCE.md): per-domain coverage, live vs. static threat data
+- [Integrations](https://github.com/sanjoy1234/gauntlex/blob/main/docs/INTEGRATIONS.md): IDE/agent setup for every supported platform
+
+## Install
+
+```bash
+pip install gauntlex-ai
+gauntlex setup
+gauntlex run --spec your_spec.md --mode quick
+```

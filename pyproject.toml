@@ -10,7 +10,7 @@ readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name = "Sanjoy Ghosh", email = "sanjoy.sghosh@yahoo.co.in" }]
 requires-python = ">=3.11"
-keywords = ["ai", "security", "adversarial", "code-generation", "swe-bench"]
+keywords = ["ai", "security", "adversarial", "code-generation", "swe-bench", "llm-security", "devsecops", "mcp", "owasp", "sast", "compliance-automation"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",

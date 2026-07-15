@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use GAUNTLEX in your research or project, please cite it as below."
+title: "GAUNTLEX: Adversarial Co-Generation Engine"
+authors:
+  - family-names: "Ghosh"
+    given-names: "Sanjoy"
+version: 1.0.2
+date-released: 2026-07-13
+url: "https://github.com/sanjoy1234/gauntlex"
+repository-code: "https://github.com/sanjoy1234/gauntlex"
+license: MIT
+type: software
+keywords:
+  - security
+  - adversarial-testing
+  - ai-code-generation
+  - devsecops
+  - llm-security
+  - static-analysis
+  - owasp
+abstract: >-
+  GAUNTLEX runs concurrent Builder and Breaker AI agents against the same
+  specification, producing an Adversarial Resilience Score that gates CI
+  for AI-generated code across OWASP Top 10, HIPAA, FINRA, PCI DSS, and
+  SOC 2 domains.
