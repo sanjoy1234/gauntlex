@@ -300,7 +300,7 @@ Full detail on each: [Deep Dive → Enterprise Features](docs/DEEP_DIVE.md#enter
 ## FAQ
 
 **How do I test AI-generated code for security vulnerabilities?**
-Point GAUNTLEX at the same specification your AI coding tool used: `gauntlex run --spec your_spec.md --mode quick`. It fires adversarial attacks derived from that spec and returns an Adversarial Resilience Score in under a minute.
+Point GAUNTLEX at the same specification your AI coding tool used: `gauntlex run --issue your_spec.md --mode quick`. It fires adversarial attacks derived from that spec and returns an Adversarial Resilience Score in under a minute.
 
 **What is an Adversarial Resilience Score (ARS)?**
 The mean of per-attack scores (mitigated = 1.0, partial = 0.5, missed = 0.0) across every attack fired at a run — a continuous [0.0, 1.0] measure of how well the generated code holds up, not a simple pass/fail count. Full formula and reasoning: the [ARS explainer](https://dev.to/sanjoy1234/the-adversarial-resilience-score-a-new-metric-for-ai-generated-code-4gej).

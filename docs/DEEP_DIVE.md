@@ -535,15 +535,17 @@ gauntlex policy search "broker dealer"          # search by tag or keyword
 
 ### Feature 7 — SARIF 2.1.0, JUnit XML, and HTML Resilience Reports
 
-GAUNTLEX emits three output formats simultaneously from every run, each for a different audience:
+Every `gauntlex run` saves one native JSON report; `gauntlex report <run_id> --format <fmt>` renders it into whichever format the audience needs, on demand:
 
 - **SARIF 2.1.0 → GitHub Code Scanning.** Every missed attack appears as an open security alert in Security → Code Scanning.
 - **JUnit XML → CI dashboards.** Every attack becomes a test case — mitigated passes, missed fails with a descriptive message. Works with GitHub Actions, Jenkins, GitLab CI, CircleCI.
 - **HTML Resilience Report → compliance evidence.** A self-contained document with the full run summary, attack table, control mappings, and tamper-evident hash.
 
 ```bash
-gauntlex run --issue spec.md --output-sarif gauntlex.sarif --output-junit gauntlex.xml
-gauntlex report <run_id> --format html > report.html
+gauntlex run --issue spec.md --mode standard
+gauntlex report <run_id> --format sarif --out gauntlex.sarif
+gauntlex report <run_id> --format junit --out gauntlex.xml
+gauntlex report <run_id> --format html --out report.html
 ```
 
 ### Feature 8 — GAUNTLEX Dashboard
@@ -843,6 +845,8 @@ attack_score:
 
 The Arbiter also runs an entropy check: if all attacks cluster on the same CWE, it flags low diversity and schedules CWE rotation for the next run.
 
+Every verdict carries a one-line `reason` alongside the score. Optionally (`--consensus <N>`), each attack is scored N times and averaged instead of once, with an `agreement_rate` surfaced per attack — see the FAQ entry on Arbiter reliability below for why and when to use it.
+
 ### The Full Execution Flow
 
 ```
@@ -907,13 +911,17 @@ gauntlex validate --no-pretty       # same checks, JSON output for CI parsing
 ```bash
 gauntlex run \
   --issue <spec>                    # file path or GitHub issue URL
-  --mode quick|standard|thorough    # 5 / 20 / 50 attacks (default: quick)
-  --domain <name>                   # policy domain (default: from .gauntlex.yml)
-  --output-sarif <file>             # emit SARIF 2.1.0 for GitHub Code Scanning
-  --output-junit <file>             # emit JUnit XML for CI dashboards
+  --mode quick|standard|thorough    # 5 / 20 / 50 attacks (default: standard)
+  --domain <name>                   # comma-separated policy domain(s) (default: owasp_top10)
+  --intent <ref>                    # Jira key / Confluence URL / Aha! URL — widens the attack surface
+  --consensus <N>                   # score each attack N times and average, with an
+                                     # agreement-rate confidence signal (default: 1, off)
   --pretty                          # rich terminal output with color
   --config <path>                   # alternate config file
+  --background                      # fire-and-forget: run detached, check status later
 ```
+
+SARIF and JUnit aren't `run` flags — they're output formats of `gauntlex report <run_id> --format sarif|junit`, rendered from an already-saved report (see below).
 
 ### `gauntlex status` — running and recent runs
 
@@ -1144,7 +1152,7 @@ kev_enabled: true               # default on
   "$schema": "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0.json",
   "version": "2.1.0",
   "runs": [{
-    "tool": { "driver": { "name": "GAUNTLEX", "version": "1.0.1" } },
+    "tool": { "driver": { "name": "GAUNTLEX", "version": "1.0.2" } },
     "results": [{
       "ruleId": "CWE-79",
       "level": "error",
@@ -1342,6 +1350,9 @@ Attack count targets 5/20/50 by mode (quick/standard/thorough) but isn't exact �
 
 **Q: Is the ARS defensible to a security auditor?**
 GAUNTLEX produces NIST SSDF, SOC 2, and ISO 27001 control mapping artifacts with a SHA-256 integrity hash. `gauntlex verify` re-derives the hash at any future audit, independent of GAUNTLEX itself.
+
+**Q: Is the Arbiter's verdict itself reliable — does the same code scored twice give the same result?**
+The Arbiter isn't a trained or fine-tuned judge — it's a prompted call to whatever general-purpose model you've configured, so like any single LLM judgment, it can vary between runs on genuinely borderline cases. The SHA-256 hash proves a report wasn't edited after the fact; it does not by itself prove the judgment was maximally consistent. For that, use `--consensus <N>` (e.g. `--consensus 3`): each attack gets scored N times and averaged, and the report includes an `agreement_rate` per attack — low agreement is a direct signal that a finding is borderline and worth a human look, rather than a silent single-shot guess. Off by default (costs N-1 extra model calls per attack); on by default it isn't, because most attacks aren't borderline and the extra cost isn't always worth paying.
 
 **Q: What if the model goes down mid-run?**
 GAUNTLEX fails the run cleanly — no partial report written. `fail_open: true` allows the pipeline to pass on model errors (useful during planned maintenance windows).

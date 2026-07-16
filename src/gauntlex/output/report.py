@@ -80,6 +80,9 @@ def build_report(
             "score": a.score,
             "verdict": _score_to_verdict(a.score),
             "remediation": get_remediation(a.cwe),
+            "reason": a.reason,
+            "consensus_samples": a.consensus_samples,
+            "consensus_agreement": a.consensus_agreement,
         }
         for a in result.all_attacks
     ]

@@ -20,6 +20,7 @@ async def execute(
     mode: str = "standard",
     domains: list[str] | None = None,
     config_path: str | None = None,
+    consensus_samples: int | None = None,
 ) -> RunResult:
     """
     Execute a full Gauntlex adversarial session.
@@ -29,6 +30,8 @@ async def execute(
         mode: quick / standard / thorough
         domains: Policy domains to activate (None = use config defaults)
         config_path: Path to .gauntlex.yml (None = auto-detect)
+        consensus_samples: score each attack this many times and average, with
+            an agreement-rate confidence signal (None = use config default, 1 = off)
 
     Returns:
         RunResult with run_id, ARS score, pass/fail, and full report dict
@@ -45,6 +48,8 @@ async def execute(
     cfg = AppConfig.load(config_path)
     mode_counts = {"quick": 5, "standard": 20, "thorough": 50}
     cfg.gauntlex.attack_count = mode_counts.get(mode, 20)
+    if consensus_samples is not None:
+        cfg.gauntlex.consensus_samples = consensus_samples
 
     if domains is None:
         domains = [d.split("@")[0] for d in cfg.policy.domains] or ["owasp_top10"]
@@ -77,7 +82,7 @@ async def execute(
 
     t0 = time.monotonic()
 
-    arbiter = Arbiter(**model_kwargs)
+    arbiter = Arbiter(consensus_samples=cfg.gauntlex.consensus_samples, **model_kwargs)
     pair = Gauntlex(config=cfg, recalled_attacks=recalled, policy_context=policy_context)
     result = await pair.run(spec, arbiter)
 

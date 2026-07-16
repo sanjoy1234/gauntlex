@@ -34,6 +34,7 @@ class GauntlexConfig:
     early_exit_threshold: float = 0.95
     early_exit_streak: int = 3
     break_context_enabled: bool = True  # BreakContext token compression for Breaker input
+    consensus_samples: int = 1  # >1 enables Arbiter self-consistency (multi-sample) scoring
 
 
 @dataclass
@@ -158,6 +159,7 @@ class AppConfig:
                     early_exit_threshold=cp.get("early_exit_threshold", 0.95),
                     early_exit_streak=cp.get("early_exit_streak", 3),
                     break_context_enabled=cp.get("break_context_enabled", True),
+                    consensus_samples=cp.get("consensus_samples", 1),
                 )
 
             if p := raw.get("policy"):
@@ -377,6 +379,7 @@ gauntlex:
   attack_count: 20
   rounds_max: 5
   cwe_rotation: true
+  consensus_samples: 1  # >1 enables Arbiter self-consistency scoring (see --consensus)
 
 policy:
   domains:

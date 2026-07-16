@@ -11,7 +11,7 @@ from gauntlex.mcp.server import MCPServer, _McpError, _eta, _ATTACK_COUNTS, _TOO
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
-async def _fake_engine(run_id, spec, mode, domain, language, config):
+async def _fake_engine(run_id, spec, mode, domain, language, config, consensus_samples=1):
     """Instant mock engine — returns a minimal result dict without LLM calls."""
     return {
         "run_id": run_id,
@@ -28,7 +28,7 @@ async def _fake_engine(run_id, spec, mode, domain, language, config):
         ],
     }
 
-async def _error_engine(run_id, spec, mode, domain, language, config):
+async def _error_engine(run_id, spec, mode, domain, language, config, consensus_samples=1):
     raise RuntimeError("engine exploded")
 
 

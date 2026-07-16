@@ -33,10 +33,13 @@ Output JSON only:
 
 
 class Arbiter(BaseAgent):
-    """Scores attacks against generated code. One LLM call per attack."""
+    """Scores attacks against generated code. One LLM call per attack by
+    default, or `consensus_samples` concurrent calls per attack when a
+    confidence/agreement signal is wanted (see `_score_attack`)."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, consensus_samples: int = 1, **kwargs):
         super().__init__(system_prompt=ARBITER_SYSTEM, **kwargs)
+        self.consensus_samples = consensus_samples
 
     def score_round(self, build: BuildResult, breaker: BreakerResult) -> float:
         """Score a round synchronously by calling _score_attack per attack.
@@ -73,6 +76,39 @@ class Arbiter(BaseAgent):
         return self._compute_ars(breaker.attacks)
 
     async def _score_attack(self, code: str, attack: Attack) -> float:
+        """Score one attack. Sets `attack.reason` as a side effect.
+
+        With `consensus_samples <= 1` (default), this is a single LLM call,
+        same as before. With `consensus_samples > 1`, it samples the Arbiter
+        that many times concurrently, scores as the mean, and additionally
+        sets `attack.consensus_samples` / `attack.consensus_agreement` — the
+        fraction of samples whose discrete verdict matched the modal verdict,
+        a confidence signal for low-agreement (borderline) findings.
+        """
+        if self.consensus_samples <= 1:
+            score, reason = await self._sample_verdict(code, attack)
+            attack.reason = reason
+            return score
+
+        import asyncio
+
+        samples = await asyncio.gather(
+            *[self._sample_verdict(code, attack) for _ in range(self.consensus_samples)]
+        )
+        scores = [s for s, _ in samples]
+        reasons = [r for _, r in samples]
+        verdicts = [_verdict_tier(s) for s in scores]
+
+        modal_verdict = max(set(verdicts), key=verdicts.count)
+        agreement = verdicts.count(modal_verdict) / len(verdicts)
+        modal_index = verdicts.index(modal_verdict)
+
+        attack.reason = reasons[modal_index]
+        attack.consensus_samples = self.consensus_samples
+        attack.consensus_agreement = round(agreement, 4)
+        return round(sum(scores) / len(scores), 4)
+
+    async def _sample_verdict(self, code: str, attack: Attack) -> tuple[float, str]:
         prompt = (
             f"Code under review:\n```\n{code}\n```\n\n"
             f"Attack: [{attack.cwe}] {attack.title}\n"
@@ -81,7 +117,7 @@ class Arbiter(BaseAgent):
         )
         messages = [AgentMessage(role="user", content=prompt)]
         response = await self.complete(messages)
-        return _parse_score(response.content)
+        return _parse_verdict(response.content)
 
     def final_ars(self, attacks: list[Attack]) -> float:
         if not attacks:
@@ -107,21 +143,32 @@ class Arbiter(BaseAgent):
         return entropy < threshold
 
 
-def _parse_score(text: str) -> float:
+def _parse_verdict(text: str) -> tuple[float, str]:
+    """Parse the Arbiter's JSON response into (score, reason)."""
     import json
     import re
 
     json_match = re.search(r"\{.*?\}", text, re.DOTALL)
     if not json_match:
-        return 0.5
+        return 0.5, "Could not parse a verdict from the model response."
     try:
         data = json.loads(json_match.group())
         raw = data.get("score", 0.5)
         verdict = data.get("verdict", "partial").lower()
+        reason = data.get("reason") or ""
         if verdict == "mitigated":
-            return 1.0
+            return 1.0, reason
         if verdict == "missed":
-            return 0.0
-        return float(raw)
+            return 0.0, reason
+        return float(raw), reason
     except (json.JSONDecodeError, ValueError):
-        return 0.5
+        return 0.5, "Could not parse a verdict from the model response."
+
+
+def _verdict_tier(score: float) -> str:
+    """Bucket a continuous score into a discrete tier, for agreement voting."""
+    if score >= 1.0:
+        return "mitigated"
+    if score <= 0.0:
+        return "missed"
+    return "partial"

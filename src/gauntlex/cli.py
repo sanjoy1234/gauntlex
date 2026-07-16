@@ -246,10 +246,13 @@ def main():
 @click.option("--config", default=None, help="Path to .gauntlex.yml (default: auto-detect)")
 @click.option("--background", is_flag=True, default=False,
               help="Fire-and-forget: run in a detached subprocess and return immediately.")
+@click.option("--consensus", default=None, type=int,
+              help="Score each attack N times and average, with an agreement-rate "
+                   "confidence signal (default: 1, off). Costs N-1 extra LLM calls per attack.")
 @click.option("--run-id", default=None, hidden=True,
               help="Pre-assigned run ID (used internally by --background launcher).")
 def run(issue: str, mode: str, domain: str, intent: str | None, pretty: bool,
-        config: str | None, background: bool, run_id: str | None):
+        config: str | None, background: bool, consensus: int | None, run_id: str | None):
     """Run adversarial Builder + Breaker on a spec.
 
     \b
@@ -305,6 +308,8 @@ def run(issue: str, mode: str, domain: str, intent: str | None, pretty: bool,
             args += ["--intent", intent]
         if config:
             args += ["--config", config]
+        if consensus:
+            args += ["--consensus", str(consensus)]
         args += ["--run-id", bg_run_id]
 
         log_path = runs_dir / f"{bg_run_id}.log"
@@ -325,7 +330,7 @@ def run(issue: str, mode: str, domain: str, intent: str | None, pretty: bool,
         console.print()
         return
 
-    asyncio.run(_run_async(issue, mode, domain, intent, pretty, config, run_id))
+    asyncio.run(_run_async(issue, mode, domain, intent, pretty, config, consensus, run_id))
 
 
 async def _run_async(
@@ -335,6 +340,7 @@ async def _run_async(
     intent_ref: str | None,
     pretty: bool,
     config_path: str | None,
+    consensus: int | None = None,
     preset_run_id: str | None = None,
 ):
     import os
@@ -344,6 +350,8 @@ async def _run_async(
 
     mode_attack_counts = {"quick": 5, "standard": 20, "thorough": 50}
     cfg.gauntlex.attack_count = mode_attack_counts[mode]
+    if consensus is not None:
+        cfg.gauntlex.consensus_samples = consensus
 
     from .core.gauntlex import Gauntlex
     from .core.arbiter import Arbiter
@@ -408,7 +416,7 @@ async def _run_async(
             live.update(_render_live_panel(state))
             _status(status="running", phase="round")
 
-            arbiter = Arbiter(**cfg.model_kwargs())
+            arbiter = Arbiter(consensus_samples=cfg.gauntlex.consensus_samples, **cfg.model_kwargs())
             pair = Gauntlex(config=cfg, recalled_attacks=recalled,
                               policy_context=policy_context, intent_context=intent_context)
 
@@ -446,6 +454,8 @@ async def _run_async(
                     attack.score = 0.5
                 verdict = ("MITIGATED" if attack.score == 1.0
                            else "PARTIAL" if attack.score == 0.5 else "MISSED")
+                if attack.consensus_agreement is not None and attack.consensus_agreement < 0.67:
+                    verdict += " (LOW CONFIDENCE — recommend human review)"
                 state.completed_attacks.append((attack.cwe, attack.title, verdict))
                 state.attacks_scored += 1
                 state.current_attack_cwe = ""
@@ -490,7 +500,7 @@ async def _run_async(
 
         _plain("[2/4] Builder + Breaker running concurrently...")
         _status(status="running", phase="round")
-        arbiter = Arbiter(**cfg.model_kwargs())
+        arbiter = Arbiter(consensus_samples=cfg.gauntlex.consensus_samples, **cfg.model_kwargs())
         pair = Gauntlex(config=cfg, recalled_attacks=recalled,
                           policy_context=policy_context, intent_context=intent_context)
         try:
@@ -517,6 +527,8 @@ async def _run_async(
                 attack.score = 0.5
             verdict = ("MITIGATED" if attack.score == 1.0
                        else "PARTIAL" if attack.score == 0.5 else "MISSED")
+            if attack.consensus_agreement is not None and attack.consensus_agreement < 0.67:
+                verdict += " (LOW CONFIDENCE — recommend human review)"
             _plain(f"      → {verdict}")
         result.final_ars = arbiter.final_ars(result.all_attacks)
 

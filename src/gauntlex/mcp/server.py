@@ -85,6 +85,16 @@ _TOOLS = [
                         "Options: python, javascript, typescript, java, go."
                     ),
                 },
+                "consensus_samples": {
+                    "type": "integer",
+                    "default": 1,
+                    "description": (
+                        "Score each attack this many times and average, surfacing an "
+                        "agreement-rate confidence signal for borderline findings. "
+                        "1 (default) = off, single call per attack. Costs N-1 extra "
+                        "LLM calls per attack when > 1."
+                    ),
+                },
             },
             "required": ["spec"],
         },
@@ -144,6 +154,8 @@ _TOOLS = [
     },
 ]
 
+# Note: engine callables also accept an optional `consensus_samples: int = 1`
+# keyword argument, not expressible in this Callable type hint.
 EngineFunction = Callable[[str, str, str, str, "str | None", AppConfig], Awaitable[dict]]
 
 
@@ -241,10 +253,12 @@ class MCPServer:
             mode = "quick"
         domain = args.get("domain") or "owasp_top10"
         language = args.get("language")
+        consensus_samples = int(args.get("consensus_samples") or 1)
 
         run_id = f"gauntlex-mcp-{uuid.uuid4().hex[:8]}"
         task = asyncio.create_task(
-            self._engine_fn(run_id, spec, mode, domain, language, self._config)
+            self._engine_fn(run_id, spec, mode, domain, language, self._config,
+                             consensus_samples=consensus_samples)
         )
         self._tasks[run_id] = task
         self._started[run_id] = time.monotonic()
@@ -501,6 +515,7 @@ async def _run_gauntlex_engine(
     domain: str,
     language: str | None,
     config: AppConfig,
+    consensus_samples: int = 1,
 ) -> dict:
     """
     Run the GAUNTLEX Gauntlex engine on an inline spec and return a result dict.
@@ -544,7 +559,7 @@ async def _run_gauntlex_engine(
         except Exception:
             pass
 
-    arbiter = Arbiter(**cfg.model_kwargs())
+    arbiter = Arbiter(consensus_samples=consensus_samples, **cfg.model_kwargs())
     pair = Gauntlex(config=cfg, recalled_attacks=recalled, policy_context=policy_context)
 
     result = await pair.run(spec, arbiter)

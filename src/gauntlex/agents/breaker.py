@@ -49,6 +49,9 @@ class Attack:
     confidence: int = 5
     severity: str = "medium"
     score: float = 0.0  # set by Arbiter: 1.0 mitigated / 0.5 partial / 0.0 miss
+    reason: str | None = None  # Arbiter's one-line explanation for the score
+    consensus_samples: int | None = None  # set when --consensus > 1 was used
+    consensus_agreement: float | None = None  # fraction of samples agreeing with the modal verdict
 
 
 @dataclass
