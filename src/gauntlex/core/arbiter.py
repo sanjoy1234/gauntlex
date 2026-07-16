@@ -92,15 +92,33 @@ class Arbiter(BaseAgent):
 
         import asyncio
 
-        samples = await asyncio.gather(
-            *[self._sample_verdict(code, attack) for _ in range(self.consensus_samples)]
+        raw_samples = await asyncio.gather(
+            *[self._sample_verdict(code, attack) for _ in range(self.consensus_samples)],
+            return_exceptions=True,
         )
+        # A failed individual sample degrades only that one sample (toward
+        # the same conservative 0.5 the rest of GAUNTLEX falls back to on
+        # error), not the whole consensus round -- losing 1 of N samples to
+        # a transient error shouldn't discard the other N-1 real judgments.
+        samples = [
+            s if not isinstance(s, Exception) else (0.5, "Sample failed; scored conservatively.")
+            for s in raw_samples
+        ]
         scores = [s for s, _ in samples]
         reasons = [r for _, r in samples]
         verdicts = [_verdict_tier(s) for s in scores]
 
-        modal_verdict = max(set(verdicts), key=verdicts.count)
-        agreement = verdicts.count(modal_verdict) / len(verdicts)
+        counts: dict[str, int] = {}
+        for v in verdicts:
+            counts[v] = counts.get(v, 0) + 1
+        max_count = max(counts.values())
+        tied = [v for v, c in counts.items() if c == max_count]
+        # Deterministic tie-break: on an exact split between verdict tiers,
+        # prefer the more conservative (severe) one -- consistent with
+        # GAUNTLEX's existing fail-toward-caution defaults elsewhere (parse
+        # errors and exceptions already default to 0.5, never a free pass).
+        modal_verdict = min(tied, key=lambda v: _VERDICT_SEVERITY[v])
+        agreement = max_count / len(verdicts)
         modal_index = verdicts.index(modal_verdict)
 
         attack.reason = reasons[modal_index]
@@ -172,3 +190,8 @@ def _verdict_tier(score: float) -> str:
     if score <= 0.0:
         return "missed"
     return "partial"
+
+
+# Lower = more conservative/severe. Used to break count-ties deterministically
+# in consensus voting -- see _score_attack.
+_VERDICT_SEVERITY = {"missed": 0, "partial": 1, "mitigated": 2}

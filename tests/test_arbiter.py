@@ -139,20 +139,47 @@ async def test_score_attack_consensus_split_verdict():
     assert score == pytest.approx((1.0 + 1.0 + 0.0) / 3, abs=1e-4)
     assert attack.consensus_samples == 3
     assert attack.consensus_agreement == pytest.approx(2 / 3, abs=1e-4)
-    assert attack.reason in ("looks handled", "looks handled too")
+    # Clear (non-tied) majority -- deterministic, first matching sample's reason.
+    assert attack.reason == "looks handled"
 
 
 @pytest.mark.asyncio
-async def test_score_attack_consensus_full_disagreement():
+async def test_score_attack_consensus_full_disagreement_is_deterministic():
     responses = [
         _verdict_json("mitigated", 1.0, "a"),
         _verdict_json("partial", 0.5, "b"),
         _verdict_json("missed", 0.0, "c"),
     ]
-    arbiter = _FakeCompleteArbiter(responses, consensus_samples=3)
+    # Run several times -- with process-level hash randomization, a set()-based
+    # tie-break would flip which verdict wins across runs. It must not.
+    for _ in range(5):
+        arbiter = _FakeCompleteArbiter(responses, consensus_samples=3)
+        attack = _make_attack("CWE-89", 0.0)
+        score = await arbiter._score_attack("code", attack)
+        assert score == pytest.approx(0.5)
+        assert attack.consensus_agreement == pytest.approx(1 / 3, abs=1e-4)
+        # A 3-way tie breaks toward the most conservative (severe) verdict,
+        # consistent with GAUNTLEX's existing fail-toward-caution defaults.
+        assert attack.reason == "c"
+
+
+@pytest.mark.asyncio
+async def test_score_attack_consensus_survives_one_failed_sample():
+    class _FlakyArbiter(_FakeCompleteArbiter):
+        async def complete(self, _messages):
+            # The 2nd call (of 3, index 1) fails; the fake `complete()` never
+            # awaits internally, so asyncio.gather's tasks run in creation
+            # order here -- this is a deterministic "middle sample fails".
+            if self._call_count == 1:
+                self._call_count += 1
+                raise RuntimeError("transient provider error")
+            return await super().complete(_messages)
+
+    responses = [_verdict_json("mitigated", 1.0, "looks handled")] * 3
+    arbiter = _FlakyArbiter(responses, consensus_samples=3)
     attack = _make_attack("CWE-89", 0.0)
+    # Must not raise -- the one failed sample degrades to a conservative 0.5
+    # rather than discarding the other 2 real judgments.
     score = await arbiter._score_attack("code", attack)
-    assert score == pytest.approx(0.5)
-    # No majority among 3 distinct tiers -- agreement is 1/3 for whichever
-    # tier max() picks first, not a tie-break failure.
-    assert attack.consensus_agreement == pytest.approx(1 / 3, abs=1e-4)
+    assert score == pytest.approx((1.0 + 0.5 + 1.0) / 3, abs=1e-4)
+    assert attack.consensus_samples == 3

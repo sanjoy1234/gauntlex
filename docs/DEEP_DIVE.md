@@ -845,7 +845,7 @@ attack_score:
 
 The Arbiter also runs an entropy check: if all attacks cluster on the same CWE, it flags low diversity and schedules CWE rotation for the next run.
 
-Every verdict carries a one-line `reason` alongside the score. Optionally (`--consensus <N>`), each attack is scored N times and averaged instead of once, with an `agreement_rate` surfaced per attack — see the FAQ entry on Arbiter reliability below for why and when to use it.
+Every verdict carries a one-line `reason` alongside the score. Optionally (`--consensus <N>`), each attack is scored N times and averaged instead of once, with a `consensus_agreement` field surfaced per attack — see the FAQ entry on Arbiter reliability below for why and when to use it.
 
 ### The Full Execution Flow
 
@@ -1352,7 +1352,7 @@ Attack count targets 5/20/50 by mode (quick/standard/thorough) but isn't exact �
 GAUNTLEX produces NIST SSDF, SOC 2, and ISO 27001 control mapping artifacts with a SHA-256 integrity hash. `gauntlex verify` re-derives the hash at any future audit, independent of GAUNTLEX itself.
 
 **Q: Is the Arbiter's verdict itself reliable — does the same code scored twice give the same result?**
-The Arbiter isn't a trained or fine-tuned judge — it's a prompted call to whatever general-purpose model you've configured, so like any single LLM judgment, it can vary between runs on genuinely borderline cases. The SHA-256 hash proves a report wasn't edited after the fact; it does not by itself prove the judgment was maximally consistent. For that, use `--consensus <N>` (e.g. `--consensus 3`): each attack gets scored N times and averaged, and the report includes an `agreement_rate` per attack — low agreement is a direct signal that a finding is borderline and worth a human look, rather than a silent single-shot guess. Off by default (costs N-1 extra model calls per attack); on by default it isn't, because most attacks aren't borderline and the extra cost isn't always worth paying.
+The Arbiter isn't a trained or fine-tuned judge — it's a prompted call to whatever general-purpose model you've configured, so like any single LLM judgment, it can vary between runs on genuinely borderline cases. The SHA-256 hash proves a report wasn't edited after the fact; it does not by itself prove the judgment was maximally consistent. For that, use `--consensus <N>` (e.g. `--consensus 3`): each attack gets scored N times and averaged, and the report includes a `consensus_agreement` field per attack — low agreement is a direct signal that a finding is borderline and worth a human look, rather than a silent single-shot guess. Off by default (costs N-1 extra model calls per attack); on by default it isn't, because most attacks aren't borderline and the extra cost isn't always worth paying.
 
 **Q: What if the model goes down mid-run?**
 GAUNTLEX fails the run cleanly — no partial report written. `fail_open: true` allows the pipeline to pass on model errors (useful during planned maintenance windows).

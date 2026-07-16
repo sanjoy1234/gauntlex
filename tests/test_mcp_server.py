@@ -114,6 +114,51 @@ async def test_gauntlex_run_returns_run_id():
 
 
 @pytest.mark.asyncio
+async def test_gauntlex_run_consensus_samples_reaches_engine():
+    """Regression: consensus_samples from tool arguments must actually reach
+    the engine call, not just be accepted and dropped."""
+    received = {}
+
+    async def _recording_engine(run_id, spec, mode, domain, language, config, consensus_samples=1):
+        received["consensus_samples"] = consensus_samples
+        return await _fake_engine(run_id, spec, mode, domain, language, config,
+                                   consensus_samples=consensus_samples)
+
+    s = _server(engine=_recording_engine)
+    resp = await s.handle_message({
+        "jsonrpc": "2.0", "id": 10,
+        "method": "tools/call",
+        "params": {
+            "name": "gauntlex_run",
+            "arguments": {"spec": "Build a login endpoint", "consensus_samples": 3},
+        },
+    })
+    run_id = resp["result"]["run_id"]
+    await s._tasks[run_id]  # let the task actually run before asserting
+    assert received["consensus_samples"] == 3
+
+
+@pytest.mark.asyncio
+async def test_gauntlex_run_consensus_samples_defaults_to_one():
+    received = {}
+
+    async def _recording_engine(run_id, spec, mode, domain, language, config, consensus_samples=1):
+        received["consensus_samples"] = consensus_samples
+        return await _fake_engine(run_id, spec, mode, domain, language, config,
+                                   consensus_samples=consensus_samples)
+
+    s = _server(engine=_recording_engine)
+    resp = await s.handle_message({
+        "jsonrpc": "2.0", "id": 10,
+        "method": "tools/call",
+        "params": {"name": "gauntlex_run", "arguments": {"spec": "Build a login endpoint"}},
+    })
+    run_id = resp["result"]["run_id"]
+    await s._tasks[run_id]
+    assert received["consensus_samples"] == 1
+
+
+@pytest.mark.asyncio
 async def test_gauntlex_run_empty_spec_returns_error():
     s = _server()
     resp = await s.handle_message({

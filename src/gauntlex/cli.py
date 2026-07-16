@@ -308,7 +308,7 @@ def run(issue: str, mode: str, domain: str, intent: str | None, pretty: bool,
             args += ["--intent", intent]
         if config:
             args += ["--config", config]
-        if consensus:
+        if consensus is not None:
             args += ["--consensus", str(consensus)]
         args += ["--run-id", bg_run_id]
 
