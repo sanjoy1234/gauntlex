@@ -1,0 +1,94 @@
+{
+  "generated_at": "2026-09-16T01:41:36.094098+00:00",
+  "spec": "examples/demo_issue.md",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "provider": "openrouter",
+  "runs": [
+    {
+      "cwe_set": [
+        "CWE-89",
+        "CWE-79",
+        "CWE-287",
+        "CWE-306"
+      ],
+      "timing_seconds": {
+        "concurrent_wall_clock": 69.3,
+        "sequential_wall_clock": 178.1,
+        "concurrent_builder": 25.3,
+        "concurrent_breaker": 69.2,
+        "sequential_builder": 22.7,
+        "sequential_breaker": 155.4,
+        "speedup": 2.57,
+        "seconds_saved": 108.8
+      },
+      "concurrent": {
+        "target": "specification",
+        "ars": 0.75,
+        "attacks": [
+          {
+            "cwe": "CWE-89",
+            "title": "SQL Injection via Username Parameter in Login Query",
+            "severity": "critical",
+            "score": 1.0,
+            "reason": "The login query uses a parameterized statement with a placeholder (?) and passes the username as a separate parameter, preventing SQL injection regardless of input content."
+          },
+          {
+            "cwe": "CWE-79",
+            "title": "Reflected XSS via Username in Error Responses",
+            "severity": "medium",
+            "score": 1.0,
+            "reason": "The login endpoint returns generic error messages (e.g., 'Invalid credentials') and never reflects the username in JSON responses, eliminating the reflected XSS vector via error messages."
+          },
+          {
+            "cwe": "CWE-287",
+            "title": "JWT Algorithm Confusion Attack (RS256 to HS256)",
+            "severity": "critical",
+            "score": 0.0,
+            "reason": "The code only implements JWT token generation (HS256) but lacks any token verification logic; algorithm confusion attacks target verification, which is absent."
+          },
+          {
+            "cwe": "CWE-306",
+            "title": "Missing Authentication on Password Reset / Account Recovery Endpoint",
+            "severity": "high",
+            "score": 1.0,
+            "reason": "The code does not implement any password reset or account recovery endpoints, so the attack vector (missing authentication on those endpoints) is entirely absent."
+          }
+        ]
+      },
+      "sequential": {
+        "target": "generated code",
+        "ars": 1.0,
+        "attacks": [
+          {
+            "cwe": "CWE-89",
+            "title": "No SQL Injection vulnerability found",
+            "severity": "low",
+            "score": 1.0,
+            "reason": "All database queries use parameterized statements with placeholders, preventing SQL injection."
+          },
+          {
+            "cwe": "CWE-79",
+            "title": "No Cross-Site Scripting vulnerability found",
+            "severity": "low",
+            "score": 1.0,
+            "reason": "The API exclusively returns JSON responses with Content-Type: application/json, performs no HTML rendering, and user-controlled data is only stored in structured logs or returned in JSON error messages, eliminating XSS vectors in the server-side code."
+          },
+          {
+            "cwe": "CWE-287",
+            "title": "Hardcoded default JWT secret enables token forgery",
+            "severity": "critical",
+            "score": 1.0,
+            "reason": "The JWT_SECRET defaults to a cryptographically random value generated at startup via os.urandom(32).hex(), not a static hardcoded string, preventing token forgery via known default secrets."
+          },
+          {
+            "cwe": "CWE-306",
+            "title": "No missing authentication for critical function found",
+            "severity": "low",
+            "score": 1.0,
+            "reason": "The code only exposes public authentication endpoints (/login, /register) and contains no critical functions that require authentication, so CWE-306 is not applicable."
+          }
+        ]
+      }
+    }
+  ]
+}
