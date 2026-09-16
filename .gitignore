@@ -59,6 +59,7 @@ gauntlex-app.private-key.pem
 .pypirc
 .devto_api_key
 .linkedin_oauth_credentials
+.hashnode_api_token
 
 # Claude Code workspace config — not for public repo
 CLAUDE.md
@@ -66,3 +67,7 @@ CLAUDE.md
 # Private marketing/strategy doc -- never commit, lives outside the repo
 MARKETING.md
 docs/media/GAUNTLEX_Marketing_Plan*.pdf
+
+# Research subproject(s) — in-progress academic work, nothing here gets
+# committed until the user explicitly says so, paper by paper
+research/

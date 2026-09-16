@@ -333,6 +333,7 @@ More questions, including gating thresholds and contributing a new policy domain
 - [Official MCP Registry](https://registry.modelcontextprotocol.io) — listed as `io.github.sanjoy1234/gauntlex`
 
 **Writing**
+- [GAUNTLEX runs GAUNTLEX](docs/self_report/REPORT.md) — a signed, verifiable self-report, plus a head-to-head measurement of concurrent vs. sequential adversarial testing on one real spec
 - [dev.to — "Why I Built an Adversarial Co-Generation Engine"](https://dev.to/sanjoy1234/why-i-built-an-adversarial-co-generation-engine-2038)
 - [dev.to — "The Adversarial Resilience Score: A New Metric for AI-Generated Code"](https://dev.to/sanjoy1234/the-adversarial-resilience-score-a-new-metric-for-ai-generated-code-4gej)
 - [dev.to — "How GAUNTLEX Gates HIPAA/FINRA Compliance in CI"](https://dev.to/sanjoy1234/how-gauntlex-gates-hipaafinra-compliance-in-ci-29hj)
