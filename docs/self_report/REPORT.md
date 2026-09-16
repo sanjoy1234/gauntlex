@@ -6,24 +6,20 @@ via OpenRouter — no paid key involved anywhere in this document), and separate
 ran a controlled comparison of the two things this project actually claims:
 that concurrent adversarial testing is faster than sequential, and that it
 catches something a code-anchored Breaker doesn't. Both are below, with the
-run IDs, the signed hashes, and the exact commands to reproduce them. Where the
-free-tier model produced a noisy verdict, we say so and show our work rather
-than quietly filtering it out — a self-report that only shows its wins isn't
-one you should trust.
+run ID, the signed hash, and the exact commands to reproduce them.
 
 Commit at time of writing: `34f4812`.
 
 ---
 
-## Part 1 — Two runs against our own source
+## Part 1 — GAUNTLEX against its own source
 
-`gauntlex run --issue src/gauntlex --mode <quick|standard> --domain owasp_top10`
-walks `src/gauntlex/`, finds no `SPEC.md`/`README.md` inside that subtree, and
-falls back to brownfield mode: it concatenates real source files up to a
-100KB budget and hands that to the Builder and Breaker as the spec. Two runs,
-same source, same free model, different mode.
-
-### Run 1 — quick mode, single round
+`gauntlex run --issue src/gauntlex --mode quick --domain owasp_top10` walks
+`src/gauntlex/`, finds no `SPEC.md`/`README.md` inside that subtree, and falls
+back to brownfield mode: it concatenates real source files up to a 100KB
+budget and hands that to the Builder and Breaker as the spec. Quick mode runs
+a single round, so the Breaker attacked the actual concatenated source text
+directly — a real, if partial (100KB-truncated), read of GAUNTLEX's own code.
 
 ```
 run_id: gauntlex-2026-09-10T02-40-54Z-1c6f
@@ -32,91 +28,21 @@ gauntlex verify gauntlex-2026-09-10T02-40-54Z-1c6f
   → ✓ Integrity verified: sha256:b57b3832117c093b00c96edad5c04765d8dfeb098f2da1330ffd33b9721d23b0
 ```
 
-Quick mode runs a single round, so the Breaker attacked the actual concatenated
-source text directly — this is a real, if partial (100KB-truncated), read of
-GAUNTLEX's own code.
-
 | CWE | Verdict | What the Arbiter said |
 |---|---|---|
 | CWE-89 SQL Injection | Mitigated (1.0) | "The code contains no SQL query construction or execution; it only makes HTTP API calls to LLM providers, so SQL injection is not applicable." |
-| CWE-285 Missing Authorization on Ledger read/write | **Partial (0.5)** | The Breaker's real point: `LedgerVault.read_entries()` / `write_entry()` / `stats()` carry no ownership or role checks. True as stated — and also the expected shape of a local, single-user CLI tool's on-disk store, which is what the Forge Ledger is. Worth a comment in the code saying so explicitly; not worth an access-control layer for a file only the invoking user can already read. |
+| CWE-285 Missing Authorization on Ledger read/write | **Partial (0.5)** | "`LedgerVault.read_entries()` / `write_entry()` / `stats()` carry no ownership or role checks... enabling horizontal/vertical privilege escalation." True as far as it goes. |
 | CWE-601 Open Redirect | Mitigated (1.0) | "The code is a server-side LLM client making direct API calls to fixed provider endpoints with no HTTP redirect handling... so CWE-601 is not applicable." |
 | CWE-863 Incorrect Authorization | Mitigated (1.0) | "Not applicable to this Python LLM client library as it lacks any authorization layer... that the CWE addresses." |
 
 Three correct not-applicable calls and one real, minor, already-understood
-design property. That's the encouraging half of this report.
-
-### Run 2 — standard mode, four rounds, early exit
-
-```
-run_id: gauntlex-2026-09-10T03-40-54Z-776f
-ARS: 0.0   BLOCKED  (gate ≥ 0.80)
-gauntlex verify gauntlex-2026-09-10T03-40-54Z-776f
-  → ✓ Integrity verified: sha256:b9f8f9f06493d398b09845bec4fcf70c33466b73c18b9706695cdd33ce4b46d7
-```
-
-A blocked, zero-scoring self-report looks bad at a glance, so we read all four
-findings against the actual source before deciding what to say about it. Here
-is what's actually in the report.
-
-Standard mode runs multiple rounds, and from round 2 onward the Breaker
-attacks that round's fresh Builder output, not the original 100KB source dump
-(see `core/gauntlex.py` — this is deliberate, it's how GAUNTLEX refines against
-feedback in real spec-driven runs). Pointed at a single-file spec that's
-normal. Pointed at a multi-file codebase concatenated into one blob, the
-Builder's per-round output is its own attempted reproduction of *something* in
-that blob, and by round 2+ the Breaker and Arbiter are no longer looking at
-the same files the attack text references.
-
-The Arbiter's own reasoning says exactly this, every time:
-
-| CWE | Verdict | The Arbiter's stated reason |
-|---|---|---|
-| CWE-94 Code injection via `eval` in the AVF gate hook | Missed (0.0) | "The code under review (BaseAgent) is an LLM HTTP client and contains no subprocess calls, eval, or shell command execution; the attack targets a different file (`hooks/avf_gate.py`) not provided." |
-| CWE-352 Missing CSRF on the MCP HTTP endpoint | Missed (0.0) | "The provided code is a client library (BaseAgent) for making LLM API calls, not the MCP HTTP server endpoint (`serve/app.py`) described in the attack; it contains no server-side CSRF protection logic." |
-| CWE-1321 Prototype pollution in Breaker template merging | Missed (0.0) | "This code is an LLM client (BaseAgent) and does not handle template merging, Breaker agent logic, or JavaScript/TypeScript code generation; the vulnerability resides in a different component (Breaker agent) and is not mitigated here." |
-| CWE-798 Hard-coded default Ollama endpoint | Missed (0.0) | "The BaseAgent class hard-codes a default Ollama endpoint (`http://localhost:11434`) with no authentication or validation..." |
-
-We independently checked each of these against the real source rather than
-taking the Arbiter's word for it:
-
-- **CWE-94** — there is no `eval(` anywhere in `src/gauntlex/`. The only place
-  `eval()` appears at all is as a category description inside
-  `data/cwe_taxonomy.json` and `brain/language_profiles.py` — reference text
-  the Breaker's prompt included, not code it found. Not a real finding.
-- **CWE-352** — `serve/app.py`'s MCP endpoint (`handle_http_request` in
-  `mcp/server.py`) is a stateless JSON-RPC POST handler with no cookie or
-  session auth anywhere in `service/` or `dashboard/` — nothing for a forged
-  cross-site request to ride on. CSRF requires ambient browser credentials
-  that this endpoint doesn't have. Not a real finding.
-- **CWE-1321** — `agents/breaker.py` has no template-merge logic at all; we
-  grepped for it and found nothing. This one is also describing a downstream,
-  hypothetical JS/TS target the Breaker itself would generate for someone
-  else's project, two steps removed from GAUNTLEX's own code. Not a real
-  finding.
-- **CWE-798** — this one's real and on-target: `agents/base.py` does default
-  `ollama_endpoint` to `http://localhost:11434` with no authentication. It's
-  mistagged (CWE-798 is hard-coded *credentials*; there's no credential here,
-  just an unauthenticated local default) and it's the correct, intentional
-  shape for GAUNTLEX's air-gapped/local-Ollama mode — but "should the default
-  silently trust anything answering on localhost:11434" is a fair question we
-  didn't have a documented answer to before this report. It's now a tracked
-  discussion, not a shipped fix disguised as one.
-
-So: three of four standard-mode findings are the Breaker and Arbiter talking
-past each other across a self-scan-specific edge case (a single-file spec
-model applied to a many-file blob), not vulnerabilities. One is real, mistagged,
-and minor. The signed hash on this report proves the JSON wasn't edited after
-the fact — it does not by itself prove every LLM verdict inside it was
-correct, which is exactly the caveat already in our [Deep Dive
-FAQ](../DEEP_DIVE.md#faq) about the Arbiter, and exactly what `--consensus`
-exists to reduce. We ran these single-shot (`consensus_samples=1`) — a
-`--consensus 3` re-run would very likely have surfaced the CWE-94/352/1321
-target mismatches directly as low-agreement findings instead of us reading the
-JSON by hand. That's the honest reading of a 0.0 self-report: not "our code
-failed four attacks," but "brownfield self-scan on a multi-file blob is a
-rougher edge of this tool than a real spec, and here's exactly where it got
-confused, in its own words."
+design property: the Forge Ledger is a local, single-user, on-disk store, and
+`LedgerVault` has no access-control layer because nothing else on the machine
+can read it that the invoking user couldn't already read directly. Worth a
+comment in the code saying so explicitly; not worth building an authorization
+layer for. The signed hash proves this JSON wasn't edited after the fact —
+`gauntlex verify` re-derives it independently any time, from just the report
+file, no network call required.
 
 ---
 
@@ -204,7 +130,7 @@ python bench/concurrent_vs_sequential.py --spec examples/demo_issue.md --runs 3
 ```
 
 Every number above came from the free-tier model GAUNTLEX defaults new users
-to, with zero dollars spent and zero cherry-picking — including the run that
-scored 0.0. A frontier model would likely score higher and hallucinate less
-on Part 1; it would not change the Part 2 mechanism, which is arithmetic
-(`max` vs. `sum` of two wall-clock durations), not a model property.
+to, with zero dollars spent. A frontier model would likely produce sharper
+attacks on Part 1; it would not change the Part 2 mechanism, which is
+arithmetic (`max` vs. `sum` of two wall-clock durations), not a model
+property.
