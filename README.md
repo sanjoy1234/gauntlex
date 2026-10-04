@@ -337,6 +337,7 @@ More questions, including gating thresholds and contributing a new policy domain
 - [dev.to — "Why I Built an Adversarial Co-Generation Engine"](https://dev.to/sanjoy1234/why-i-built-an-adversarial-co-generation-engine-2038)
 - [dev.to — "The Adversarial Resilience Score: A New Metric for AI-Generated Code"](https://dev.to/sanjoy1234/the-adversarial-resilience-score-a-new-metric-for-ai-generated-code-4gej)
 - [dev.to — "How GAUNTLEX Gates HIPAA/FINRA Compliance in CI"](https://dev.to/sanjoy1234/how-gauntlex-gates-hipaafinra-compliance-in-ci-29hj)
+- [dev.to — "The Login Endpoint That Handed Out Tokens Nobody Ever Checked"](https://dev.to/sanjoy1234/the-login-endpoint-that-handed-out-tokens-nobody-ever-checked-2idd)
 - [LinkedIn Article — "The Math That Breaks When AI Writes a Million Lines of Code"](https://www.linkedin.com/feed/update/urn:li:activity:7482279870576611328/)
 
 **Community**
